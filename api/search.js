@@ -21,7 +21,10 @@ export default async function handler(req, res) {
     }).on('error', reject);
   });
 
-  const results = (data.shopping_results || []).slice(0, 6).map((item, i) => {
+  const raw = data.shopping_results || [];
+  if (raw[0]) console.log('[search] first item keys:', Object.keys(raw[0]).join(', '));
+  if (raw[0]) console.log('[search] first item links:', JSON.stringify({ link: raw[0].link, product_link: raw[0].product_link, seller_link: raw[0].seller_link }));
+  const results = raw.slice(0, 6).map((item, i) => {
     const price = parseFloat((item.price || '0').replace(/[^0-9.]/g, '')) || 0;
     const points = Array.from({length:30}, (_,j) => {
       const wave = Math.sin(j/4) * 0.04;
@@ -32,7 +35,7 @@ export default async function handler(req, res) {
     return {
       id: i+1, name: item.title, source: item.source || 'Retailer',
       price, rating: item.rating || 4.2, reviews: item.reviews || 0,
-      img: item.thumbnail || '', link: item.link || '',
+      img: item.thumbnail || '', link: item.product_link || item.link || '',
       delivery: item.delivery || '', prices: points,
       snippet: item.snippet || item.title,
       summary: '', insight: item.snippet || item.title

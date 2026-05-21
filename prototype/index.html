@@ -257,7 +257,6 @@ async function sendMessage() {
         const s = JSON.parse(searchMatch[1]);
         removeTyping();
         let clean = fullText.replace(/SEARCH:\{[^}]+\}/g,"").replace(/PROFILE:\{[^}]+\}/g,"").trim();
-        clean = clean.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>").replace(/\n/g,"<br>");
         addMessage("ai", clean);
         conversationHistory.push({role:"assistant", content:fullText});
         showSearching();
@@ -315,11 +314,25 @@ function hideSearching() {
   document.querySelectorAll("#searchingIndicator").forEach(el => el.remove());
 }
 
+
+function parseMarkdown(text) {
+  return text
+    .split('\n')
+    .map(line => {
+      if (/^#{1,3}\s/.test(line)) return '<strong style="display:block;margin:6px 0 2px">' + line.replace(/^#{1,3}\s+/, '') + '</strong>';
+      if (/^-{3,}$/.test(line.trim())) return '<hr style="border:none;border-top:1px solid #333;margin:8px 0">';
+      if (/^[\-\*]\s/.test(line)) return '&bull; ' + line.replace(/^[\-\*]\s+/, '');
+      return line;
+    })
+    .join('<br>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+}
+
 function addMessage(role, text) {
   function makeMsg() {
     const div = document.createElement("div");
     div.className = "msg" + (role==="user" ? " user" : "");
-    div.innerHTML = "<div class=\"avatar "+role+"\">"+(role==="ai"?"🤖":"🙏‚")+"</div><div class=\"bubble "+role+"\">"+text+"</div>";
+    div.innerHTML = "<div class=\"avatar "+role+"\">"+(role==="ai"?"🤖":"🙏‚")+"</div><div class=\"bubble "+role+"\">"+(role==="ai"?parseMarkdown(text):text)+"</div>";
     return div;
   }
   const cm = document.getElementById("chatAreaMobile");
@@ -420,7 +433,7 @@ function selectCard(el, id) {
   }).then(r=>r.json()).then(data=>{
     removeTyping();
     let text = data.content[0].text.replace(/SEARCH:\{[^}]+\}/g,"").replace(/PROFILE:\{[^}]+\}/g,"").trim();
-    text = text.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>").replace(/\n/g,"<br>");
+
     addMessage("ai", text);
     conversationHistory.push({role:"assistant", content:data.content[0].text});
   });
