@@ -1,29 +1,6 @@
 const https = require('https');
 
-function callClaude(prompt, apiKey) {
-  return new Promise((resolve, reject) => {
-    const payload = JSON.stringify({
-      model: 'claude-sonnet-4-6', max_tokens: 1024,
-      messages: [{ role: 'user', content: prompt }]
-    });
-    const r = https.request({
-      hostname: 'api.anthropic.com', path: '/v1/messages', method: 'POST',
-      headers: {
-        'Content-Type': 'application/json', 'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01', 'Content-Length': Buffer.byteLength(payload)
-      }
-    }, res => {
-      let d = '';
-      res.on('data', c => d += c);
-      res.on('end', () => { try { resolve(JSON.parse(d).content[0].text); } catch(e) { reject(e); } });
-    });
-    r.on('error', reject);
-    r.write(payload);
-    r.end();
-  });
-}
-
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -31,17 +8,16 @@ module.exports = async (req, res) => {
 
   const { query } = req.body;
   const serpKey = process.env.SERPAPI_KEY;
-  const apiKey = process.env.ANTHROPIC_API_KEY;
 
   const params = new URLSearchParams({
     api_key: serpKey, engine: 'google_shopping', q: query, num: '8', gl: 'us', hl: 'en'
   });
 
   const data = await new Promise((resolve, reject) => {
-    https.get('https://serpapi.com/search?' + params.toString(), res => {
+    https.get('https://serpapi.com/search?' + params.toString(), r => {
       let d = '';
-      res.on('data', c => d += c);
-      res.on('end', () => resolve(JSON.parse(d)));
+      r.on('data', c => d += c);
+      r.on('end', () => { try { resolve(JSON.parse(d)); } catch(e) { reject(e); } });
     }).on('error', reject);
   });
 
@@ -64,4 +40,4 @@ module.exports = async (req, res) => {
   });
 
   res.status(200).json(results);
-};
+}
