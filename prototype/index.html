@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShopSense — AI Shopping Search</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f0f0f; color: #f0f0f0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  header { padding: 24px 32px; border-bottom: 1px solid #222; display: flex; align-items: center; gap: 16px; }
+  header h1 { font-size: 24px; font-weight: 700; color: #fff; }
+  header span { background: #6c47ff; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+  .search-section { padding: 48px 32px 24px; max-width: 800px; margin: 0 auto; text-align: center; }
+  .search-section h2 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+  .search-section p { color: #888; margin-bottom: 24px; }
+  .search-bar { display: flex; gap: 8px; }
+  .search-bar input { flex: 1; padding: 14px 20px; background: #1a1a1a; border: 1px solid #333; border-radius: 12px; color: #fff; font-size: 16px; outline: none; }
+  .search-bar input:focus { border-color: #6c47ff; }
+  .search-bar button { padding: 14px 28px; background: #6c47ff; color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; }
+  .search-bar button:hover { background: #5a38e0; }
+  .filters { padding: 0 32px 24px; max-width: 800px; margin: 0 auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { padding: 6px 16px; border-radius: 20px; border: 1px solid #333; background: #1a1a1a; color: #ccc; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+  .chip:hover, .chip.active { background: #6c47ff; border-color: #6c47ff; color: #fff; }
+  .results-header { padding: 0 32px 16px; color: #888; font-size: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; padding: 0 32px 48px; }
+  .card { background: #1a1a1a; border: 1px solid #222; border-radius: 16px; overflow: hidden; transition: transform 0.2s, border-color 0.2s; }
+  .card:hover { transform: translateY(-4px); border-color: #6c47ff; }
+  .card img { width: 100%; height: 180px; object-fit: cover; background: #222; }
+  .card-body { padding: 16px; }
+  .card-brand { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+  .card-name { font-size: 15px; font-weight: 600; margin: 4px 0 8px; }
+  .card-price { font-size: 20px; font-weight: 700; color: #6c47ff; }
+  .card-rating { font-size: 13px; color: #888; margin-top: 4px; }
+  .card-match { margin-top: 10px; padding: 8px 12px; background: #0d0d0d; border-radius: 8px; font-size: 12px; color: #aaa; border-left: 3px solid #6c47ff; }
+  .card-match strong { color: #6c47ff; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-bottom: 8px; }
+  .badge-high { background: #1a3a1a; color: #4caf50; }
+  .badge-med { background: #3a2a00; color: #ffc107; }
+  .empty { text-align: center; padding: 80px 32px; color: #555; grid-column: 1/-1; }
+  .empty h3 { font-size: 20px; margin-bottom: 8px; color: #777; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ShopSense</h1>
+  <span>AI Beta</span>
+</header>
+<div class="search-section">
+  <h2>Find exactly what you need</h2>
+  <p>Try: "running shoes under $130 for flat feet" or "waterproof hiking boots"</p>
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Describe what you are looking for..." />
+    <button onclick="doSearch()">Search</button>
+  </div>
+</div>
+<div class="filters">
+  <div class="chip active" onclick="setFilter(this, null)">All</div>
+  <div class="chip" onclick="setFilter(this, &apos;Running&apos;)">Running</div>
+  <div class="chip" onclick="setFilter(this, &apos;Trail&apos;)">Trail</div>
+  <div class="chip" onclick="setFilter(this, &apos;Hiking&apos;)">Hiking</div>
+  <div class="chip" onclick="setFilter(this, &apos;Casual&apos;)">Casual</div>
+</div>
+<div class="results-header" id="resultsHeader">Showing all products</div>
+<div class="grid" id="grid"></div>
+<script>
+  let products = [];
+  let activeCategory = null;
+  let currentQuery = "";
+
+  fetch("products.json").then(r => r.json()).then(data => {
+    products = data;
+    render();
+  });
+
+  document.getElementById("searchInput").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") doSearch();
+  });
+
+  function doSearch() {
+    currentQuery = document.getElementById("searchInput").value.trim().toLowerCase();
+    render();
+  }
+
+  function setFilter(el, cat) {
+    document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+    el.classList.add("active");
+    activeCategory = cat;
+    render();
+  }
+
+  function scoreProduct(p, query) {
+    if (!query) return { score: 1, reason: "Browsing all products" };
+    let score = 0;
+    let reasons = [];
+    const q = query.toLowerCase();
+    const words = q.split(/\s+/);
+
+    if (p.name.toLowerCase().includes(q)) { score += 10; reasons.push("exact name match"); }
+    if (p.brand.toLowerCase().includes(q)) { score += 8; reasons.push("brand match"); }
+    if (p.category.toLowerCase().includes(q)) { score += 5; reasons.push("category match"); }
+
+    words.forEach(w => {
+      if (p.tags.some(t => t.includes(w))) { score += 3; reasons.push(w + " tag"); }
+      if (p.description.toLowerCase().includes(w)) { score += 2; }
+      if (p.name.toLowerCase().includes(w)) score += 2;
+    });
+
+    const priceMatch = q.match(/under\s*\$?(\d+)/);
+    if (priceMatch) {
+      const limit = parseInt(priceMatch[1]);
+      if (p.price <= limit) { score += 5; reasons.push("within budget"); }
+      else { score -= 10; }
+    }
+
+    const reason = reasons.length > 0
+      ? "Matched: " + [...new Set(reasons)].slice(0, 3).join(", ")
+      : "Partial relevance";
+
+    return { score, reason };
+  }
+
+  function render() {
+    const grid = document.getElementById("grid");
+    const header = document.getElementById("resultsHeader");
+
+    let filtered = products;
+    if (activeCategory) filtered = filtered.filter(p => p.category === activeCategory);
+
+    let scored = filtered.map(p => ({ ...p, ...scoreProduct(p, currentQuery) }));
+    if (currentQuery) scored = scored.filter(p => p.score > 0);
+    scored.sort((a, b) => b.score - a.score);
+
+    header.textContent = scored.length + " product" + (scored.length !== 1 ? "s" : "") + (currentQuery ? " matching \"" + currentQuery + "\"" : " — browse or search above");
+
+    if (scored.length === 0) {
+      grid.innerHTML = "<div class=empty><h3>No matches found</h3><p>Try different keywords or clear filters</p></div>";
+      return;
+    }
+
+    grid.innerHTML = scored.map(p => {
+      const matchLevel = p.score >= 8 ? "high" : "med";
+      const matchLabel = p.score >= 8 ? "Strong Match" : "Good Match";
+      const stars = "?".repeat(Math.round(p.rating)) + "?".repeat(5 - Math.round(p.rating));
+      return "<div class=card>" +
+        "<img src=" + p.image + " alt=" + p.name + " />" +
+        "<div class=card-body>" +
+        (currentQuery ? "<div class=\"badge badge-" + matchLevel + "\">" + matchLabel + "</div>" : "") +
+        "<div class=card-brand>" + p.brand + "</div>" +
+        "<div class=card-name>" + p.name + "</div>" +
+        "<div class=card-price>$" + p.price + "</div>" +
+        "<div class=card-rating>" + stars + " " + p.rating + " (" + p.reviews.toLocaleString() + " reviews)</div>" +
+        (currentQuery ? "<div class=card-match><strong>AI Match:</strong> " + p.reason + "</div>" : "") +
+        "</div></div>";
+    }).join("");
+  }
+</script>
+</body>
+</html>
