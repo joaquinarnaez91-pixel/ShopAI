@@ -1,1 +1,6 @@
-{"outputDirectory":"prototype"}
+{
+  "outputDirectory": "prototype",
+  "functions": {
+    "api/*.js": { "maxDuration": 30 }
+  }
+}

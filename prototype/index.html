@@ -236,6 +236,12 @@ async function sendMessage() {
           currentProducts = products;
           renderProducts(products);
           addMessage("ai", "I found " + products.length + " real products for you. Prices are live from multiple retailers. Click any card to learn more or ask me to compare them!");
+          fetch("/api/enrich", {
+            method:"POST", headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({products})
+          }).then(r=>r.json()).then(enriched=>{
+            if (enriched && enriched.length) { currentProducts = enriched; renderProducts(enriched); }
+          }).catch(()=>{});
         }
         return;
       } catch(e) {}
