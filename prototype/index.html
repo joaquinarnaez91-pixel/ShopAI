@@ -185,6 +185,36 @@ function setupLayout() {
 setupLayout();
 window.addEventListener("resize", setupLayout);
 
+(function() {
+  try {
+    const saved = localStorage.getItem('shopai_profile');
+    if (saved) {
+      const p = JSON.parse(saved);
+      if (p.foot) document.getElementById('profFoot').textContent = p.foot;
+      if (p.budget) document.getElementById('profBudget').textContent = p.budget;
+      if (p.style) document.getElementById('profStyle').textContent = p.style;
+      if (p.size) document.getElementById('profSize').textContent = p.size;
+    }
+  } catch(e) {}
+})();
+
+
+
+function showPostSearchReplies() {
+  document.querySelectorAll('.post-search-qr').forEach(el => el.remove());
+  const suggestions = ['\uD83C\uDFC6 Best value option?', '\uD83D\uDE9A Which ships fastest?', '\uD83D\uDCCA Compare all options', '\uD83C\uDFA8 Different colors available?'];
+  function makeReplies() {
+    const div = document.createElement('div');
+    div.className = 'quick-replies post-search-qr';
+    div.style.cssText = 'padding:4px 12px 8px;flex-wrap:wrap;';
+    div.innerHTML = suggestions.map(s => '<button class="qr" onclick="sendQuick(this)">' + s + '</button>').join('');
+    return div;
+  }
+  const cm = document.getElementById('chatAreaMobile');
+  const cd = document.getElementById('chatAreaDesktop');
+  if (cm) { cm.appendChild(makeReplies()); cm.scrollTop = cm.scrollHeight; }
+  if (cd) { cd.appendChild(makeReplies()); cd.scrollTop = cd.scrollHeight; }
+}
 function sendQuick(btn) {
   const el = isMobile ? document.getElementById("inputMobile") : document.getElementById("inputDesktop");
   el.value = btn.textContent;
@@ -217,6 +247,7 @@ async function sendMessage() {
         if (p.budget) document.getElementById("profBudget").textContent = p.budget;
         if (p.style) document.getElementById("profStyle").textContent = p.style;
         if (p.size) document.getElementById("profSize").textContent = p.size;
+        try { localStorage.setItem('shopai_profile', JSON.stringify(p)); } catch(e) {}
       } catch(e) {}
     }
 
@@ -236,6 +267,7 @@ async function sendMessage() {
           currentProducts = products;
           renderProducts(products);
           addMessage("ai", "I found " + products.length + " real products for you. Prices are live from multiple retailers. Click any card to learn more or ask me to compare them!");
+          showPostSearchReplies();
           fetch("/api/enrich", {
             method:"POST", headers:{"Content-Type":"application/json"},
             body:JSON.stringify({products})
@@ -360,7 +392,7 @@ function makeCard(p) {
     (p.delivery ? "<div class=\"card-delivery\">🚚 "+p.delivery+"</div>" : "") +
     (stars ? "<div class=\"card-rating\"><span class=\"stars\">"+stars+"</span> "+p.rating+(p.reviews?" ("+p.reviews.toLocaleString()+")":"")+"</div>" : "") +
     (p.summary ? "<div class=\"review-summary\" style=\"background:#111;border-radius:6px;padding:7px;font-size:10px;color:#888;line-height:1.4;border-left:2px solid #6c47ff;margin-bottom:8px;overflow:visible;max-height:none\"><strong style=\"color:#6c47ff;display:block;margin-bottom:2px;font-size:9px;text-transform:uppercase\">🤖 AI Summary</strong>"+p.summary+"</div>" : "") +
-    (p.link ? "<a class=\"buy-btn\" href=\""+p.link+"\" target=\"_blank\">View Product â†’</a>" : "") +
+    "<a class=\"buy-btn\" href=\""+(p.link||'#')+"\" target=\"_blank\">View Product &#8594;</a>" +
     "</div></div>";
 }
 
