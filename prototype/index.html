@@ -34,9 +34,8 @@ body { background:#0a0a0a; color:#f0f0f0; font-family:-apple-system,BlinkMacSyst
 .product-card:active { border-color:#6c47ff; }
 .product-card.selected { border-color:#6c47ff; box-shadow:0 0 0 2px rgba(108,71,255,0.2); }
 .product-card.pinned { border-color:#6c47ff; box-shadow:0 0 0 2px rgba(108,71,255,0.3); }
-.pin-btn { position:absolute; top:8px; right:8px; width:28px; height:28px; border-radius:50%; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; z-index:3; background:rgba(0,0,0,0.55); opacity:0.7; transition:all 0.2s; }
-.pin-btn.active { background:#6c47ff; opacity:1; }
-.product-card:hover .pin-btn { opacity:1; }
+.pin-btn { position:absolute; top:8px; right:8px; width:32px; height:32px; border-radius:50%; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; z-index:3; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,0.3); transition:all 0.2s; }
+.pin-btn.active { background:#6c47ff; }
 .product-card img { width:100%; height:160px; object-fit:cover; object-position:center; display:block; background:#222; }
 .card-body { padding:10px; }
 .card-brand { font-size:11px; color:#a78bfa; text-transform:uppercase; letter-spacing:1.5px; font-weight:700; }
@@ -181,6 +180,8 @@ let isMobile = window.innerWidth < 768;
 let currentProducts = [];
 let mobileCardStrip = null;
 let pinnedCards = [];
+let hasSentPinMessage = false;
+let hasSentPinTip = false;
 
 function scrollToBottom() {
   if (isMobile) {
@@ -204,7 +205,7 @@ function togglePin(id, event) {
     if (pinnedCards.length >= 2) return;
     pinnedCards.push(id);
     const product = currentProducts.find(p => p.id === id);
-    if (product) showPinChips(product.name);
+    if (product && !hasSentPinMessage) { hasSentPinMessage = true; showPinChips(product.name); }
   }
   document.querySelectorAll('.product-card[data-card-id="'+id+'"]').forEach(card => {
     const btn = card.querySelector('.pin-btn');
@@ -215,7 +216,7 @@ function togglePin(id, event) {
 }
 
 function showPinChips(shoeName) {
-  const chips = ['🔍 More like this', '🎨 Other colors', '📊 Compare'];
+  const chips = ['🔍 More like these', '🏷️ Same brand options', '💰 Similar price range', '⚡ Similar technology', '🎨 Similar colors', '🏆 Show me premium versions'];
   function makeEl() {
     const wrapper = document.createElement('div');
     wrapper.className = 'msg';
@@ -338,6 +339,7 @@ async function sendMessage() {
         hideSearching();
         if (products.length) {
           currentProducts = products;
+          if (!hasSentPinTip) { hasSentPinTip = true; addMessage("ai", "📌 Tip: Pin 1 or 2 shoes you like and I'll help you find more just like them."); }
           renderProducts(products, true);
           addMessage("ai", "I found " + products.length + " products matched to your profile. Prices are live from multiple retailers. Click any card to learn more or ask me to compare them!");
           showPostSearchReplies();
