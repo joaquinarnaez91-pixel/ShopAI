@@ -9,8 +9,8 @@ export default async function handler(req, res) {
   const { products } = req.body;
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
-  const names = products.map((p, i) => (i+1) + '. ' + p.name + ' ($' + p.price + ', rated ' + p.rating + ')').join('\n');
-  const prompt = 'For each of these shoe products provide: (1) a summary with pros starting with ✅ and cons starting with ❌ (e.g. "✅ Excellent arch support, durable outsole. ❌ Runs narrow, limited colors."), and (2) a funFact — one sentence about a famous athlete, world record, or interesting technology behind the shoe. If you have no specific fact about that exact shoe, generate a plausible general fact about the brand or shoe category instead (e.g. "Brooks has been making running shoes since 1914 and is trusted by podiatrists worldwide."). Never leave funFact empty. Respond ONLY with a JSON array: [{"summary":"✅ ... ❌ ...","funFact":"..."}]\n\n' + names;
+  const names = products.map((p, i) => (i+1) + '. ' + p.name + (p.brand ? ' by ' + p.brand : '') + ' — $' + p.price + ', rated ' + p.rating).join('\n');
+  const prompt = 'You are reviewing ' + products.length + ' DIFFERENT shoe products. Each entry in your response must be UNIQUE — do not repeat the same pros, cons, or fun fact across entries. Tailor every response to that specific shoe model and brand.\n\nFor each shoe provide:\n1. A summary: pros starting with ✅ then cons starting with ❌ (e.g. "✅ Excellent arch support, durable outsole. ❌ Runs narrow, limited colors."). Make the pros and cons specific to THIS shoe.\n2. A funFact: one sentence about this specific shoe model, its brand history, a famous athlete who wears it, or its technology. If unsure of a specific fact, use a real fact about the brand. Never leave empty.\n\nReturn ONLY a valid JSON array with exactly ' + products.length + ' entries: [{"summary":"✅ ... ❌ ...","funFact":"..."}]\n\n' + names;
 
   const payload = JSON.stringify({
     model: 'claude-sonnet-4-6', max_tokens: 1024,
@@ -37,6 +37,10 @@ export default async function handler(req, res) {
           const text = JSON.parse(d).content[0].text;
           const enriched = JSON.parse(text.replace(/```json|```/g, '').trim());
           console.log('Enrichment result:', JSON.stringify(enriched[0]));
+          const summaries = enriched.map(e => e && e.summary);
+          if (new Set(summaries).size < summaries.filter(Boolean).length) {
+            console.warn('Enrichment warning: duplicate summaries detected', summaries);
+          }
           res.status(200).json(products.map((p, i) => ({
             ...p,
             summary: enriched[i] ? enriched[i].summary : '✅ Highly rated by verified buyers. ❌ Individual fit may vary.',
