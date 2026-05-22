@@ -384,7 +384,11 @@ async function sendMessage() {
           currentProducts = products;
           if (!hasSentPinTip) { hasSentPinTip = true; addMessage("ai", "📌 Tip: Pin up to 5 shoes you like — they stay at the top as your shortlist and help me understand your taste."); }
           renderProducts(products, true);
-          addMessage("ai", "I ranked " + products.length + " options specifically for you — here are your top picks:");
+          const isExpert = products.length > 0 && !!products[0].whyThisUser;
+          const useCase = (products[0] && products[0].category) || 'your needs';
+          addMessage("ai", isExpert
+            ? "Here are my expert picks for you — each selected specifically for " + useCase + ". I've matched the best models to your profile and found real prices across retailers."
+            : "I ranked " + products.length + " options specifically for you — here are your top picks:");
           showPostSearchReplies();
           fetch("/api/enrich", {
             method:"POST", headers:{"Content-Type":"application/json"},
@@ -581,13 +585,15 @@ function makeCard(p, cardIndex) {
     "<span class=\"card-brand\">"+brandDisplay+"</span>" +
     "<span style=\"display:inline-block;padding:2px 8px;border-radius:4px;font-size:9px;font-weight:700;background:"+sourceColor+";color:#fff\">"+p.source+"</span>" +
     "</div>" +
+    (p.category ? (function(){var cats={running:{bg:'#0a2a1a',color:'#4caf50',label:'🏃 Running'},hiking:{bg:'#1a1a0a',color:'#ff9800',label:'🥾 Hiking'},basketball:{bg:'#1a0a0a',color:'#f44336',label:'🏀 Basketball'},tennis:{bg:'#0a1a2a',color:'#03a9f4',label:'🎾 Tennis'},casual:{bg:'#1a1a2a',color:'#9c27b0',label:'👟 Casual'}};var c=cats[p.category]||{bg:'#1a1a2a',color:'#a78bfa',label:p.category};return '<div style="margin-bottom:5px;"><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;background:'+c.bg+';color:'+c.color+';">'+c.label+'</span></div>';})() : '') +
     "<div class=\"card-name\">"+p.name+"</div>" +
-    (p.aiReason && cardIndex < 2 ? "<div style=\"font-size:12px;color:#a78bfa;font-style:italic;margin-bottom:6px;line-height:1.4;\">🎯 "+p.aiReason+"</div>" : "") +
+    (p.whyThisUser ? "<div class=\"card-insight\" style=\"color:#a78bfa;margin-bottom:6px;\">🎯 "+p.whyThisUser+"</div>" : "") +
     (!p.img ? "<div class=\"card-price\" style=\"margin-bottom:4px;\">"+priceDisplay+"</div>" : "") +
     priceChart +
     (p.delivery ? "<div class=\"card-delivery\">🚚 "+p.delivery+"</div>" : "") +
     (stars ? "<div class=\"card-rating\"><span class=\"stars\">"+stars+"</span> "+p.rating+(p.reviews?" ("+p.reviews.toLocaleString()+")":"")+"</div>" : "") +
     "<div class=\"card-enrichment\" data-card-id=\""+p.id+"\">" +
+    (p.technology ? "<div style=\"font-size:10px;color:#6cb4ff;line-height:1.4;margin-bottom:6px;\">⚡ Tech: "+p.technology+"</div>" : "") +
     (p.summary
       ? "<div class=\"review-summary\" style=\"background:#111;border-radius:6px;padding:7px;font-size:10px;color:#888;line-height:1.4;border-left:2px solid #6c47ff;margin-bottom:8px;\"><strong style=\"color:#6c47ff;display:block;margin-bottom:2px;font-size:9px;text-transform:uppercase\">🤖 AI Summary</strong>"+formatSummary(p.summary)+"</div>"
       : "<div style=\"font-size:10px;color:#444;font-style:italic;margin-bottom:8px;\">Analyzing reviews...</div>") +

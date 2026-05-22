@@ -32,12 +32,12 @@ function makePricePoints(price) {
   return pts;
 }
 
-async function serpSearch(query, serpKey) {
+async function serpSearch(query, serpKey, timeoutMs = 7000, numResults = 30) {
   const params = new URLSearchParams({
-    api_key: serpKey, engine: 'google_shopping', q: query, num: '30', gl: 'us', hl: 'en'
+    api_key: serpKey, engine: 'google_shopping', q: query, num: String(numResults), gl: 'us', hl: 'en'
   });
-  const data = await httpsGet('https://serpapi.com/search?' + params.toString());
-  return (data.shopping_results || []).slice(0, 15).map(item => {
+  const data = await httpsGet('https://serpapi.com/search?' + params.toString(), timeoutMs);
+  return (data.shopping_results || []).slice(0, numResults).map(item => {
     const price = parseFloat((item.price || '0').replace(/[^0-9.]/g, '')) || 0;
     return {
       name: item.title, source: item.source || 'Retailer',
@@ -228,6 +228,86 @@ async function rerankProducts(products, userProfile, userQuery) {
   }
 }
 
+async function getExpertRecommendations(userQuery, userProfile) {
+  const prompt = `You are a world-class footwear expert with deep knowledge of every shoe brand and model.
+
+USER NEEDS: ${userQuery}
+USER PROFILE: ${JSON.stringify(userProfile || {})}
+
+Name exactly 6 specific shoe models that best fit this user. Think like a personal shopping expert.
+
+Rules:
+- For budget "under $X": recommend shoes in the range of 50%-100% of that budget (not cheap shoes unless user said budget/cheap)
+- Be specific with model names and version numbers (e.g. "Nike Pegasus 41" not "Nike running shoe")
+- Include a mix: best overall, best value, best for their specific use case
+- Match category to what the user asked (running, hiking, casual, basketball, tennis)
+
+Return ONLY a valid JSON array with exactly 6 objects, no other text:
+[{"brand":"Nike","model":"Pegasus 41","searchQuery":"Nike Pegasus 41 mens running shoe","whyThisUser":"One sentence why this model fits this user's stated needs","priceRange":"$130-$160","category":"running","technology":"One sentence about the key cushioning or performance technology"}]
+
+category must be exactly one of: running, hiking, basketball, tennis, casual`;
+
+  const text = await callClaude(prompt);
+  const clean = text.replace(/```json|```/g, '').trim();
+  const picks = JSON.parse(clean);
+  if (!Array.isArray(picks) || picks.length < 4) throw new Error('invalid expert picks response');
+  picks.forEach(p => {
+    if (!p.brand || !p.model || !p.searchQuery || !p.whyThisUser || !p.category) throw new Error('missing required fields');
+  });
+  return picks;
+}
+
+function matchExpertPicks(expertPicks, targetedResults, broadPool) {
+  const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+  const pickKey = p => norm(p.name || '').substring(0, 50);
+  const usedKeys = new Set();
+  let broadIdx = 0;
+
+  return expertPicks.map((pick, i) => {
+    const brandNorm = norm(pick.brand);
+    const modelWords = norm(pick.model).split(/\s+/).filter(w => w.length > 1).slice(0, 2).join(' ');
+    const candidates = targetedResults[i] && targetedResults[i].status === 'fulfilled'
+      ? targetedResults[i].value : [];
+
+    // Tier 1: name contains brand AND first 2 model words
+    let match = candidates.find(c => {
+      const n = norm(c.name);
+      return n.includes(brandNorm) && modelWords && n.includes(modelWords);
+    });
+
+    // Tier 2: token overlap score >= 2
+    if (!match) {
+      const tokens = norm(pick.brand + ' ' + pick.model).split(/\s+/).filter(t => t.length > 2);
+      let best = null, bestScore = 0;
+      for (const c of candidates) {
+        const n = norm(c.name);
+        const score = tokens.filter(t => n.includes(t)).length;
+        if (score > bestScore) { bestScore = score; best = c; }
+      }
+      if (bestScore >= 2) match = best;
+    }
+
+    if (match) {
+      const key = pickKey(match);
+      if (!usedKeys.has(key)) {
+        usedKeys.add(key);
+        return { ...match, whyThisUser: pick.whyThisUser, category: pick.category, technology: pick.technology, expertMatched: true };
+      }
+    }
+
+    // Tier 3: broad pool fallback
+    while (broadIdx < broadPool.length) {
+      const p = broadPool[broadIdx++];
+      const key = pickKey(p);
+      if (!usedKeys.has(key)) {
+        usedKeys.add(key);
+        return { ...p, _fallbackSlot: true };
+      }
+    }
+    return null;
+  }).filter(Boolean);
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -237,47 +317,69 @@ export default async function handler(req, res) {
   const { query, userProfile, userQuery } = req.body;
   const serpKey = process.env.SERPAPI_KEY;
   const rfKey = process.env.RAINFOREST_API_KEY;
+  const effectiveQuery = userQuery || query;
 
-  const [serpResult, rfResult, wmtResult] = await Promise.allSettled([
+  // T=0: fire broad safety-net search unconditionally
+  const broadSearchPromise = Promise.allSettled([
     serpSearch(query, serpKey),
     rfKey ? rainforestSearch(query, rfKey) : Promise.resolve([]),
     walmartSearch(query, serpKey)
   ]);
 
-  const serpProducts = serpResult.status === 'fulfilled' ? serpResult.value : [];
-  const rfProducts   = rfResult.status === 'fulfilled'   ? rfResult.value   : [];
-  const wmtProducts  = wmtResult.status === 'fulfilled'  ? wmtResult.value  : [];
+  // T=0: fire Claude expert curation with 3.5s hard abort
+  const expertPicksPromise = Promise.race([
+    getExpertRecommendations(effectiveQuery, userProfile || {}),
+    new Promise((_, rej) => setTimeout(() => rej(new Error('expert timeout')), 3500))
+  ]).catch(err => { console.log('[search] Expert picks skipped:', err.message); return null; });
 
-  if (serpResult.status === 'rejected') console.log('[search] SerpAPI error:', serpResult.reason?.message);
-  if (rfResult.status === 'rejected')   console.log('[search] Rainforest error:', rfResult.reason?.message);
-  if (wmtResult.status === 'rejected')  console.log('[search] Walmart error:', wmtResult.reason?.message);
+  const expertPicks = await expertPicksPromise;
 
-  const raw = dedupe([...rfProducts, ...wmtProducts, ...serpProducts]).slice(0, 45);
-  console.log('[search] Before filter:', raw.length);
-
-  const effectiveQuery = userQuery || query;
-  const budget = extractBudget(effectiveQuery);
-  const category = extractCategory(effectiveQuery);
-
-  let filtered = raw;
-  if (budget) {
-    const withMin = filtered.filter(p => p.price > 0 && p.price <= budget.max && p.price >= budget.min);
-    const withoutMin = filtered.filter(p => p.price > 0 && p.price <= budget.max);
-    filtered = withMin.length >= 5 ? withMin : withoutMin;
+  if (!expertPicks) {
+    // Fallback path: broad search + existing filter pipeline
+    const [serpResult, rfResult, wmtResult] = await broadSearchPromise;
+    const serpProducts = serpResult.status === 'fulfilled' ? serpResult.value : [];
+    const rfProducts   = rfResult.status === 'fulfilled'   ? rfResult.value   : [];
+    const wmtProducts  = wmtResult.status === 'fulfilled'  ? wmtResult.value  : [];
+    if (serpResult.status === 'rejected') console.log('[search] SerpAPI error:', serpResult.reason?.message);
+    if (rfResult.status === 'rejected')   console.log('[search] Rainforest error:', rfResult.reason?.message);
+    if (wmtResult.status === 'rejected')  console.log('[search] Walmart error:', wmtResult.reason?.message);
+    const raw = dedupe([...rfProducts, ...wmtProducts, ...serpProducts]).slice(0, 45);
+    console.log('[search] Fallback — before filter:', raw.length);
+    const budget = extractBudget(effectiveQuery);
+    const category = extractCategory(effectiveQuery);
+    let filtered = raw;
+    if (budget) {
+      const withMin = filtered.filter(p => p.price > 0 && p.price <= budget.max && p.price >= budget.min);
+      const withoutMin = filtered.filter(p => p.price > 0 && p.price <= budget.max);
+      filtered = withMin.length >= 5 ? withMin : withoutMin;
+    }
+    if (category) {
+      const catFiltered = filtered.filter(p => matchesCategory(p.name, category));
+      if (catFiltered.length >= 3) filtered = catFiltered;
+    }
+    filtered = dedupeByModel(filtered);
+    const final = filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 8).map((p, i) => ({ ...p, id: i + 1 }));
+    console.log(`[search] Fallback → ${final.length} results`);
+    return res.status(200).json(final);
   }
-  if (category) {
-    const catFiltered = filtered.filter(p => matchesCategory(p.name, category));
-    if (catFiltered.length >= 3) filtered = catFiltered;
-  }
-  filtered = dedupeByModel(filtered);
 
-  console.log('[search] After filter:', filtered.length, '| budget:', budget ? `$${budget.min}-$${budget.max}` : 'none', '| category:', category || 'none');
+  // Expert path: run one targeted search per pick (5s cap, 5 results each)
+  console.log('[search] Expert picks:', expertPicks.map(p => p.brand + ' ' + p.model).join(' | '));
+  const targetedResults = await Promise.allSettled(
+    expertPicks.map(pick => serpSearch(pick.searchQuery, serpKey, 5000, 5))
+  );
+  console.log('[search] Targeted hits:', targetedResults.map(r => r.status === 'fulfilled' ? r.value.length : 0).join(','));
 
-  const final = filtered
-    .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-    .slice(0, 8)
-    .map((p, i) => ({ ...p, id: i + 1 }));
+  // Broad pool for Tier 3 fallback slots (may already be resolved)
+  const [serpResult, rfResult, wmtResult] = await broadSearchPromise;
+  const broadPool = dedupe([
+    ...(serpResult.status === 'fulfilled' ? serpResult.value : []),
+    ...(rfResult.status === 'fulfilled'   ? rfResult.value   : []),
+    ...(wmtResult.status === 'fulfilled'  ? wmtResult.value  : [])
+  ]);
 
-  console.log(`[search] → ${final.length} results`);
-  res.status(200).json(final);
+  const matched = matchExpertPicks(expertPicks, targetedResults, broadPool);
+  const final = dedupeByModel(matched).slice(0, 6).map((p, i) => ({ ...p, id: i + 1 }));
+  console.log(`[search] Expert → ${final.length} results`);
+  return res.status(200).json(final);
 }
