@@ -88,7 +88,7 @@ function extractBudget(userQuery) {
   const m = q.match(/under\s*\$?(\d+)/);
   if (m) {
     const max = parseInt(m[1]);
-    const min = Math.round(max * 0.70);
+    const min = Math.round(max * 0.50);
     return { min, max };
   }
   const m2 = q.match(/\$(\d+)\s*[-–]\s*\$?(\d+)/);
@@ -229,7 +229,9 @@ export default async function handler(req, res) {
 
   let filtered = raw;
   if (budget) {
-    filtered = filtered.filter(p => p.price > 0 && p.price <= budget.max && p.price >= budget.min);
+    const withMin = filtered.filter(p => p.price > 0 && p.price <= budget.max && p.price >= budget.min);
+    const withoutMin = filtered.filter(p => p.price > 0 && p.price <= budget.max);
+    filtered = withMin.length >= 5 ? withMin : withoutMin;
   }
   if (category) {
     const catFiltered = filtered.filter(p => matchesCategory(p.name, category));
