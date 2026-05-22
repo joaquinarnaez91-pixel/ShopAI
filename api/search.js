@@ -50,6 +50,34 @@ async function serpSearch(query, serpKey) {
   });
 }
 
+async function walmartSearch(query, serpKey) {
+  const params = new URLSearchParams({
+    api_key: serpKey, engine: 'walmart', query: query, ps: '15'
+  });
+  const data = await httpsGet('https://serpapi.com/search?' + params.toString());
+  return (data.organic_results || []).slice(0, 15).map(item => {
+    const raw = item.primary_offer ? item.primary_offer.offer_price : (item.price || 0);
+    const price = typeof raw === 'string'
+      ? parseFloat(raw.replace(/[^0-9.]/g, '')) || 0
+      : parseFloat(raw) || 0;
+    return {
+      name: item.title || '',
+      source: 'Walmart',
+      brand: item.brand || '',
+      price,
+      rating: item.rating || 4.0,
+      reviews: item.reviews || 0,
+      img: item.thumbnail || '',
+      link: item.product_page_url || item.item_link || 'https://walmart.com',
+      delivery: stripHtml(item.delivery || 'Free shipping on orders $35+'),
+      prices: makePricePoints(price),
+      snippet: item.title || '',
+      summary: '',
+      insight: item.title || ''
+    };
+  }).filter(p => p.price > 0);
+}
+
 async function rainforestSearch(query, rfKey) {
   const params = new URLSearchParams({
     api_key: rfKey, type: 'search', amazon_domain: 'amazon.com', search_term: query
@@ -210,18 +238,21 @@ export default async function handler(req, res) {
   const serpKey = process.env.SERPAPI_KEY;
   const rfKey = process.env.RAINFOREST_API_KEY;
 
-  const [serpResult, rfResult] = await Promise.allSettled([
+  const [serpResult, rfResult, wmtResult] = await Promise.allSettled([
     serpSearch(query, serpKey),
-    rfKey ? rainforestSearch(query, rfKey) : Promise.resolve([])
+    rfKey ? rainforestSearch(query, rfKey) : Promise.resolve([]),
+    walmartSearch(query, serpKey)
   ]);
 
   const serpProducts = serpResult.status === 'fulfilled' ? serpResult.value : [];
   const rfProducts   = rfResult.status === 'fulfilled'   ? rfResult.value   : [];
+  const wmtProducts  = wmtResult.status === 'fulfilled'  ? wmtResult.value  : [];
 
   if (serpResult.status === 'rejected') console.log('[search] SerpAPI error:', serpResult.reason?.message);
   if (rfResult.status === 'rejected')   console.log('[search] Rainforest error:', rfResult.reason?.message);
+  if (wmtResult.status === 'rejected')  console.log('[search] Walmart error:', wmtResult.reason?.message);
 
-  const raw = dedupe([...rfProducts, ...serpProducts]).slice(0, 30);
+  const raw = dedupe([...rfProducts, ...wmtProducts, ...serpProducts]).slice(0, 45);
   console.log('[search] Before filter:', raw.length);
 
   const effectiveQuery = userQuery || query;
