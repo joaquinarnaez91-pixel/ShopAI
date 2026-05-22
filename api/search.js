@@ -11,13 +11,14 @@ function stripHtml(str) {
   return plain.slice(0, 80);
 }
 
-function httpsGet(url) {
+function httpsGet(url, timeoutMs = 7000) {
   return new Promise((resolve, reject) => {
-    https.get(url, r => {
+    const req = https.get(url, r => {
       let d = '';
       r.on('data', c => d += c);
       r.on('end', () => { try { resolve(JSON.parse(d)); } catch(e) { reject(e); } });
     }).on('error', reject);
+    req.setTimeout(timeoutMs, () => { req.destroy(); reject(new Error('httpsGet timeout')); });
   });
 }
 
