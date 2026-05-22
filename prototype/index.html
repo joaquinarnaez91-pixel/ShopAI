@@ -284,7 +284,12 @@ async function sendMessage() {
           renderProducts(products, true);
           addMessage("ai", "I found " + products.length + " products matched to your profile. Prices are live from multiple retailers. Click any card to learn more or ask me to compare them!");
           showPostSearchReplies();
-          pollEnrichment(s.query);
+          fetch("/api/enrich", {
+            method:"POST", headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({products})
+          }).then(r=>r.json()).then(enriched=>{
+            if (enriched && enriched.length) { currentProducts = enriched; updateCardEnrichment(enriched); }
+          }).catch(()=>{});
         }
         return;
       } catch(e) {}
@@ -505,23 +510,6 @@ function renderProducts(prods, isNewSearch) {
   const count = document.getElementById("prodCount");
   if (grid) { if(count) count.textContent = prods.length+" products found"; grid.innerHTML = prods.map(makeCard).join(""); }
   scrollToBottom();
-}
-
-function pollEnrichment(query, attempts) {
-  attempts = attempts || 0;
-  if (attempts >= 3) return;
-  setTimeout(async function() {
-    try {
-      const r = await fetch('/api/enrich?query=' + encodeURIComponent(query));
-      const data = await r.json();
-      if (data.status === 'ready' && data.data && data.data.length) {
-        currentProducts = data.data;
-        updateCardEnrichment(data.data);
-        return;
-      }
-    } catch(e) {}
-    pollEnrichment(query, attempts + 1);
-  }, 2000);
 }
 
 function updateCardEnrichment(enrichedProducts) {
