@@ -43,6 +43,10 @@ async function rainforestSearch(query, rfKey) {
     api_key: rfKey, type: 'search', amazon_domain: 'amazon.com', search_term: query
   });
   const data = await httpsGet('https://api.rainforestapi.com/request?' + params.toString());
+  console.log('[rf] keys:', Object.keys(data).join(', '));
+  console.log('[rf] request_info:', JSON.stringify(data.request_info));
+  console.log('[rf] search_results count:', (data.search_results || []).length);
+  if (data.search_results && data.search_results[0]) console.log('[rf] first keys:', Object.keys(data.search_results[0]).join(', '));
   return (data.search_results || []).slice(0, 6).map(item => {
     const price = parseFloat(((item.price && item.price.value) || '0').toString().replace(/[^0-9.]/g, '')) || 0;
     const asin = item.asin || '';
