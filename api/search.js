@@ -34,7 +34,7 @@ function makePricePoints(price) {
 
 async function serpSearch(query, serpKey) {
   const params = new URLSearchParams({
-    api_key: serpKey, engine: 'google_shopping', q: query, num: '15', gl: 'us', hl: 'en'
+    api_key: serpKey, engine: 'google_shopping', q: query, num: '30', gl: 'us', hl: 'en'
   });
   const data = await httpsGet('https://serpapi.com/search?' + params.toString());
   return (data.shopping_results || []).slice(0, 15).map(item => {
@@ -85,7 +85,7 @@ async function rainforestSearch(query, rfKey) {
   const data = await httpsGet('https://api.rainforestapi.com/request?' + params.toString());
   return (data.search_results || [])
     .filter(item => item.price !== undefined)
-    .slice(0, 15)
+    .slice(0, 20)
     .map(item => {
       const price = parseFloat((item.price.value || '0').toString().replace(/[^0-9.]/g, '')) || 0;
       const brand = item.brand ? item.brand + ' — ' : '';
