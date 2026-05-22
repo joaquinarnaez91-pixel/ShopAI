@@ -43,22 +43,22 @@ async function rainforestSearch(query, rfKey) {
     api_key: rfKey, type: 'search', amazon_domain: 'amazon.com', search_term: query
   });
   const data = await httpsGet('https://api.rainforestapi.com/request?' + params.toString());
-  console.log('[rf] keys:', Object.keys(data).join(', '));
-  console.log('[rf] request_info:', JSON.stringify(data.request_info));
-  console.log('[rf] search_results count:', (data.search_results || []).length);
-  if (data.search_results && data.search_results[0]) console.log('[rf] first keys:', Object.keys(data.search_results[0]).join(', '));
-  return (data.search_results || []).slice(0, 6).map(item => {
-    const price = parseFloat(((item.price && item.price.value) || '0').toString().replace(/[^0-9.]/g, '')) || 0;
-    const asin = item.asin || '';
-    return {
-      name: item.title || '', source: 'Amazon',
-      price, rating: item.rating || 4.2, reviews: item.ratings_total || 0,
-      img: (item.image) || '', link: asin ? `https://amazon.com/dp/${asin}` : '',
-      delivery: 'Prime eligible', prices: makePricePoints(price),
-      snippet: item.title || '',
-      summary: '', insight: item.title || ''
-    };
-  });
+  return (data.search_results || [])
+    .filter(item => item.price !== undefined)
+    .slice(0, 6)
+    .map(item => {
+      const price = parseFloat((item.price.value || '0').toString().replace(/[^0-9.]/g, '')) || 0;
+      const brand = item.brand ? item.brand + ' — ' : '';
+      return {
+        name: item.title || '', source: 'Amazon',
+        price, rating: item.rating || 4.2, reviews: item.ratings_total || 0,
+        img: item.image || '', link: item.link || '',
+        delivery: (item.delivery && item.delivery.tagline) || 'Prime eligible',
+        prices: makePricePoints(price),
+        snippet: brand + (item.title || ''),
+        summary: '', insight: brand + (item.title || '')
+      };
+    });
 }
 
 function dedupe(products) {
@@ -80,9 +80,7 @@ export default async function handler(req, res) {
   const { query } = req.body;
   const serpKey = process.env.SERPAPI_KEY;
   const rfKey = process.env.RAINFOREST_API_KEY;
-  if (req.body._debug) { res.status(200).json({ serpKey: !!serpKey, rfKey: !!rfKey, rfLen: rfKey ? rfKey.length : 0 }); return; }
 
-  console.log('[search] serpKey present:', !!serpKey, '| rfKey present:', !!rfKey, '| rfKey length:', rfKey ? rfKey.length : 0);
   const [serpResult, rfResult] = await Promise.allSettled([
     serpSearch(query, serpKey),
     rfKey ? rainforestSearch(query, rfKey) : Promise.resolve([])
