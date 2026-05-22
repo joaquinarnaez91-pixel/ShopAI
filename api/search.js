@@ -162,6 +162,18 @@ function dedupeByModel(products) {
   return Array.from(groups.values());
 }
 
+const BRAND_BLOCKLIST = ['ALO', 'Fashion Nova', 'Steve Madden', 'H&M', 'Zara', 'Forever 21'];
+
+function applyQualityFilters(products, category) {
+  return products.filter(p => {
+    const nameLower = (p.name || '').toLowerCase();
+    const brandLower = (p.brand || '').toLowerCase();
+    if (BRAND_BLOCKLIST.some(b => nameLower.includes(b.toLowerCase()) || brandLower.includes(b.toLowerCase()))) return false;
+    if (p.source === 'Walmart' && category === 'running' && p.price > 0 && p.price < 80) return false;
+    return true;
+  });
+}
+
 async function callClaude(prompt) {
   return new Promise((resolve, reject) => {
     const payload = JSON.stringify({
@@ -329,7 +341,7 @@ export default async function handler(req, res) {
   // T=0: fire Claude expert curation with 3.5s hard abort
   const expertPicksPromise = Promise.race([
     getExpertRecommendations(effectiveQuery, userProfile || {}),
-    new Promise((_, rej) => setTimeout(() => rej(new Error('expert timeout')), 3500))
+    new Promise((_, rej) => setTimeout(() => rej(new Error('expert timeout')), 8000))
   ]).catch(err => { console.log('[search] Expert picks skipped:', err.message); return null; });
 
   const expertPicks = await expertPicksPromise;
@@ -357,8 +369,9 @@ export default async function handler(req, res) {
       const catFiltered = filtered.filter(p => matchesCategory(p.name, category));
       if (catFiltered.length >= 3) filtered = catFiltered;
     }
-    filtered = dedupeByModel(filtered);
+    filtered = applyQualityFilters(dedupeByModel(filtered), category);
     const final = filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 8).map((p, i) => ({ ...p, id: i + 1 }));
+    console.log('[expert] path: FALLBACK');
     console.log(`[search] Fallback → ${final.length} results`);
     return res.status(200).json(final);
   }
@@ -378,8 +391,10 @@ export default async function handler(req, res) {
     ...(wmtResult.status === 'fulfilled'  ? wmtResult.value  : [])
   ]);
 
-  const matched = matchExpertPicks(expertPicks, targetedResults, broadPool);
+  const expertCategory = extractCategory(effectiveQuery) || (expertPicks[0] && expertPicks[0].category) || null;
+  const matched = applyQualityFilters(matchExpertPicks(expertPicks, targetedResults, broadPool), expertCategory);
   const final = dedupeByModel(matched).slice(0, 6).map((p, i) => ({ ...p, id: i + 1 }));
+  console.log('[expert] path: SUCCESS');
   console.log(`[search] Expert → ${final.length} results`);
   return res.status(200).json(final);
 }
