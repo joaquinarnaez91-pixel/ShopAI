@@ -179,7 +179,7 @@ let conversationHistory = [];
 let isMobile = window.innerWidth < 768;
 let currentProducts = [];
 let mobileCardStrip = null;
-let pinnedCards = [];
+let pinnedProducts = [];
 let hasSentPinMessage = false;
 let hasSentPinTip = false;
 
@@ -198,29 +198,33 @@ const SYSTEM_PROMPT = "You are ShopAI, a personal shopping advisor specialized e
 
 function togglePin(id, event) {
   event.stopPropagation();
-  const idx = pinnedCards.indexOf(id);
+  const idx = pinnedProducts.findIndex(p => p.id === id);
   if (idx !== -1) {
-    pinnedCards.splice(idx, 1);
+    pinnedProducts.splice(idx, 1);
   } else {
-    if (pinnedCards.length >= 2) return;
-    pinnedCards.push(id);
+    if (pinnedProducts.length >= 5) return;
     const product = currentProducts.find(p => p.id === id);
-    if (product && !hasSentPinMessage) { hasSentPinMessage = true; showPinChips(product.name); }
+    if (!product) return;
+    pinnedProducts.push(product);
+    if (!hasSentPinMessage) { hasSentPinMessage = true; showPinChips(product.name); }
   }
-  document.querySelectorAll('.product-card[data-card-id="'+id+'"]').forEach(card => {
-    const btn = card.querySelector('.pin-btn');
-    const pinned = pinnedCards.includes(id);
-    card.classList.toggle('pinned', pinned);
-    if (btn) btn.classList.toggle('active', pinned);
-  });
+  reapplyPinStates();
 }
 
 function showPinChips(shoeName) {
-  const chips = ['🔍 More like these', '🏷️ Same brand options', '💰 Similar price range', '⚡ Similar technology', '🎨 Similar colors', '🏆 Show me premium versions'];
+  const chips = [
+    { label: '🔍 More like these',          send: true },
+    { label: '🏷️ Same brand options',       send: true },
+    { label: '💰 Similar price range',       send: true },
+    { label: '⚡ Similar technology',        send: true },
+    { label: '🎨 Similar colors',            send: true },
+    { label: '🏆 Show me premium versions',  send: true },
+    { label: '💬 Tell me what you like about them', send: false }
+  ];
   function makeEl() {
     const wrapper = document.createElement('div');
     wrapper.className = 'msg';
-    wrapper.innerHTML = '<div class="avatar ai">🤖</div><div class="bubble ai">Good taste! 📌 Want me to find more like this, explore colors, or compare options?</div>';
+    wrapper.innerHTML = '<div class="avatar ai">🤖</div><div class="bubble ai">📌 Nice! You can pin up to 5 shoes you like — they\'ll stay at the top as your shortlist. The more you pin, the better I understand your taste. Now tell me: what do you like about this shoe? Or choose what to explore next:</div>';
     const bubble = wrapper.querySelector('.bubble');
     const chipRow = document.createElement('div');
     chipRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;';
@@ -228,8 +232,8 @@ function showPinChips(shoeName) {
       const btn = document.createElement('button');
       btn.className = 'qr';
       btn.style.flexShrink = '0';
-      btn.textContent = c;
-      btn.onclick = () => sendPinChip(shoeName, c);
+      btn.textContent = c.label;
+      btn.onclick = c.send ? () => sendPinChip(shoeName, c.label) : () => focusPinInput();
       chipRow.appendChild(btn);
     });
     bubble.appendChild(chipRow);
@@ -246,6 +250,22 @@ function sendPinChip(shoeName, chipText) {
   const el = isMobile ? document.getElementById('inputMobile') : document.getElementById('inputDesktop');
   el.value = 'I pinned ' + shoeName + '. ' + chipText;
   sendMessage();
+}
+
+function focusPinInput() {
+  const el = isMobile ? document.getElementById('inputMobile') : document.getElementById('inputDesktop');
+  el.placeholder = 'What do you like about it? (comfort, style, price, brand...)';
+  el.focus();
+}
+
+function reapplyPinStates() {
+  document.querySelectorAll('.product-card[data-card-id]').forEach(card => {
+    const id = parseInt(card.getAttribute('data-card-id'));
+    const pinned = pinnedProducts.some(p => p.id === id);
+    const btn = card.querySelector('.pin-btn');
+    card.classList.toggle('pinned', pinned);
+    if (btn) btn.classList.toggle('active', pinned);
+  });
 }
 
 function setupLayout() {
@@ -339,7 +359,7 @@ async function sendMessage() {
         hideSearching();
         if (products.length) {
           currentProducts = products;
-          if (!hasSentPinTip) { hasSentPinTip = true; addMessage("ai", "📌 Tip: Pin 1 or 2 shoes you like and I'll help you find more just like them."); }
+          if (!hasSentPinTip) { hasSentPinTip = true; addMessage("ai", "📌 Tip: Pin up to 5 shoes you like — they stay at the top as your shortlist and help me understand your taste."); }
           renderProducts(products, true);
           addMessage("ai", "I found " + products.length + " products matched to your profile. Prices are live from multiple retailers. Click any card to learn more or ask me to compare them!");
           showPostSearchReplies();
@@ -526,9 +546,11 @@ function makeCard(p) {
       "<span style=\"font-size:18px;font-weight:800;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.5);\">"+priceDisplay+"</span>" +
       "</div></div>"
     : "";
-  const isPinned = pinnedCards.includes(p.id);
+  const isPinned = pinnedProducts.some(pin => pin.id === p.id);
+  const pinnedLabel = isPinned ? "<div style=\"position:absolute;top:8px;left:8px;background:#6c47ff;color:#fff;font-size:9px;font-weight:700;padding:3px 7px;border-radius:10px;z-index:3;letter-spacing:0.5px;\">📌 Pinned</div>" : "";
   return "<div class=\"product-card"+(isPinned?" pinned":"")+"\" data-card-id=\""+p.id+"\" onclick=\"selectCard(this,"+p.id+")\">" +
-    "<button class=\"pin-btn"+(isPinned?" active":"")+"\" onclick=\"togglePin("+p.id+",event)\" title=\"Pin\">📌</button>" +
+    "<button class=\"pin-btn"+(isPinned?" active":"")+"\" onclick=\"togglePin("+p.id+",event)\" title=\""+(isPinned?"Unpin":"Pin")+"\">📌</button>" +
+    pinnedLabel +
     imgHtml +
     "<div class=\"card-body\">" +
     "<div style=\"display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;\">" +
@@ -550,6 +572,27 @@ function makeCard(p) {
     "</div></div>";
 }
 
+function buildProductsHtml(prods) {
+  const pinnedIds = pinnedProducts.map(p => p.id);
+  const newProds = prods.filter(p => !pinnedIds.includes(p.id));
+  if (pinnedProducts.length === 0) return prods.map(makeCard).join('');
+  const divider = '<div style="display:flex;flex-direction:column;justify-content:center;align-items:center;flex-shrink:0;padding:0 6px;gap:4px;">' +
+    '<div style="width:1px;flex:1;background:#2a2a2a;min-height:40px;"></div>' +
+    '<span style="font-size:9px;color:#444;writing-mode:vertical-lr;transform:rotate(180deg);letter-spacing:1.5px;text-transform:uppercase;">New</span>' +
+    '<div style="width:1px;flex:1;background:#2a2a2a;min-height:40px;"></div></div>';
+  return pinnedProducts.map(makeCard).join('') + (newProds.length ? divider + newProds.map(makeCard).join('') : '');
+}
+
+function buildProductsGridHtml(prods) {
+  const pinnedIds = pinnedProducts.map(p => p.id);
+  const newProds = prods.filter(p => !pinnedIds.includes(p.id));
+  if (pinnedProducts.length === 0) return prods.map(makeCard).join('');
+  const divider = newProds.length
+    ? '<div style="grid-column:1/-1;font-size:10px;color:#444;text-transform:uppercase;letter-spacing:1px;padding:8px 0 4px;border-top:1px solid #222;">New recommendations →</div>'
+    : '';
+  return pinnedProducts.map(makeCard).join('') + divider + newProds.map(makeCard).join('');
+}
+
 function renderProducts(prods, isNewSearch) {
   if (isMobile) {
     const cm = document.getElementById("chatAreaMobile");
@@ -562,14 +605,17 @@ function renderProducts(prods, isNewSearch) {
         mobileCardStrip.appendChild(scroll);
         cm.appendChild(mobileCardStrip);
       }
-      mobileCardStrip.querySelector(".products-scroll").innerHTML = prods.map(makeCard).join("");
+      mobileCardStrip.querySelector(".products-scroll").innerHTML = buildProductsHtml(prods);
       if (isNewSearch) scrollToBottom();
     }
+    reapplyPinStates();
     return;
   }
   const grid = document.getElementById("productsGrid");
   const count = document.getElementById("prodCount");
-  if (grid) { if(count) count.textContent = prods.length+" products found"; grid.innerHTML = prods.map(makeCard).join(""); }
+  const total = pinnedProducts.length + prods.filter(p => !pinnedProducts.some(pp => pp.id === p.id)).length;
+  if (grid) { if(count) count.textContent = total+" products found"; grid.innerHTML = buildProductsGridHtml(prods); }
+  reapplyPinStates();
   scrollToBottom();
 }
 
