@@ -239,11 +239,11 @@ export default async function handler(req, res) {
 
   console.log('[search] After filter:', filtered.length, '| budget:', budget ? `$${budget.min}-$${budget.max}` : 'none', '| category:', category || 'none');
 
-  const pool = filtered.slice(0, 15).map((p, i) => ({ ...p, id: i + 1 }));
+  const final = filtered
+    .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+    .slice(0, 8)
+    .map((p, i) => ({ ...p, id: i + 1 }));
 
-  const merged = await rerankProducts(pool, userProfile || {}, effectiveQuery);
-  const final = merged.map((p, i) => ({ ...p, id: i + 1 }));
-
-  console.log(`[search] → ${final.length} ranked results`);
+  console.log(`[search] → ${final.length} results`);
   res.status(200).json(final);
 }
