@@ -107,7 +107,7 @@ async function callClaude(prompt) {
 }
 
 async function rerankProducts(products, userProfile, userQuery) {
-  const prompt = `You are a personal shopping expert. Re-rank these shoes for this specific user.
+  const prompt = `You are an expert personal shopping advisor. Re-rank these shoes for this specific user.
 
 USER PROFILE: ${JSON.stringify(userProfile)}
 USER QUERY: ${userQuery}
@@ -115,20 +115,23 @@ USER QUERY: ${userQuery}
 PRODUCTS TO RANK:
 ${products.map((p,i) => `${i}. ${p.name} - $${p.price} - ${p.source} - Rating: ${p.rating} (${p.reviews} reviews)`).join('\n')}
 
-INSTRUCTIONS:
-- Score each product 1-10 based on how well it matches this specific user
-- Consider their foot type, budget, use case, and any stated preferences
-- Eliminate products that clearly don't match (wrong category, way over budget, very low ratings)
-- For top picks, write a ONE sentence personal reason why it matches THIS user specifically
-- Return ONLY a JSON array: [{"index": 0, "score": 9, "reason": "Perfect for flat feet with extra stability support within your $150 budget"}, ...]
-- Include maximum 6 products, minimum 3
-- Sort by score descending`;
+RANKING PRIORITIES (in order of importance):
+1. FUNCTION first — if user says running shoes, only include actual running shoes. Eliminate anything that is not the right category. Score wrong-category items 1-2.
+2. BUDGET interpretation — "under $X" means the user wants options CLOSE to $X, not far below it. If user says under $200, prioritize shoes between $120-200. Shoes under $80 should score 3 or lower unless user specifically said budget or cheap.
+3. FIT — foot type, size, use case (street vs trail vs casual)
+4. STYLE — color, brand preference, aesthetics come LAST
+
+For EACH product write a unique reason that references the USER'S SPECIFIC inputs (their foot type, budget, use case). Example: "Matches your street running needs with bold colorway, priced at $165 within your $200 budget."
+
+Return ONLY valid JSON array: [{"index": 0, "score": 9, "reason": "...specific to this user..."}, ...]
+Maximum 6 products. Every reason must be unique and reference the user's query.`;
 
   try {
     const response = await callClaude(prompt);
     const clean = response.replace(/```json|```/g, '').trim();
     const ranked = JSON.parse(clean);
     return ranked
+      .filter(r => r.index >= 0 && r.index < products.length && r.score >= 5)
       .sort((a, b) => b.score - a.score)
       .slice(0, 6)
       .map(r => ({ ...products[r.index], aiScore: r.score, aiReason: r.reason }));

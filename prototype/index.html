@@ -482,7 +482,7 @@ function injectHighlightCard(product) {
   const wrapper = document.createElement("div");
   wrapper.className = "chat-highlight-card";
   wrapper.style.cssText = "width:280px;margin:4px 0 4px 36px;border-radius:14px;overflow:hidden;flex-shrink:0;";
-  wrapper.innerHTML = makeCard(product);
+  wrapper.innerHTML = makeCard(product, 0);
   const cm = document.getElementById("chatAreaMobile");
   const cd = document.getElementById("chatAreaDesktop");
   if (cm) cm.appendChild(wrapper.cloneNode(true));
@@ -529,7 +529,7 @@ function formatSummary(summary) {
     .replace(/❌\s*/g, '<span style="color:#f5a623">💡 Worth knowing: </span>');
 }
 
-function makeCard(p) {
+function makeCard(p, cardIndex) {
   const stars = p.rating ? "★".repeat(Math.round(p.rating))+"☆".repeat(5-Math.round(p.rating)) : "";
   const priceDisplay = p.price > 0 ? "$"+p.price.toFixed(2) : "See price";
   let priceChart = "";
@@ -581,7 +581,7 @@ function makeCard(p) {
     "<span style=\"display:inline-block;padding:2px 8px;border-radius:4px;font-size:9px;font-weight:700;background:"+sourceColor+";color:#fff\">"+p.source+"</span>" +
     "</div>" +
     "<div class=\"card-name\">"+p.name+"</div>" +
-    (p.aiReason ? "<div style=\"font-size:12px;color:#a78bfa;font-style:italic;margin-bottom:6px;line-height:1.4;\">🎯 "+p.aiReason+"</div>" : "") +
+    (p.aiReason && cardIndex < 2 ? "<div style=\"font-size:12px;color:#a78bfa;font-style:italic;margin-bottom:6px;line-height:1.4;\">🎯 "+p.aiReason+"</div>" : "") +
     (!p.img ? "<div class=\"card-price\" style=\"margin-bottom:4px;\">"+priceDisplay+"</div>" : "") +
     priceChart +
     (p.delivery ? "<div class=\"card-delivery\">🚚 "+p.delivery+"</div>" : "") +
@@ -599,22 +599,24 @@ function makeCard(p) {
 function buildProductsHtml(prods) {
   const pinnedIds = pinnedProducts.map(p => p.id);
   const newProds = prods.filter(p => !pinnedIds.includes(p.id));
-  if (pinnedProducts.length === 0) return prods.map(makeCard).join('');
+  if (pinnedProducts.length === 0) return prods.map((p, i) => makeCard(p, i)).join('');
   const divider = '<div style="display:flex;flex-direction:column;justify-content:center;align-items:center;flex-shrink:0;padding:0 6px;gap:4px;">' +
     '<div style="width:1px;flex:1;background:#2a2a2a;min-height:40px;"></div>' +
     '<span style="font-size:9px;color:#444;writing-mode:vertical-lr;transform:rotate(180deg);letter-spacing:1.5px;text-transform:uppercase;">New</span>' +
     '<div style="width:1px;flex:1;background:#2a2a2a;min-height:40px;"></div></div>';
-  return pinnedProducts.map(makeCard).join('') + (newProds.length ? divider + newProds.map(makeCard).join('') : '');
+  const off = pinnedProducts.length;
+  return pinnedProducts.map((p, i) => makeCard(p, i)).join('') + (newProds.length ? divider + newProds.map((p, i) => makeCard(p, i + off)).join('') : '');
 }
 
 function buildProductsGridHtml(prods) {
   const pinnedIds = pinnedProducts.map(p => p.id);
   const newProds = prods.filter(p => !pinnedIds.includes(p.id));
-  if (pinnedProducts.length === 0) return prods.map(makeCard).join('');
+  if (pinnedProducts.length === 0) return prods.map((p, i) => makeCard(p, i)).join('');
   const divider = newProds.length
     ? '<div style="grid-column:1/-1;font-size:10px;color:#444;text-transform:uppercase;letter-spacing:1px;padding:8px 0 4px;border-top:1px solid #222;">New recommendations →</div>'
     : '';
-  return pinnedProducts.map(makeCard).join('') + divider + newProds.map(makeCard).join('');
+  const off = pinnedProducts.length;
+  return pinnedProducts.map((p, i) => makeCard(p, i)).join('') + divider + newProds.map((p, i) => makeCard(p, i + off)).join('');
 }
 
 function renderProducts(prods, isNewSearch) {
