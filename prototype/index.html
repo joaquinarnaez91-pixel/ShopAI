@@ -182,6 +182,8 @@ let mobileCardStrip = null;
 let pinnedProducts = [];
 let hasSentPinMessage = false;
 let hasSentPinTip = false;
+let userProfile = {};
+let currentQuery = '';
 
 function scrollToBottom() {
   if (isMobile) {
@@ -357,6 +359,7 @@ async function sendMessage() {
     if (profileMatch) {
       try {
         const p = JSON.parse(profileMatch[1]);
+        userProfile = p;
         if (p.foot) document.getElementById("profFoot").textContent = p.foot;
         if (p.budget) document.getElementById("profBudget").textContent = p.budget;
         if (p.style) document.getElementById("profStyle").textContent = p.style;
@@ -373,14 +376,15 @@ async function sendMessage() {
         let clean = fullText.replace(/SEARCH:\{[^}]+\}/g,"").replace(/PROFILE:\{[^}]+\}/g,"").replace(/HIGHLIGHT:\{[^}]+\}/g,"").trim();
         addMessage("ai", clean);
         conversationHistory.push({role:"assistant", content:fullText});
+        currentQuery = text;
         showSearching();
-        const products = await searchRealProducts(s.query);
+        const products = await searchRealProducts(s.query, userProfile, text);
         hideSearching();
         if (products.length) {
           currentProducts = products;
           if (!hasSentPinTip) { hasSentPinTip = true; addMessage("ai", "📌 Tip: Pin up to 5 shoes you like — they stay at the top as your shortlist and help me understand your taste."); }
           renderProducts(products, true);
-          addMessage("ai", "I found " + products.length + " products matched to your profile. Prices are live from multiple retailers. Click any card to learn more or ask me to compare them!");
+          addMessage("ai", "I ranked " + products.length + " options specifically for you — here are your top picks:");
           showPostSearchReplies();
           fetch("/api/enrich", {
             method:"POST", headers:{"Content-Type":"application/json"},
@@ -408,11 +412,11 @@ async function sendMessage() {
   }
 }
 
-async function searchRealProducts(query) {
+async function searchRealProducts(query, profile, userQuery) {
   try {
     const res = await fetch("/api/search", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({query})
+      body:JSON.stringify({query, userProfile: profile || {}, userQuery: userQuery || query})
     });
     return await res.json();
   } catch(e) { return []; }
@@ -577,6 +581,7 @@ function makeCard(p) {
     "<span style=\"display:inline-block;padding:2px 8px;border-radius:4px;font-size:9px;font-weight:700;background:"+sourceColor+";color:#fff\">"+p.source+"</span>" +
     "</div>" +
     "<div class=\"card-name\">"+p.name+"</div>" +
+    (p.aiReason ? "<div style=\"font-size:12px;color:#a78bfa;font-style:italic;margin-bottom:6px;line-height:1.4;\">🎯 "+p.aiReason+"</div>" : "") +
     (!p.img ? "<div class=\"card-price\" style=\"margin-bottom:4px;\">"+priceDisplay+"</div>" : "") +
     priceChart +
     (p.delivery ? "<div class=\"card-delivery\">🚚 "+p.delivery+"</div>" : "") +

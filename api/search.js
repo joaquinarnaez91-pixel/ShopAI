@@ -33,10 +33,10 @@ function makePricePoints(price) {
 
 async function serpSearch(query, serpKey) {
   const params = new URLSearchParams({
-    api_key: serpKey, engine: 'google_shopping', q: query, num: '8', gl: 'us', hl: 'en'
+    api_key: serpKey, engine: 'google_shopping', q: query, num: '15', gl: 'us', hl: 'en'
   });
   const data = await httpsGet('https://serpapi.com/search?' + params.toString());
-  return (data.shopping_results || []).slice(0, 6).map(item => {
+  return (data.shopping_results || []).slice(0, 15).map(item => {
     const price = parseFloat((item.price || '0').replace(/[^0-9.]/g, '')) || 0;
     return {
       name: item.title, source: item.source || 'Retailer',
@@ -56,7 +56,7 @@ async function rainforestSearch(query, rfKey) {
   const data = await httpsGet('https://api.rainforestapi.com/request?' + params.toString());
   return (data.search_results || [])
     .filter(item => item.price !== undefined)
-    .slice(0, 6)
+    .slice(0, 15)
     .map(item => {
       const price = parseFloat((item.price.value || '0').toString().replace(/[^0-9.]/g, '')) || 0;
       const brand = item.brand ? item.brand + ' — ' : '';
@@ -82,13 +82,69 @@ function dedupe(products) {
   });
 }
 
+async function callClaude(prompt) {
+  return new Promise((resolve, reject) => {
+    const payload = JSON.stringify({
+      model: 'claude-haiku-4-5-20251001', max_tokens: 1024,
+      messages: [{ role: 'user', content: prompt }]
+    });
+    const r = https.request({
+      hostname: 'api.anthropic.com', path: '/v1/messages', method: 'POST',
+      timeout: 20000,
+      headers: {
+        'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01', 'Content-Length': Buffer.byteLength(payload)
+      }
+    }, apiRes => {
+      let d = '';
+      apiRes.on('data', c => d += c);
+      apiRes.on('end', () => { try { resolve(JSON.parse(d).content[0].text); } catch(e) { reject(e); } });
+    });
+    r.on('timeout', () => { r.destroy(); reject(new Error('timeout')); });
+    r.on('error', reject);
+    r.write(payload); r.end();
+  });
+}
+
+async function rerankProducts(products, userProfile, userQuery) {
+  const prompt = `You are a personal shopping expert. Re-rank these shoes for this specific user.
+
+USER PROFILE: ${JSON.stringify(userProfile)}
+USER QUERY: ${userQuery}
+
+PRODUCTS TO RANK:
+${products.map((p,i) => `${i}. ${p.name} - $${p.price} - ${p.source} - Rating: ${p.rating} (${p.reviews} reviews)`).join('\n')}
+
+INSTRUCTIONS:
+- Score each product 1-10 based on how well it matches this specific user
+- Consider their foot type, budget, use case, and any stated preferences
+- Eliminate products that clearly don't match (wrong category, way over budget, very low ratings)
+- For top picks, write a ONE sentence personal reason why it matches THIS user specifically
+- Return ONLY a JSON array: [{"index": 0, "score": 9, "reason": "Perfect for flat feet with extra stability support within your $150 budget"}, ...]
+- Include maximum 6 products, minimum 3
+- Sort by score descending`;
+
+  try {
+    const response = await callClaude(prompt);
+    const clean = response.replace(/```json|```/g, '').trim();
+    const ranked = JSON.parse(clean);
+    return ranked
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 6)
+      .map(r => ({ ...products[r.index], aiScore: r.score, aiReason: r.reason }));
+  } catch(e) {
+    console.log('[search] Re-rank error:', e.message);
+    return products.slice(0, 6);
+  }
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
 
-  const { query } = req.body;
+  const { query, userProfile, userQuery } = req.body;
   const serpKey = process.env.SERPAPI_KEY;
   const rfKey = process.env.RAINFOREST_API_KEY;
 
@@ -103,12 +159,15 @@ export default async function handler(req, res) {
   if (serpResult.status === 'rejected') console.log('[search] SerpAPI error:', serpResult.reason?.message);
   if (rfResult.status === 'rejected')   console.log('[search] Rainforest error:', rfResult.reason?.message);
 
-  const merged = dedupe([...rfProducts, ...serpProducts])
-    .slice(0, 8)
-    .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+  const pool = dedupe([...rfProducts, ...serpProducts])
+    .slice(0, 15)
     .map((p, i) => ({ ...p, id: i + 1 }));
 
-  console.log(`[search] ${rfProducts.length} Amazon + ${serpProducts.length} SerpAPI → ${merged.length} merged`);
+  console.log(`[search] ${rfProducts.length} Amazon + ${serpProducts.length} SerpAPI → ${pool.length} pool → re-ranking`);
 
-  res.status(200).json(merged);
+  const merged = await rerankProducts(pool, userProfile || {}, userQuery || query);
+  const final = merged.map((p, i) => ({ ...p, id: i + 1 }));
+
+  console.log(`[search] → ${final.length} ranked results`);
+  res.status(200).json(final);
 }
