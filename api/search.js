@@ -81,6 +81,7 @@ export default async function handler(req, res) {
   const serpKey = process.env.SERPAPI_KEY;
   const rfKey = process.env.RAINFOREST_API_KEY;
 
+  console.log('[search] serpKey present:', !!serpKey, '| rfKey present:', !!rfKey, '| rfKey length:', rfKey ? rfKey.length : 0);
   const [serpResult, rfResult] = await Promise.allSettled([
     serpSearch(query, serpKey),
     rfKey ? rainforestSearch(query, rfKey) : Promise.resolve([])
