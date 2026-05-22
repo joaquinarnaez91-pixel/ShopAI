@@ -82,6 +82,57 @@ function dedupe(products) {
   });
 }
 
+function extractBudget(userQuery) {
+  const q = (userQuery || '').toLowerCase();
+  if (/budget|cheap|affordable|inexpensive/.test(q)) return { min: 0, max: Infinity };
+  const m = q.match(/under\s*\$?(\d+)/);
+  if (m) {
+    const max = parseInt(m[1]);
+    const min = Math.round(max * 0.70);
+    return { min, max };
+  }
+  const m2 = q.match(/\$(\d+)\s*[-–]\s*\$?(\d+)/);
+  if (m2) return { min: parseInt(m2[1]), max: parseInt(m2[2]) };
+  const m3 = q.match(/(\d+)\s*[-–]\s*(\d+)\s*dollar/);
+  if (m3) return { min: parseInt(m3[1]), max: parseInt(m3[2]) };
+  return null;
+}
+
+function extractCategory(userQuery) {
+  const q = (userQuery || '').toLowerCase();
+  if (/\brunning\b|\bjogging\b|\bmarathon\b|\brun\b/.test(q)) return 'running';
+  if (/\bhiking\b|\btrail\b|\btrekking\b/.test(q)) return 'hiking';
+  if (/\bbasketball\b/.test(q)) return 'basketball';
+  if (/\btennis\b|\bpickleball\b/.test(q)) return 'tennis';
+  if (/\bcasual\b|\bsneaker\b|\blifestyle\b|\bwalking\b/.test(q)) return 'casual';
+  return null;
+}
+
+const CATEGORY_TERMS = {
+  running:    [/running/i, /trainer/i, /athletic/i, /marathon/i, /jogging/i],
+  hiking:     [/hiking/i, /trail/i, /boot/i, /trekking/i, /outdoor/i],
+  basketball: [/basketball/i, /court/i],
+  tennis:     [/tennis/i, /court/i, /pickleball/i],
+  casual:     [/sneaker/i, /casual/i, /lifestyle/i, /walking/i, /canvas/i, /slip.on/i]
+};
+
+function matchesCategory(productName, category) {
+  const terms = CATEGORY_TERMS[category];
+  if (!terms) return true;
+  return terms.some(re => re.test(productName));
+}
+
+function dedupeByModel(products) {
+  const groups = new Map();
+  products.forEach(p => {
+    const words = p.name.toLowerCase().replace(/[^a-z0-9 ]/g, '').split(/\s+/).slice(0, 5).join(' ');
+    if (!groups.has(words) || p.price > (groups.get(words).price || 0)) {
+      groups.set(words, p);
+    }
+  });
+  return Array.from(groups.values());
+}
+
 async function callClaude(prompt) {
   return new Promise((resolve, reject) => {
     const payload = JSON.stringify({
@@ -162,13 +213,28 @@ export default async function handler(req, res) {
   if (serpResult.status === 'rejected') console.log('[search] SerpAPI error:', serpResult.reason?.message);
   if (rfResult.status === 'rejected')   console.log('[search] Rainforest error:', rfResult.reason?.message);
 
-  const pool = dedupe([...rfProducts, ...serpProducts])
-    .slice(0, 15)
-    .map((p, i) => ({ ...p, id: i + 1 }));
+  const raw = dedupe([...rfProducts, ...serpProducts]).slice(0, 30);
+  console.log('[search] Before filter:', raw.length);
 
-  console.log(`[search] ${rfProducts.length} Amazon + ${serpProducts.length} SerpAPI → ${pool.length} pool → re-ranking`);
+  const effectiveQuery = userQuery || query;
+  const budget = extractBudget(effectiveQuery);
+  const category = extractCategory(effectiveQuery);
 
-  const merged = await rerankProducts(pool, userProfile || {}, userQuery || query);
+  let filtered = raw;
+  if (budget) {
+    filtered = filtered.filter(p => p.price > 0 && p.price <= budget.max && p.price >= budget.min);
+  }
+  if (category) {
+    const catFiltered = filtered.filter(p => matchesCategory(p.name, category));
+    if (catFiltered.length >= 3) filtered = catFiltered;
+  }
+  filtered = dedupeByModel(filtered);
+
+  console.log('[search] After filter:', filtered.length, '| budget:', budget ? `$${budget.min}-$${budget.max}` : 'none', '| category:', category || 'none');
+
+  const pool = filtered.slice(0, 15).map((p, i) => ({ ...p, id: i + 1 }));
+
+  const merged = await rerankProducts(pool, userProfile || {}, effectiveQuery);
   const final = merged.map((p, i) => ({ ...p, id: i + 1 }));
 
   console.log(`[search] → ${final.length} ranked results`);
