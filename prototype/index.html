@@ -493,8 +493,8 @@ function makeCard(p) {
     priceChart +
     (p.delivery ? "<div class=\"card-delivery\">🚚 "+p.delivery+"</div>" : "") +
     (stars ? "<div class=\"card-rating\"><span class=\"stars\">"+stars+"</span> "+p.rating+(p.reviews?" ("+p.reviews.toLocaleString()+")":"")+"</div>" : "") +
-    (p.summary ? "<div class=\"review-summary\" style=\"background:#111;border-radius:6px;padding:7px;font-size:10px;color:#888;line-height:1.4;border-left:2px solid #6c47ff;margin-bottom:8px;\"><strong style=\"color:#6c47ff;display:block;margin-bottom:2px;font-size:9px;text-transform:uppercase\">🤖 AI Summary</strong>"+p.summary+"</div>" : "") +
-    (p.funFact ? "<div style=\"font-size:10px;color:#a78bfa;line-height:1.4;margin-bottom:8px;\">⚡ "+p.funFact+"</div>" : "") +
+    (p.summary ? "<div class=\"review-summary\" style=\"background:#111;border-radius:6px;padding:7px;font-size:10px;color:#888;line-height:1.4;border-left:2px solid #6c47ff;margin-bottom:8px;\"><strong style=\"color:#6c47ff;display:block;margin-bottom:2px;font-size:9px;text-transform:uppercase\">🤖 AI Summary</strong>"+(p.summary.replace(/✅/g,'<span style="color:#4caf50">✅</span>').replace(/❌/g,'<span style="color:#f44336">❌</span>'))+"</div>" : "") +
+    ((p.funFact && p.funFact.trim()) ? "<div style=\"font-size:10px;color:#a78bfa;line-height:1.4;margin-bottom:8px;\">⚡ "+p.funFact+"</div>" : "") +
     (function(){ const cands=[p.direct_link,p.product_link,p.link].filter(Boolean); const direct=cands.find(u=>!u.includes('google.com')); const best=direct||cands[0]||'#'; const googleOnly=!direct&&best!=='#'; return '<a class=\"buy-btn\" href=\"'+best+'\" target=\"_blank\"'+(googleOnly?' style=\"opacity:0.7;\"':'')+'>'+( googleOnly?'Visit retailer website':'View Product &#8594;')+'</a>'; })() +
     "</div></div>";
 }
