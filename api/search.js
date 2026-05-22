@@ -157,7 +157,7 @@ async function callClaude(prompt) {
   });
 }
 
-async function rerankProducts(products, userProfile, userQuery) {
+async function doRerank(products, userProfile, userQuery) {
   const prompt = `You are an expert personal shopping advisor. Re-rank these shoes for this specific user.
 
 USER PROFILE: ${JSON.stringify(userProfile)}
@@ -177,18 +177,25 @@ For EACH product write a unique reason that references the USER'S SPECIFIC input
 Return ONLY valid JSON array: [{"index": 0, "score": 9, "reason": "...specific to this user..."}, ...]
 Maximum 6 products. Every reason must be unique and reference the user's query.`;
 
+  const response = await callClaude(prompt);
+  const clean = response.replace(/```json|```/g, '').trim();
+  const ranked = JSON.parse(clean);
+  return ranked
+    .filter(r => r.index >= 0 && r.index < products.length && r.score >= 5)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 6)
+    .map(r => ({ ...products[r.index], aiScore: r.score, aiReason: r.reason }));
+}
+
+async function rerankProducts(products, userProfile, userQuery) {
+  const fallback = products.sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 6);
   try {
-    const response = await callClaude(prompt);
-    const clean = response.replace(/```json|```/g, '').trim();
-    const ranked = JSON.parse(clean);
-    return ranked
-      .filter(r => r.index >= 0 && r.index < products.length && r.score >= 5)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 6)
-      .map(r => ({ ...products[r.index], aiScore: r.score, aiReason: r.reason }));
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('rerank timeout')), 4500));
+    const result = await Promise.race([doRerank(products, userProfile, userQuery), timeout]);
+    return result.length >= 3 ? result : fallback;
   } catch(e) {
-    console.log('[search] Re-rank error:', e.message);
-    return products.slice(0, 6);
+    console.log('[search] Re-rank skipped:', e.message, '— using rating sort');
+    return fallback;
   }
 }
 
