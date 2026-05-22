@@ -80,6 +80,7 @@ export default async function handler(req, res) {
   const { query } = req.body;
   const serpKey = process.env.SERPAPI_KEY;
   const rfKey = process.env.RAINFOREST_API_KEY;
+  if (req.body._debug) { res.status(200).json({ serpKey: !!serpKey, rfKey: !!rfKey, rfLen: rfKey ? rfKey.length : 0 }); return; }
 
   console.log('[search] serpKey present:', !!serpKey, '| rfKey present:', !!rfKey, '| rfKey length:', rfKey ? rfKey.length : 0);
   const [serpResult, rfResult] = await Promise.allSettled([
