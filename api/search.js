@@ -1,5 +1,72 @@
 const https = require('https');
 
+function httpsGet(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, r => {
+      let d = '';
+      r.on('data', c => d += c);
+      r.on('end', () => { try { resolve(JSON.parse(d)); } catch(e) { reject(e); } });
+    }).on('error', reject);
+  });
+}
+
+function makePricePoints(price) {
+  const pts = Array.from({length: 30}, (_,j) => {
+    const wave = Math.sin(j/4) * 0.04;
+    const noise = (Math.sin(j*7.3+price) - 0.5) * 0.03;
+    return Math.round(price * (1 + wave + noise));
+  });
+  pts[29] = price;
+  return pts;
+}
+
+async function serpSearch(query, serpKey) {
+  const params = new URLSearchParams({
+    api_key: serpKey, engine: 'google_shopping', q: query, num: '8', gl: 'us', hl: 'en'
+  });
+  const data = await httpsGet('https://serpapi.com/search?' + params.toString());
+  return (data.shopping_results || []).slice(0, 6).map(item => {
+    const price = parseFloat((item.price || '0').replace(/[^0-9.]/g, '')) || 0;
+    return {
+      name: item.title, source: item.source || 'Retailer',
+      price, rating: item.rating || 4.2, reviews: item.reviews || 0,
+      img: item.thumbnail || '', link: item.product_link || item.link || '',
+      delivery: item.delivery || '', prices: makePricePoints(price),
+      snippet: item.snippet || item.title,
+      summary: '', insight: item.snippet || item.title
+    };
+  });
+}
+
+async function rainforestSearch(query, rfKey) {
+  const params = new URLSearchParams({
+    api_key: rfKey, type: 'search', amazon_domain: 'amazon.com', search_term: query
+  });
+  const data = await httpsGet('https://api.rainforestapi.com/request?' + params.toString());
+  return (data.search_results || []).slice(0, 6).map(item => {
+    const price = parseFloat(((item.price && item.price.value) || '0').toString().replace(/[^0-9.]/g, '')) || 0;
+    const asin = item.asin || '';
+    return {
+      name: item.title || '', source: 'Amazon',
+      price, rating: item.rating || 4.2, reviews: item.ratings_total || 0,
+      img: (item.image) || '', link: asin ? `https://amazon.com/dp/${asin}` : '',
+      delivery: 'Prime eligible', prices: makePricePoints(price),
+      snippet: item.title || '',
+      summary: '', insight: item.title || ''
+    };
+  });
+}
+
+function dedupe(products) {
+  const seen = new Set();
+  return products.filter(p => {
+    const key = p.name.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 40);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -8,39 +75,25 @@ export default async function handler(req, res) {
 
   const { query } = req.body;
   const serpKey = process.env.SERPAPI_KEY;
+  const rfKey = process.env.RAINFOREST_API_KEY;
 
-  const params = new URLSearchParams({
-    api_key: serpKey, engine: 'google_shopping', q: query, num: '8', gl: 'us', hl: 'en'
-  });
+  const [serpResult, rfResult] = await Promise.allSettled([
+    serpSearch(query, serpKey),
+    rfKey ? rainforestSearch(query, rfKey) : Promise.resolve([])
+  ]);
 
-  const data = await new Promise((resolve, reject) => {
-    https.get('https://serpapi.com/search?' + params.toString(), r => {
-      let d = '';
-      r.on('data', c => d += c);
-      r.on('end', () => { try { resolve(JSON.parse(d)); } catch(e) { reject(e); } });
-    }).on('error', reject);
-  });
+  const serpProducts = serpResult.status === 'fulfilled' ? serpResult.value : [];
+  const rfProducts   = rfResult.status === 'fulfilled'   ? rfResult.value   : [];
 
-  const raw = data.shopping_results || [];
-  if (raw[0]) console.log('[search] first item keys:', Object.keys(raw[0]).join(', '));
-  if (raw[0]) console.log('[search] first item links:', JSON.stringify({ link: raw[0].link, product_link: raw[0].product_link, seller_link: raw[0].seller_link }));
-  const results = raw.slice(0, 6).map((item, i) => {
-    const price = parseFloat((item.price || '0').replace(/[^0-9.]/g, '')) || 0;
-    const points = Array.from({length:30}, (_,j) => {
-      const wave = Math.sin(j/4) * 0.04;
-      const noise = (Math.sin(j*7.3+price) - 0.5) * 0.03;
-      return Math.round(price * (1 + wave + noise));
-    });
-    points[29] = price;
-    return {
-      id: i+1, name: item.title, source: item.source || 'Retailer',
-      price, rating: item.rating || 4.2, reviews: item.reviews || 0,
-      img: item.thumbnail || '', link: item.product_link || item.link || '',
-      delivery: item.delivery || '', prices: points,
-      snippet: item.snippet || item.title,
-      summary: '', insight: item.snippet || item.title
-    };
-  });
+  if (serpResult.status === 'rejected') console.log('[search] SerpAPI error:', serpResult.reason?.message);
+  if (rfResult.status === 'rejected')   console.log('[search] Rainforest error:', rfResult.reason?.message);
 
-  res.status(200).json(results);
+  const merged = dedupe([...rfProducts, ...serpProducts])
+    .slice(0, 8)
+    .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+    .map((p, i) => ({ ...p, id: i + 1 }));
+
+  console.log(`[search] ${rfProducts.length} Amazon + ${serpProducts.length} SerpAPI → ${merged.length} merged`);
+
+  res.status(200).json(merged);
 }
