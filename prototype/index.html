@@ -57,6 +57,7 @@ body { background:#0a0a0a; color:#f0f0f0; font-family:-apple-system,BlinkMacSyst
 .input-row input::placeholder { color:#444; }
 .send-btn { width:36px; height:36px; background:#6c47ff; border:none; border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .send-btn svg { width:14px; height:14px; fill:#fff; }
+.chat-products-strip { width:calc(100% + 32px); margin-left:-16px; padding:0 16px; }
 @media (min-width:768px) {
   body { flex-direction:row; }
   .header { display:none; }
@@ -147,10 +148,7 @@ body { background:#0a0a0a; color:#f0f0f0; font-family:-apple-system,BlinkMacSyst
         <div class="bubble ai">Hey! I am ShopAI. Tell me what you are looking for and I will find the perfect shoes for you.<br><br>Try: <strong>"best running shoes for flat feet"</strong> or <strong>"waterproof hiking boots under $150"</strong></div>
       </div>
     </div>
-    <div class="products-section" id="productsSectionMobile" style="display:none">
-      <div class="products-label">✨ Real products for you</div>
-      <div class="products-scroll" id="productsScrollMobile"></div>
-    </div>
+
   </div>
 </div>
 
@@ -405,14 +403,29 @@ function makeCard(p) {
     (p.delivery ? "<div class=\"card-delivery\">🚚 "+p.delivery+"</div>" : "") +
     (stars ? "<div class=\"card-rating\"><span class=\"stars\">"+stars+"</span> "+p.rating+(p.reviews?" ("+p.reviews.toLocaleString()+")":"")+"</div>" : "") +
     (p.summary ? "<div class=\"review-summary\" style=\"background:#111;border-radius:6px;padding:7px;font-size:10px;color:#888;line-height:1.4;border-left:2px solid #6c47ff;margin-bottom:8px;overflow:visible;max-height:none\"><strong style=\"color:#6c47ff;display:block;margin-bottom:2px;font-size:9px;text-transform:uppercase\">🤖 AI Summary</strong>"+p.summary+"</div>" : "") +
-    "<a class=\"buy-btn\" href=\""+(p.link||'#')+"\" target=\"_blank\">View Product &#8594;</a>" +
+    (function(){ const cands=[p.direct_link,p.product_link,p.link].filter(Boolean); const direct=cands.find(u=>!u.includes('google.com')); const best=direct||cands[0]||'#'; const googleOnly=!direct&&best!=='#'; return '<a class=\"buy-btn\" href=\"'+best+'\" target=\"_blank\"'+(googleOnly?' style=\"opacity:0.7;\"':'')+'>'+( googleOnly?'Visit retailer website':'View Product &#8594;')+'</a>'; })() +
     "</div></div>";
 }
 
 function renderProducts(prods) {
-  const ms = document.getElementById("productsSectionMobile");
-  const msc = document.getElementById("productsScrollMobile");
-  if (ms && msc) { ms.style.display = "block"; msc.innerHTML = prods.map(makeCard).join(""); }
+  if (isMobile) {
+    const cm = document.getElementById("chatAreaMobile");
+    if (cm) {
+      let strip = document.getElementById("chatCardsMobile");
+      if (!strip) {
+        strip = document.createElement("div");
+        strip.id = "chatCardsMobile";
+        strip.className = "chat-products-strip";
+        const scroll = document.createElement("div");
+        scroll.className = "products-scroll";
+        strip.appendChild(scroll);
+        cm.appendChild(strip);
+      }
+      strip.querySelector(".products-scroll").innerHTML = prods.map(makeCard).join("");
+      cm.scrollTop = cm.scrollHeight;
+    }
+    return;
+  }
   const grid = document.getElementById("productsGrid");
   const count = document.getElementById("prodCount");
   if (grid) { if(count) count.textContent = prods.length+" real products found"; grid.innerHTML = prods.map(makeCard).join(""); }
