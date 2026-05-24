@@ -28,7 +28,10 @@ My pick for you: [Model] — [one sentence reason].
 What's next?
 🔍 Compare these  |  💰 Lower budget  |  🏆 More premium  |  🎨 Specific color  |  👟 Different brand"
 
-Then end with SEARCH_MODELS JSON on its own line. Include 5-6 models in the array.
+After your ranked list, output SEARCH_MODELS on its own line in exactly this format — no markdown, no code blocks, no backticks:
+SEARCH_MODELS:{"models":[{"brand":"ASICS","model":"Novablast 5","query":"ASICS Novablast 5 running shoe men","category":"Long Run","why":"Outstanding impact protection for endurance runs"},{"brand":"Adidas","model":"Adizero EVO SL","query":"Adidas Adizero EVO SL running shoe men","category":"Performance","why":"Race-proven foam perfect for long distance"}]}
+
+Include all 5-6 recommended models. Each must have brand, model, query, category, and why fields.
 
 ENGAGEMENT RULES:
 - After showing recommendations always offer next steps on one line (as above)

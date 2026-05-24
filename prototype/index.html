@@ -310,11 +310,15 @@ function stars(r) {
 }
 
 function parseMarkdown(t) {
+  t = t.replace(/```json[\s\S]*?```/g, '');
+  t = t.replace(/```[\s\S]*?```/g, '');
+  t = t.replace(/SEARCH_MODELS:\{[\s\S]*?\}/g, '');
   return t
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/\n\n/g, '<br><br>')
-    .replace(/\n/g, '<br>');
+    .replace(/\n/g, '<br>')
+    .trim();
 }
 
 function storeColor(src) { return STORE_COLORS[src] || '#999'; }
