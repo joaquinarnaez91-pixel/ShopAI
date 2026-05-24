@@ -214,74 +214,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
   </div>
 
   <div class="m-scroll" id="mScroll">
-    <!-- Chat -->
-    <div class="chat">
-      <div class="msg">
-        <div class="av ai">🤖</div>
-        <div class="bbl ai">Hi! I'm ShopAI. Tell me what you're looking for and I'll find the best deals across every store.</div>
-      </div>
-      <div class="msg u">
-        <div class="av u">😊</div>
-        <div class="bbl u">Running shoes for street running, size 10.5, under $200. I like bold colors.</div>
-      </div>
-      <div class="msg">
-        <div class="av ai">🤖</div>
-        <div class="bbl ai">Great profile. One more — plush cushioned ride or light and responsive?</div>
-      </div>
-      <div class="msg u">
-        <div class="av u">😊</div>
-        <div class="bbl u">Plush but still fast. Regular width feet.</div>
-      </div>
-      <div class="msg">
-        <div class="av ai">🤖</div>
-        <div class="bbl ai">Got it. I've selected 6 expert picks — every one matched to street running with great cushioning under $200.</div>
-      </div>
-    </div>
-
-    <!-- Pin tray -->
-    <div class="pin-tray">
-      <div class="pin-tray-lbl">📌 Your shortlist</div>
-      <div class="pin-row">
-        <div class="pin-th"><img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=120&q=80" alt="Nike Pegasus 41"></div>
-        <div class="pin-th-empty">+</div>
-        <div class="pin-th-empty">+</div>
-        <div class="pin-th-empty">+</div>
-        <div class="pin-th-empty">+</div>
-        <span class="pin-action">Find similar →</span>
-      </div>
-    </div>
-
-    <!-- Section label -->
-    <div class="sec-label">6 expert picks for you</div>
-
-    <!-- Product grid -->
-    <div class="m-grid" id="mGrid"></div>
-
-    <!-- Chips -->
-    <div class="chips-wrap" style="margin-top:12px;">
-      <div class="chips-inner">
-        <button class="chip" onclick="chipTap(this)">🔍 More like these</button>
-        <button class="chip" onclick="chipTap(this)">🏷️ Same brand</button>
-        <button class="chip" onclick="chipTap(this)">💰 Lower price</button>
-        <button class="chip" onclick="chipTap(this)">⚡ Better tech</button>
-        <button class="chip" onclick="chipTap(this)">🎨 Other colors</button>
-        <button class="chip" onclick="chipTap(this)">🏆 Premium picks</button>
-      </div>
-    </div>
-
-    <!-- Follow-up -->
-    <div class="chat" style="padding-top:14px;">
-      <div class="msg">
-        <div class="av ai">🤖</div>
-        <div class="bbl ai">Tap any shoe to see expert analysis, the best price across every store, and where to get the best deal. 📌 Pin the ones you love to build your shortlist.</div>
-      </div>
-    </div>
   </div>
 
   <!-- Input -->
   <div class="input-bar">
-    <input class="inp" type="text" placeholder="Ask about sizing, colors, or alternatives…" />
-    <button class="send" aria-label="Send">
+    <input class="inp" id="mInput" type="text" placeholder="Ask about shoes, sizing, or alternatives…" />
+    <button class="send" id="mSend" aria-label="Send">
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
       </svg>
@@ -296,13 +234,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
     <div class="d-logo"><div class="logo">ShopAI<span class="logo-dot"></span></div></div>
     <div class="d-profile">
       <div class="d-av">😊</div>
-      <div class="d-name">Alex M.</div>
-      <div class="d-detail">Size 10.5 · Regular · Street runner</div>
+      <div class="d-name" id="dProfileName">Your Profile</div>
+      <div class="d-detail" id="dProfileDetail">Tell me what you need</div>
     </div>
     <div class="d-pins-sec">
       <div class="d-pins-lbl">📌 Shortlist</div>
-      <div class="d-pins-grid">
-        <div class="d-pt"><img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=120&q=80" alt=""></div>
+      <div class="d-pins-grid" id="dPinsGrid">
+        <div class="d-pt-empty">+</div>
         <div class="d-pt-empty">+</div>
         <div class="d-pt-empty">+</div>
         <div class="d-pt-empty">+</div>
@@ -313,23 +251,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
   <!-- Chat panel -->
   <div class="d-chat">
     <div class="d-chat-head">Conversation</div>
-    <div class="d-msgs">
-      <div class="msg"><div class="av ai">🤖</div><div class="bbl ai">Hi! I'm ShopAI. Tell me what you need.</div></div>
-      <div class="msg u"><div class="av u">😊</div><div class="bbl u">Running shoes, street, size 10.5, under $200. Bold colors.</div></div>
-      <div class="msg"><div class="av ai">🤖</div><div class="bbl ai">Plush ride or responsive?</div></div>
-      <div class="msg u"><div class="av u">😊</div><div class="bbl u">Plush but fast. Regular width.</div></div>
-      <div class="msg"><div class="av ai">🤖</div><div class="bbl ai">6 expert picks — tap any shoe to see full analysis and best price.</div></div>
-      <div class="chips-wrap" style="padding:4px 0 0;">
-        <div class="chips-inner">
-          <button class="chip" onclick="chipTap(this)">🔍 More like these</button>
-          <button class="chip" onclick="chipTap(this)">💰 Lower price</button>
-          <button class="chip" onclick="chipTap(this)">⚡ Better tech</button>
-        </div>
-      </div>
-    </div>
+    <div class="d-msgs" id="dMsgs"></div>
     <div class="d-inp-wrap">
-      <input class="inp" type="text" placeholder="Ask a follow-up…" />
-      <button class="send">
+      <input class="inp" id="dInput" type="text" placeholder="Ask a follow-up…" />
+      <button class="send" id="dSend">
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
         </svg>
@@ -339,7 +264,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
 
   <!-- Products panel -->
   <div class="d-products">
-    <div class="d-prod-head"><span class="d-prod-count">6 expert picks for you</span></div>
+    <div class="d-prod-head"><span class="d-prod-count" id="dProdCount">Ready to search</span></div>
     <div class="d-prod-scroll"><div class="d-grid" id="dGrid"></div></div>
   </div>
 </div>
@@ -355,287 +280,319 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
 </div>
 
 <script>
-// ══ DATA ══
-const PRODUCTS = [
-  {
-    id:0, brand:'Nike', model:'Pegasus 41', cat:'Daily Trainer',
-    price:138, store:'Amazon', ind:'deal', badge:'Expert Pick', btype:'expert',
-    rating:4.6, reviews:2341,
-    img:'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80',
-    stores:[
-      {name:'Amazon',  price:138, del:'Free delivery tomorrow',   color:'#FF9900', best:true},
-      {name:'Zappos',  price:150, del:'2 days · free returns',    color:'#005DAA'},
-      {name:'Nike.com',price:160, del:'3–5 business days',        color:'#111'}
-    ],
-    take:"The Pegasus 41 is Nike's most trusted daily trainer — refined over 40 years. React foam cushioning with a wider forefoot delivers a natural, responsive ride perfect for street running. Available in the boldest colorways Nike makes.",
-    scores:{Comfort:88,Value:82,Style:90,'Fit match':85},
-    tech:['React foam','Air Zoom unit','Wider forefoot','Engineered mesh'],
-    pros:['Exceptional cushioning','True to size','Bold colorways'],
-    cons:['Slightly heavier than v40','Firm for very long runs'],
-    fact:'The Pegasus line has logged more miles than any other Nike model — over 40 years of continuous production and counting.'
-  },
-  {
-    id:1, brand:'Adidas', model:'Ultraboost 24', cat:'Performance',
-    price:165, store:'Zappos', ind:'typical', badge:'Bestseller', btype:'seller',
-    rating:4.5, reviews:1876,
-    img:'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=600&q=80',
-    stores:[
-      {name:'Zappos',    price:165, del:'Free 2-day shipping',  color:'#005DAA', best:true},
-      {name:'Amazon',    price:172, del:'Delivery tomorrow',    color:'#FF9900'},
-      {name:'Adidas.com',price:180, del:'3–5 business days',   color:'#111'}
-    ],
-    take:'The Ultraboost 24 sets the gold standard for energy return in a daily trainer. Boost foam provides unmatched all-day comfort, while the Primeknit+ upper wraps your foot like a second skin for a locked-in feel.',
-    scores:{Comfort:92,Value:75,Style:88,'Fit match':80},
-    tech:['Boost foam','Primeknit+','Continental rubber','Linear Energy Push'],
-    pros:['Industry-leading energy return','Sock-like fit','Durable outsole'],
-    cons:['Premium price point','Runs slightly narrow'],
-    fact:'Adidas Ultraboost launched in 2015 with a sold-out release in under one hour — it remains the best-selling performance runner in Adidas history.'
-  },
-  {
-    id:2, brand:'Hoka', model:'Clifton 9', cat:'Max Cushion',
-    price:145, store:'Hoka.com', ind:'deal', badge:'Best Value', btype:'value',
-    rating:4.7, reviews:2109,
-    img:'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=600&q=80',
-    stores:[
-      {name:'Hoka.com',price:145, del:'Free 2-day shipping',  color:'#009BDE', best:true},
-      {name:'Amazon',  price:152, del:'Delivery tomorrow',    color:'#FF9900'},
-      {name:'Zappos',  price:155, del:'2-day · free returns', color:'#005DAA'}
-    ],
-    take:"The Clifton 9 is Hoka's everyday masterpiece — impossibly light for its level of cushioning. The rocker geometry propels you forward effortlessly. Best choice for high mileage or long days on your feet.",
-    scores:{Comfort:95,Value:88,Style:75,'Fit match':82},
-    tech:['EVA midsole','Rocker geometry','Flat-knit upper','Rubberized foam outsole'],
-    pros:['Unmatched cushioning','Lightest in class','Comfortable from day one'],
-    cons:['Less aggressive look','Not ideal for speed work'],
-    fact:"Hoka was founded in 2009 in Annecy, France. The name means 'time to fly' in Māori — chosen after the founders tested the shoes hopping between trail moguls."
-  },
-  {
-    id:3, brand:'ASICS', model:'Gel-Nimbus 26', cat:'Premium',
-    price:180, store:'Amazon', ind:'high', badge:null, btype:null,
-    rating:4.5, reviews:1203,
-    img:'https://images.unsplash.com/photo-1539185441755-769473a23570?w=600&q=80',
-    stores:[
-      {name:'Amazon',   price:180, del:'Delivery tomorrow',   color:'#FF9900', best:true},
-      {name:'ASICS.com',price:180, del:'3–5 business days',   color:'#1B4D8E'},
-      {name:'Zappos',   price:185, del:'2-day · free returns',color:'#005DAA'}
-    ],
-    take:"The Gel-Nimbus 26 is ASICS' flagship luxury runner — built for premium long-distance comfort. FF Blast+ cushioning with dual-density GEL technology creates a buttery smooth ride for marathon training.",
-    scores:{Comfort:94,Value:72,Style:78,'Fit match':88},
-    tech:['FF Blast+ foam','Dual GEL technology','LITETRUSS','4D Guidance System'],
-    pros:['Elite comfort for long runs','Excellent heel support','Wide size range'],
-    cons:['Price is high right now','Heavier than competitors'],
-    fact:"ASICS stands for Anima Sana In Corpore Sano — 'a sound mind in a sound body' in Latin. The company has crafted running shoes in Kobe, Japan since 1949."
-  },
-  {
-    id:4, brand:'New Balance', model:'1080v13', cat:'Versatile',
-    price:165, store:'NB.com', ind:'typical', badge:null, btype:null,
-    rating:4.6, reviews:987,
-    img:'https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?w=600&q=80',
-    stores:[
-      {name:'NB.com', price:165, del:'Free 2-day shipping', color:'#CC0000', best:true},
-      {name:'Zappos', price:165, del:'2-day · free returns',color:'#005DAA'},
-      {name:'Amazon', price:170, del:'Delivery tomorrow',   color:'#FF9900'}
-    ],
-    take:"The 1080v13 is New Balance's most popular high-cushion trainer. Fresh Foam X delivers a plush yet responsive ride that works from easy recovery jogs to tempo runs — highly versatile.",
-    scores:{Comfort:91,Value:80,Style:82,'Fit match':90},
-    tech:['Fresh Foam X','Hypoknit upper','NDurance rubber','Ultra Heel design'],
-    pros:['Wide fit options available','Versatile for all paces','Excellent heel lockdown'],
-    cons:['Limited bold colorways','Takes a few runs to break in'],
-    fact:'New Balance is one of the last major athletic brands to manufacture shoes in the USA — their Boston and Lawrence, MA factories produce over 4 million pairs annually.'
-  },
-  {
-    id:5, brand:'On', model:'Cloudmonster 2', cat:'Premium Street',
-    price:185, store:'On.com', ind:'typical', badge:null, btype:null,
-    rating:4.3, reviews:654,
-    img:'https://images.unsplash.com/photo-1556906781-9a412961a28c?w=600&q=80',
-    stores:[
-      {name:'On.com',price:185, del:'Free 2-day shipping', color:'#111', best:true},
-      {name:'REI',   price:185, del:'2–3 business days',   color:'#4CAF50'},
-      {name:'Amazon',price:192, del:'Delivery tomorrow',   color:'#FF9900'}
-    ],
-    take:"The Cloudmonster 2 is On's boldest statement shoe — cloud-like ride with visual attitude. CloudTec Phase cushioning absorbs impact differently at each landing angle. Swiss engineering meets street style.",
-    scores:{Comfort:87,Value:70,Style:95,'Fit match':78},
-    tech:['CloudTec Phase','Helion superfoam','Speedboard','Zero-gravity foam'],
-    pros:['Unique visual aesthetic','Exceptional energy return','Lightweight for its size'],
-    cons:['Expensive for casual runners','Runs narrow','Polarizing look'],
-    fact:'On Running was co-founded by Olivier Bernhard, a three-time Duathlon World Champion. Roger Federer became a co-owner in 2019, helping propel On to a $3B+ public valuation.'
-  }
-];
+// ── State ─────────────────────────────────────────────────────────────────
+let products    = [];
+let pinned      = new Set();
+let curIdx      = 0;
+let panelOpen   = false;
+let messages    = [];
+let userProfile = {};
+let enrichCache = {};
+let isLoading   = false;
 
-// ══ HELPERS ══
+// ── Maps ──────────────────────────────────────────────────────────────────
 const INDS = {
-  deal:   {cls:'pp-deal', lbl:'🟢 Low'},
-  typical:{cls:'pp-typ',  lbl:'🟡 Usual'},
-  high:   {cls:'pp-high', lbl:'🔴 High'}
+  LOW:   { cls:'pp-deal', lbl:'🟢 Low'   },
+  USUAL: { cls:'pp-typ',  lbl:'🟡 Usual' },
+  HIGH:  { cls:'pp-high', lbl:'🔴 High'  }
 };
-const BADGES = {
-  expert:{cls:'b-expert', lbl:'Expert Pick'},
-  value: {cls:'b-value',  lbl:'Best Value'},
-  seller:{cls:'b-seller', lbl:'Bestseller'}
-};
+
 const STORE_COLORS = {
   'Amazon':'#FF9900','Zappos':'#005DAA','Nike.com':'#111','Hoka.com':'#009BDE',
-  'NB.com':'#CC0000','On.com':'#111','Adidas.com':'#111','REI':'#4CAF50','ASICS.com':'#1B4D8E'
+  'NB.com':'#CC0000','On.com':'#111','Adidas.com':'#111','REI':'#4CAF50',
+  'ASICS.com':'#1B4D8E','Walmart':'#0071CE'
 };
 
-let pinned = new Set([0]);
-let curIdx = 0;
-let panelOpen = false;
-
-function stars(r){
-  const f = Math.round(r);
-  return '★'.repeat(f) + '☆'.repeat(5-f);
+// ── Utilities ─────────────────────────────────────────────────────────────
+function stars(r) {
+  const f = Math.round(r || 0);
+  return '★'.repeat(f) + '☆'.repeat(5 - f);
 }
 
-// ══ CARD ══
-function buildCard(p, isTut) {
-  const ind = INDS[p.ind] || INDS.typical;
-  const bdg = p.btype ? BADGES[p.btype] : null;
+function parseMarkdown(t) {
+  return t
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+}
+
+function storeColor(src) { return STORE_COLORS[src] || '#999'; }
+
+function extractProfile(msgs) {
+  const t = msgs.map(m => m.content).join(' ').toLowerCase();
+  const p = {};
+  const sz  = t.match(/size\s+(\d+(?:\.\d+)?)/);
+  const bud = t.match(/under\s+\$?(\d+)/);
+  if (sz)  p.shoeSize = sz[1];
+  if (bud) p.budget   = parseInt(bud[1]);
+  if (t.includes('wide'))   p.width = 'wide';
+  if (t.includes('narrow')) p.width = 'narrow';
+  ['running','hiking','basketball','tennis','casual','walking'].forEach(u => {
+    if (t.includes(u)) p.useCase = u;
+  });
+  return p;
+}
+
+function updateProfileDisplay() {
+  const nameEl   = document.getElementById('dProfileName');
+  const detailEl = document.getElementById('dProfileDetail');
+  if (!nameEl) return;
+  const parts = [];
+  if (userProfile.shoeSize) parts.push('Size ' + userProfile.shoeSize);
+  if (userProfile.width)    parts.push(userProfile.width.charAt(0).toUpperCase() + userProfile.width.slice(1));
+  if (userProfile.useCase)  parts.push(userProfile.useCase.charAt(0).toUpperCase() + userProfile.useCase.slice(1));
+  if (parts.length && detailEl) detailEl.textContent = parts.join(' · ');
+}
+
+// ── Chat UI ───────────────────────────────────────────────────────────────
+function scrollBottom() {
+  const ms = document.getElementById('mScroll');
+  const dc = document.getElementById('dMsgs');
+  if (ms) ms.scrollTop = ms.scrollHeight;
+  if (dc) dc.scrollTop = dc.scrollHeight;
+}
+
+function addMessage(role, text) {
+  const isAI = role === 'ai';
+  const html  = `<div class="msg${isAI ? '' : ' u'}"><div class="av ${isAI ? 'ai' : 'u'}">${isAI ? '🤖' : '😊'}</div><div class="bbl ${isAI ? 'ai' : 'u'}">${isAI ? parseMarkdown(text) : text}</div></div>`;
+  const mc = document.getElementById('shopai-chat');
+  const dc = document.getElementById('dMsgs');
+  if (mc) mc.insertAdjacentHTML('beforeend', html);
+  if (dc) dc.insertAdjacentHTML('beforeend', html);
+  scrollBottom();
+}
+
+function showTyping() {
+  const id   = 'typ' + Date.now();
+  const html = `<div class="msg" id="${id}"><div class="av ai">🤖</div><div class="bbl ai" style="color:var(--tx3);font-style:italic">ShopAI is thinking…</div></div>`;
+  const mc = document.getElementById('shopai-chat');
+  const dc = document.getElementById('dMsgs');
+  if (mc) mc.insertAdjacentHTML('beforeend', html);
+  if (dc) dc.insertAdjacentHTML('beforeend', html);
+  scrollBottom();
+  return id;
+}
+
+function removeTyping(id) {
+  document.querySelectorAll('#' + id).forEach(el => el.remove());
+}
+
+// ── API ───────────────────────────────────────────────────────────────────
+async function apiFetch(path, body) {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error(path + ' ' + res.status);
+  return res.json();
+}
+
+async function enrichProduct(p) {
+  if (enrichCache[p.id]) return enrichCache[p.id];
+  const data = await apiFetch('/api/enrich', { product: p, userProfile });
+  enrichCache[p.id] = data;
+  return data;
+}
+
+// ── Cards ─────────────────────────────────────────────────────────────────
+function makeCard(p, isFirst) {
+  const ind   = INDS[p.priceIndicator] || INDS.USUAL;
   const isPin = pinned.has(p.id);
+  const pinSvg = isPin
+    ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'
+    : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
   return `
-<div class="card${isTut?' tut-ring':''}" data-id="${p.id}" onclick="openDD(${p.id})">
+<div class="card${isFirst ? ' tut-ring' : ''}" data-id="${p.id}" onclick="openDD(${p.id})">
   <div class="c-photo">
-    <img src="${p.img}" alt="${p.brand} ${p.model}" loading="lazy">
-    ${bdg ? `<div class="badge ${bdg.cls}">${bdg.lbl}</div>` : ''}
-    <button class="pin-btn${isPin?' on':''}" onclick="togglePin(event,${p.id})" aria-label="${isPin?'Unpin':'Pin'}">
-      ${isPin ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'
-               : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'}
-    </button>
+    <img src="${p.img || ''}" alt="${p.brand} ${p.name || ''}" loading="lazy" onerror="this.style.display='none'">
+    ${p.why ? '<div class="badge b-expert">Expert Pick</div>' : ''}
+    <button class="pin-btn${isPin ? ' on' : ''}" onclick="togglePin(event,${p.id})" aria-label="Pin">${pinSvg}</button>
   </div>
   <div class="c-body">
-    <div class="c-brand">${p.brand}</div>
-    <div class="c-model">${p.model}</div>
-    <div class="c-cat">${p.cat}</div>
+    <div class="c-brand">${p.brand || ''}</div>
+    <div class="c-model">${p.name || ''}</div>
+    <div class="c-cat">${p.category || ''}</div>
     <div class="price-row">
-      <span class="c-price">$${p.price}</span>
+      <span class="c-price">$${p.price || ''}</span>
       <span class="ppill ${ind.cls}">${ind.lbl}</span>
     </div>
-    <div class="c-store">
-      <span class="s-dot" style="background:${STORE_COLORS[p.store]||'#999'}"></span>${p.store}
-    </div>
-    <div class="c-rating"><span class="stars">${stars(p.rating)}</span> ${p.rating} (${p.reviews.toLocaleString()})</div>
+    <div class="c-store"><span class="s-dot" style="background:${storeColor(p.source)}"></span>${p.source || ''}</div>
+    <div class="c-rating"><span class="stars">${stars(p.rating)}</span> ${p.rating || ''} (${(p.reviews || 0).toLocaleString()})</div>
   </div>
 </div>`;
 }
 
-// ══ RENDER ══
-function render() {
-  const html = PRODUCTS.map((p,i) => buildCard(p, i===0)).join('');
-  const mg = document.getElementById('mGrid');
-  const dg = document.getElementById('dGrid');
+function renderProducts() {
+  const mg   = document.getElementById('mGrid');
+  const dg   = document.getElementById('dGrid');
+  const html = products.map((p, i) => makeCard(p, i === 0)).join('');
   if (mg) mg.innerHTML = html;
   if (dg) dg.innerHTML = html;
-  setTimeout(() => {
-    document.querySelectorAll('.tut-ring').forEach(el => el.classList.remove('tut-ring'));
-  }, 3200);
+  setTimeout(() => document.querySelectorAll('.tut-ring').forEach(el => el.classList.remove('tut-ring')), 3200);
+
+  const label = products.length + ' expert picks for you';
+  const sl = document.getElementById('shopai-sec-label');
+  const dl = document.getElementById('dProdCount');
+  if (sl) { sl.textContent = label; sl.style.display = ''; }
+  if (dl) dl.textContent = label;
+
+  updatePinTray();
 }
 
 function togglePin(e, id) {
   e.stopPropagation();
   pinned.has(id) ? pinned.delete(id) : pinned.add(id);
-  render();
+  renderProducts();
 }
 
+function updatePinTray() {
+  const pinnedList = products.filter(p => pinned.has(p.id));
+  const row  = document.getElementById('shopai-pin-row');
+  const tray = document.getElementById('shopai-pin-tray');
+  const dg   = document.getElementById('dPinsGrid');
+
+  if (row) {
+    let h = '';
+    for (let i = 0; i < 5; i++) {
+      const p = pinnedList[i];
+      h += p
+        ? '<div class="pin-th"><img src="' + (p.img||'') + '" alt="' + p.brand + '" onerror="this.style.display=\'none\'"></div>'
+        : '<div class="pin-th-empty">+</div>';
+    }
+    h += '<span class="pin-action" onclick="findSimilar()">Find similar →</span>';
+    row.innerHTML = h;
+    if (tray) tray.style.display = pinnedList.length ? '' : 'none';
+  }
+
+  if (dg) {
+    let h = '';
+    for (let i = 0; i < 4; i++) {
+      const p = pinnedList[i];
+      h += p
+        ? '<div class="d-pt"><img src="' + (p.img||'') + '" alt="' + p.brand + '" onerror="this.style.display=\'none\'"></div>'
+        : '<div class="d-pt-empty">+</div>';
+    }
+    dg.innerHTML = h;
+  }
+}
+
+function findSimilar() {
+  const list = products.filter(p => pinned.has(p.id));
+  if (!list.length) return;
+  sendMessage('Find more options similar to my pinned shoes: ' + list.map(p => p.brand + ' ' + (p.name || '')).join(', '));
+}
+
+// ── Chips ─────────────────────────────────────────────────────────────────
 function chipTap(el) {
   el.classList.add('hit');
   setTimeout(() => el.classList.remove('hit'), 280);
+  const txt = el.textContent.trim().replace(/^[^a-zA-Z]+/, '').trim();
+  if (txt) sendMessage(txt);
 }
 
-// ══ DEEP DIVE ══
-const ddPanel = document.getElementById('ddPanel');
+// ── Deep Dive ─────────────────────────────────────────────────────────────
+const ddPanel   = document.getElementById('ddPanel');
 const ddContent = document.getElementById('ddContent');
-const ddScroll = document.getElementById('ddScroll');
-const overlay = document.getElementById('overlay');
+const ddScroll  = document.getElementById('ddScroll');
+const overlay   = document.getElementById('overlay');
 
 function buildDots() {
   document.getElementById('ddDots').innerHTML =
-    PRODUCTS.map((_,i) => `<div class="dot${i===curIdx?' on':''}"></div>`).join('');
+    products.map((_, i) => '<div class="dot' + (i === curIdx ? ' on' : '') + '"></div>').join('');
 }
 
 function syncDots() {
-  document.querySelectorAll('#ddDots .dot').forEach((d,i) => d.classList.toggle('on', i===curIdx));
+  document.querySelectorAll('#ddDots .dot').forEach((d, i) => d.classList.toggle('on', i === curIdx));
 }
 
 function animateBars() {
   requestAnimationFrame(() => {
     document.querySelectorAll('.score-fill').forEach(el => {
-      const w = el.dataset.w;
-      el.style.width = w + '%';
+      el.style.width = (el.dataset.w || 0) + '%';
     });
   });
 }
 
-function renderContent(idx) {
-  const p = PRODUCTS[idx];
-  const best = p.stores.find(s => s.best) || p.stores[0];
-  const others = p.stores.filter(s => !s.best);
-  const cheapOther = others.length ? others.reduce((a,b) => a.price < b.price ? a : b) : null;
-
+function populateDeepDiveBasic(p) {
+  const ind = INDS[p.priceIndicator] || INDS.USUAL;
   ddContent.innerHTML = `
-<div class="dd-photo"><img src="${p.img}" alt="${p.brand} ${p.model}"></div>
-<div class="dd-brand">${p.brand}</div>
-<div class="dd-model">${p.model}</div>
-<div class="dd-cat">${p.cat}</div>
-
+<div class="dd-photo"><img src="${p.img || ''}" alt="${p.brand} ${p.name || ''}" onerror="this.style.display='none'"></div>
+<div class="dd-brand">${p.brand || ''}</div>
+<div class="dd-model">${p.name || ''}</div>
+<div class="dd-cat">${p.category || ''}</div>
 <div class="dd-div"></div>
 <div class="dd-stitle">💰 Best price right now</div>
-${p.stores.map(s => `
-<div class="store-row${s.best?' best':''}">
-  <div class="si"><div class="sname">${s.name}</div><div class="sdel">${s.del}</div></div>
-  <div class="sprice">$${s.price}</div>
-</div>`).join('')}
-${cheapOther ? `<p class="deal-note">✓ ${best.name} has the best deal — $${cheapOther.price - best.price} cheaper than ${cheapOther.name}</p>` : ''}
+<div class="store-row best">
+  <div class="si">
+    <div class="sname">${p.source || ''}</div>
+    <div class="sdel">${p.delivery || ''}</div>
+  </div>
+  <div class="sprice">$${p.price || ''}</div>
+</div>
+<div style="margin-top:6px"><span class="ppill ${ind.cls}">${ind.lbl} price</span></div>
+<div id="enrich-section">
+  <div class="dd-div"></div>
+  <div class="dd-stitle" style="color:var(--tx3)">🔄 Loading expert analysis…</div>
+</div>
+<a class="cta-btn" href="${p.link || '#'}" target="_blank" rel="noopener noreferrer" style="display:block;text-decoration:none;text-align:center;line-height:54px;margin-top:22px">Buy on ${p.source || ''} — $${p.price || ''}</a>
+<p class="cta-sub">Best price · ${p.delivery || ''}</p>`;
+}
 
+function populateDeepDiveEnriched(data) {
+  const el = document.getElementById('enrich-section');
+  if (!el) return;
+  const scores   = data.scores || {};
+  const tech     = Array.isArray(data.technology) ? data.technology : [data.technology || ''];
+  const techHtml = tech.filter(Boolean).map(t => '<span class="tag">' + t + '</span>').join('');
+  const scoreRows = Object.entries(scores).map(function(entry) {
+    const lbl = entry[0], val = entry[1];
+    return '<div class="score-row"><span class="score-lbl">' + lbl + '</span><div class="score-track"><div class="score-fill" data-w="' + val + '" style="width:0%"></div></div><span class="score-val">' + ((val || 0) / 10).toFixed(1) + '</span></div>';
+  }).join('');
+  el.outerHTML = `
 <div class="dd-div"></div>
 <div class="dd-stitle">🏆 Expert take</div>
-<p class="expert-text">${p.take}</p>
-
+<p class="expert-text">${data.expertTake || ''}</p>
 <div class="dd-div"></div>
 <div class="dd-stitle">📊 Match score</div>
-${Object.entries(p.scores).map(([lbl,val]) => `
-<div class="score-row">
-  <span class="score-lbl">${lbl}</span>
-  <div class="score-track"><div class="score-fill" data-w="${val}" style="width:0%"></div></div>
-  <span class="score-val">${(val/10).toFixed(1)}</span>
-</div>`).join('')}
-
+${scoreRows}
 <div class="dd-div"></div>
 <div class="dd-stitle">⚡ Technology</div>
-<div class="tech-tags">${p.tech.map(t => `<span class="tag">${t}</span>`).join('')}</div>
-
+<div class="tech-tags">${techHtml}</div>
 <div class="dd-div"></div>
-<div class="dd-stitle">⭐ ${p.reviews.toLocaleString()} reviews</div>
-${p.pros.map(x => `<div class="rev pro">✓ ${x}</div>`).join('')}
-${p.cons.map(x => `<div class="rev con">💡 ${x}</div>`).join('')}
-
-<div class="dd-div"></div>
-<div class="dd-stitle">🏅 Did you know</div>
-<p class="fun-fact">${p.fact}</p>
-
-<button class="cta-btn" onclick="window.open('#','_blank')">Buy on ${best.name} — $${best.price}</button>
-<p class="cta-sub">Best price · ${best.del}</p>`;
-
-  animateBars();
+<div class="dd-stitle">⭐ Reviews</div>
+${data.prosSummary ? '<div class="rev pro">✓ ' + data.prosSummary + '</div>' : ''}
+${data.consSummary ? '<div class="rev con">💡 ' + data.consSummary + '</div>' : ''}
+${data.funFact ? '<div class="dd-div"></div><div class="dd-stitle">🏅 Did you know</div><p class="fun-fact">' + data.funFact + '</p>' : ''}`;
+  requestAnimationFrame(animateBars);
 }
 
 function openDD(id) {
-  curIdx = id;
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  curIdx = products.indexOf(p);
   buildDots();
-  renderContent(curIdx);
+  populateDeepDiveBasic(p);
   ddScroll.scrollTop = 0;
-
   overlay.classList.add('on');
   ddPanel.style.transition = 'none';
-  ddPanel.style.transform = 'translateY(100%)';
+  ddPanel.style.transform  = 'translateY(100%)';
   requestAnimationFrame(() => requestAnimationFrame(() => {
     ddPanel.style.transition = 'transform 0.35s cubic-bezier(0.32,0.72,0,1)';
-    ddPanel.style.transform = 'translateY(0)';
+    ddPanel.style.transform  = 'translateY(0)';
     panelOpen = true;
   }));
+  enrichProduct(p).then(function(data) {
+    if (panelOpen && products[curIdx] && products[curIdx].id === id) {
+      populateDeepDiveEnriched(data);
+    }
+  }).catch(function() {});
 }
 
 function closeDD() {
   ddPanel.style.transition = 'transform 0.3s cubic-bezier(0.32,0.72,0,1)';
-  ddPanel.style.transform = 'translateY(100%)';
+  ddPanel.style.transform  = 'translateY(100%)';
   overlay.classList.remove('on');
   panelOpen = false;
 }
@@ -644,79 +601,190 @@ function overlayClick(e) { if (e.target === overlay) closeDD(); }
 
 function navigate(dir) {
   const next = curIdx + dir;
-  if (next < 0 || next >= PRODUCTS.length) return;
-
+  if (next < 0 || next >= products.length) return;
   const slideOut = dir > 0 ? -22 : 22;
   const slideIn  = dir > 0 ?  22 : -22;
-
   ddContent.style.transition = 'opacity 0.15s ease,transform 0.15s ease';
-  ddContent.style.opacity = '0';
-  ddContent.style.transform = `translateX(${slideOut}px)`;
-
-  setTimeout(() => {
+  ddContent.style.opacity    = '0';
+  ddContent.style.transform  = 'translateX(' + slideOut + 'px)';
+  const nextP = products[next];
+  setTimeout(function() {
     curIdx = next;
-    renderContent(curIdx);
+    populateDeepDiveBasic(nextP);
     syncDots();
     ddScroll.scrollTop = 0;
     ddContent.style.transition = 'none';
-    ddContent.style.transform = `translateX(${slideIn}px)`;
-    ddContent.style.opacity = '0';
-    requestAnimationFrame(() => requestAnimationFrame(() => {
+    ddContent.style.transform  = 'translateX(' + slideIn + 'px)';
+    ddContent.style.opacity    = '0';
+    requestAnimationFrame(function() { requestAnimationFrame(function() {
       ddContent.style.transition = 'opacity 0.22s ease,transform 0.22s ease';
-      ddContent.style.opacity = '1';
-      ddContent.style.transform = 'translateX(0)';
-    }));
+      ddContent.style.opacity    = '1';
+      ddContent.style.transform  = 'translateX(0)';
+    }); });
+    enrichProduct(nextP).then(function(data) {
+      if (panelOpen && curIdx === next) populateDeepDiveEnriched(data);
+    }).catch(function() {});
   }, 150);
 }
 
-// ══ TOUCH ══
-let tx0 = 0, ty0 = 0, tt0 = 0, dragging = false;
+// ── Touch ─────────────────────────────────────────────────────────────────
+var tx0 = 0, ty0 = 0, tt0 = 0, dragging = false;
 
-ddPanel.addEventListener('touchstart', e => {
-  tx0 = e.touches[0].clientX;
-  ty0 = e.touches[0].clientY;
-  tt0 = Date.now();
+ddPanel.addEventListener('touchstart', function(e) {
+  tx0 = e.touches[0].clientX; ty0 = e.touches[0].clientY; tt0 = Date.now();
   dragging = true;
   ddPanel.style.transition = 'none';
-}, {passive:true});
+}, { passive: true });
 
-ddPanel.addEventListener('touchmove', e => {
+ddPanel.addEventListener('touchmove', function(e) {
   if (!dragging) return;
-  const dx = e.touches[0].clientX - tx0;
-  const dy = e.touches[0].clientY - ty0;
+  var dx = e.touches[0].clientX - tx0, dy = e.touches[0].clientY - ty0;
   if (dy > 0 && ddScroll.scrollTop <= 0 && Math.abs(dy) > Math.abs(dx)) {
-    ddPanel.style.transform = `translateY(${dy * 0.36}px)`;
+    ddPanel.style.transform = 'translateY(' + (dy * 0.36) + 'px)';
     e.preventDefault();
   }
-}, {passive:false});
+}, { passive: false });
 
-ddPanel.addEventListener('touchend', e => {
+ddPanel.addEventListener('touchend', function(e) {
   if (!dragging) return;
   dragging = false;
-  const dx = e.changedTouches[0].clientX - tx0;
-  const dy = e.changedTouches[0].clientY - ty0;
-  const vel = dy / (Date.now() - tt0);
-
+  var dx  = e.changedTouches[0].clientX - tx0;
+  var dy  = e.changedTouches[0].clientY - ty0;
+  var vel = dy / (Date.now() - tt0);
   if (dy > 80 && vel > 0.22 && ddScroll.scrollTop <= 0) { closeDD(); return; }
-
   ddPanel.style.transition = 'transform 0.3s cubic-bezier(0.32,0.72,0,1)';
-  ddPanel.style.transform = 'translateY(0)';
-
+  ddPanel.style.transform  = 'translateY(0)';
   if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.4) {
     dx < 0 ? navigate(1) : navigate(-1);
   }
-}, {passive:true});
+}, { passive: true });
 
-// Keyboard
-document.addEventListener('keydown', e => {
+document.addEventListener('keydown', function(e) {
   if (!panelOpen) return;
-  if (e.key === 'Escape') closeDD();
+  if (e.key === 'Escape')     closeDD();
   if (e.key === 'ArrowRight') navigate(1);
   if (e.key === 'ArrowLeft')  navigate(-1);
 });
 
-// ══ INIT ══
-render();
+// ── Send Message ──────────────────────────────────────────────────────────
+async function sendMessage(text) {
+  if (!text.trim() || isLoading) return;
+  isLoading = true;
+
+  addMessage('user', text);
+  messages.push({ role: 'user', content: text });
+  const typId = showTyping();
+
+  try {
+    const data    = await apiFetch('/api/chat', { messages });
+    removeTyping(typId);
+    const content  = data.content || '';
+    const tokMatch = content.match(/SEARCH_MODELS:(\{[\s\S]*\})/);
+
+    if (tokMatch) {
+      const displayText = content.slice(0, content.indexOf('SEARCH_MODELS:')).trim();
+      if (displayText) addMessage('ai', displayText);
+      messages.push({ role: 'assistant', content });
+      userProfile = extractProfile(messages);
+      updateProfileDisplay();
+
+      let modelData;
+      try { modelData = JSON.parse(tokMatch[1]); }
+      catch (e) { addMessage('ai', "Let me search for the best options for you…"); isLoading = false; return; }
+
+      const srchTypId = showTyping();
+      try {
+        const found = await apiFetch('/api/search', { models: modelData.models || [], userProfile });
+        removeTyping(srchTypId);
+
+        if (!found.length) {
+          addMessage('ai', "I couldn't find exact matches right now. Could you try rephrasing your search?");
+          isLoading = false; return;
+        }
+
+        products = found;
+        const hasWhy  = !!products[0].why;
+        const useCase = (products[0] && products[0].category) || 'your needs';
+        addMessage('ai', hasWhy
+          ? "Here are my expert picks for you — each selected specifically for " + useCase + ". I've matched the best models to your profile and found real prices across retailers."
+          : "I found " + products.length + " options specifically for you — here are your top picks:");
+
+        renderProducts();
+
+        const cw = document.getElementById('shopai-chips');
+        if (cw) cw.style.display = '';
+        const ms = document.getElementById('mScroll');
+        const mg = document.getElementById('mGrid');
+        if (ms && mg) setTimeout(function() { mg.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
+
+      } catch (e) {
+        removeTyping(srchTypId);
+        addMessage('ai', "I had trouble searching right now. Please try again in a moment.");
+      }
+
+    } else {
+      messages.push({ role: 'assistant', content });
+      addMessage('ai', content);
+    }
+
+  } catch (e) {
+    removeTyping(typId);
+    addMessage('ai', "I'm having trouble connecting. Please check your connection and try again.");
+  }
+
+  isLoading = false;
+}
+
+// ── Input wiring ──────────────────────────────────────────────────────────
+function wireInput(inp, btn) {
+  if (!inp) return;
+  inp.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); go(); }
+  });
+  if (btn) btn.addEventListener('click', go);
+  function go() {
+    var v = inp.value.trim();
+    if (!v) return;
+    inp.value = '';
+    sendMessage(v);
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+(function init() {
+  var mScrollEl = document.getElementById('mScroll');
+  if (mScrollEl) {
+    mScrollEl.innerHTML = [
+      '<div class="chat" id="shopai-chat"></div>',
+      '<div class="pin-tray" id="shopai-pin-tray" style="display:none">',
+      '  <div class="pin-tray-lbl">📌 Your shortlist</div>',
+      '  <div class="pin-row" id="shopai-pin-row"></div>',
+      '</div>',
+      '<div class="sec-label" id="shopai-sec-label" style="display:none"></div>',
+      '<div class="m-grid" id="mGrid"></div>',
+      '<div class="chips-wrap" id="shopai-chips" style="display:none;margin-top:12px">',
+      '  <div class="chips-inner">',
+      '    <button class="chip" onclick="chipTap(this)">🔍 More like these</button>',
+      '    <button class="chip" onclick="chipTap(this)">🏷️ Same brand</button>',
+      '    <button class="chip" onclick="chipTap(this)">💰 Lower price</button>',
+      '    <button class="chip" onclick="chipTap(this)">⚡ Better tech</button>',
+      '    <button class="chip" onclick="chipTap(this)">🎨 Other colors</button>',
+      '    <button class="chip" onclick="chipTap(this)">🏆 Premium picks</button>',
+      '  </div>',
+      '</div>'
+    ].join('');
+  }
+
+  try {
+    var saved = localStorage.getItem('shopai_profile');
+    if (saved) userProfile = JSON.parse(saved);
+  } catch (e) {}
+
+  wireInput(document.getElementById('mInput'), document.getElementById('mSend'));
+  wireInput(document.getElementById('dInput'), document.getElementById('dSend'));
+
+  addMessage('ai', "Hi! I'm ShopAI — your personal shoe expert. Tell me what you're looking for and I'll find the best deals across every store.");
+})();
 </script>
 </body>
 </html>
