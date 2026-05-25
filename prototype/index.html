@@ -108,6 +108,17 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
 .chip{display:inline-flex;align-items:center;padding:8px 13px;border:1px solid var(--border);border-radius:20px;font-size:13px;color:var(--tx1);background:#fff;cursor:pointer;white-space:nowrap;font-family:var(--font);transition:all 0.1s;}
 .chip.hit{background:var(--tx1);color:#fff;border-color:var(--tx1);}
 
+/* Inline action chips (inside AI bubbles) */
+.msg-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;}
+.msg-chip{display:inline-flex;align-items:center;padding:5px 10px;border:1px solid var(--border);border-radius:14px;font-size:12px;color:var(--tx1);background:#fff;cursor:pointer;white-space:nowrap;font-family:var(--font);transition:background 0.12s,color 0.12s,border-color 0.12s;}
+.msg-chip:active,.msg-chip.hit{background:var(--tx1);color:#fff;border-color:var(--tx1);}
+.chip-inline{color:var(--accent);text-decoration:underline;cursor:pointer;font-weight:600;}
+
+/* Enrich loading animation */
+.enrich-progress{height:2px;background:var(--border);border-radius:1px;margin:10px 0 4px;overflow:hidden;}
+.enrich-progress-fill{height:100%;width:35%;background:var(--tx3);border-radius:1px;animation:enrichSlide 1.4s ease-in-out infinite;}
+@keyframes enrichSlide{0%{transform:translateX(-200%);}100%{transform:translateX(500%);}}
+
 /* Input */
 .input-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);padding:10px 16px calc(22px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:10px;z-index:20;}
 .inp{flex:1;height:44px;background:#F0F0F0;border-radius:22px;border:none;padding:0 18px;font-size:15px;font-family:var(--font);color:var(--tx1);outline:none;-webkit-appearance:none;}
@@ -281,14 +292,37 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
 
 <script>
 // ── State ─────────────────────────────────────────────────────────────────
-let products    = [];
-let pinned      = new Set();
-let curIdx      = 0;
-let panelOpen   = false;
-let messages    = [];
-let userProfile = {};
-let enrichCache = {};
-let isLoading   = false;
+let products         = [];
+let pinned           = new Set();
+let curIdx           = 0;
+let panelOpen        = false;
+let messages         = [];
+let userProfile      = {};
+let enrichCache      = {};
+let isLoading        = false;
+let enrichLoadTimer  = null;
+
+const ENRICH_LABELS = [
+  '🔄 Scanning expert reviews…',
+  '🔄 Analyzing value for money…',
+  '🔄 Checking buyer feedback…',
+  '🔄 Building your expert report…'
+];
+
+function startEnrichAnim() {
+  stopEnrichAnim();
+  let i = 0;
+  enrichLoadTimer = setInterval(() => {
+    i = (i + 1) % ENRICH_LABELS.length;
+    const el = document.querySelector('.enrich-loading-label');
+    if (el) el.textContent = ENRICH_LABELS[i];
+  }, 2000);
+}
+
+function stopEnrichAnim() {
+  clearInterval(enrichLoadTimer);
+  enrichLoadTimer = null;
+}
 
 // ── Maps ──────────────────────────────────────────────────────────────────
 const INDS = {
@@ -312,7 +346,14 @@ function stars(r) {
 function parseMarkdown(t) {
   t = t.replace(/```json[\s\S]*?```/g, '');
   t = t.replace(/```[\s\S]*?```/g, '');
-  t = t.replace(/SEARCH_MODELS:\{[\s\S]*?\}/g, '');
+  t = t.replace(/SEARCH_MODELS:\s*\{[\s\S]*\}/g, '');
+  // Transform the footer action line (starts with 🔍, must have | separators) into clickable chips
+  t = t.replace(/^(🔍[^\n]+\|[^\n]+)$/gm, (match) => {
+    const items = match.split(/\s*\|\s*/);
+    return '<div class="msg-chips">' +
+      items.map(item => `<button class="msg-chip" onclick="chipTap(this)">${item.trim()}</button>`).join('') +
+      '</div>';
+  });
   return t
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
@@ -447,8 +488,22 @@ function renderProducts() {
 
 function togglePin(e, id) {
   e.stopPropagation();
-  pinned.has(id) ? pinned.delete(id) : pinned.add(id);
+  const wasPinned = pinned.has(id);
+  wasPinned ? pinned.delete(id) : pinned.add(id);
   renderProducts();
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  if (!wasPinned) {
+    const esc = p.name.replace(/'/g, "\\'");
+    addMessage('ai',
+      `Good taste — <strong>${p.name}</strong> pinned to your shortlist 📌\n\nNow you can:\n` +
+      `🔍 <span class='chip-inline' onclick='sendMessage("Compare my pinned shoes")'>Compare pinned shoes</span>\n` +
+      `🎯 <span class='chip-inline' onclick='sendMessage("Find similar to ${esc}")'>Find similar</span>\n` +
+      `💰 <span class='chip-inline' onclick='sendMessage("Better price for ${esc}")'>Find better price</span>`
+    );
+  } else {
+    addMessage('ai', p.name + ' removed from your shortlist.');
+  }
 }
 
 function updatePinTray() {
@@ -483,9 +538,9 @@ function updatePinTray() {
 }
 
 function findSimilar() {
-  const list = products.filter(p => pinned.has(p.id));
-  if (!list.length) return;
-  sendMessage('Find more options similar to my pinned shoes: ' + list.map(p => p.brand + ' ' + (p.name || '')).join(', '));
+  const names = [...pinned].map(id => products.find(p => p.id === id)?.name).filter(Boolean);
+  if (!names.length) return;
+  sendMessage('Find similar to my pinned shoes: ' + names.join(', '));
 }
 
 // ── Chips ─────────────────────────────────────────────────────────────────
@@ -538,13 +593,16 @@ function populateDeepDiveBasic(p) {
 <div style="margin-top:6px"><span class="ppill ${ind.cls}">${ind.lbl} price</span></div>
 <div id="enrich-section">
   <div class="dd-div"></div>
-  <div class="dd-stitle" style="color:var(--tx3)">🔄 Loading expert analysis…</div>
+  <div class="dd-stitle enrich-loading-label" style="color:var(--tx3)">🔄 Scanning expert reviews…</div>
+  <div class="enrich-progress"><div class="enrich-progress-fill"></div></div>
 </div>
 <a class="cta-btn" href="${p.link || '#'}" target="_blank" rel="noopener noreferrer" style="display:block;text-decoration:none;text-align:center;line-height:54px;margin-top:22px">Buy on ${p.source || ''} — $${p.price || ''}</a>
 <p class="cta-sub">Best price · ${p.delivery || ''}</p>`;
+  startEnrichAnim();
 }
 
 function populateDeepDiveEnriched(data) {
+  stopEnrichAnim();
   const el = document.getElementById('enrich-section');
   if (!el) return;
   const scores   = data.scores || {};
@@ -591,10 +649,11 @@ function openDD(id) {
     if (panelOpen && products[curIdx] && products[curIdx].id === id) {
       populateDeepDiveEnriched(data);
     }
-  }).catch(function() {});
+  }).catch(function() { stopEnrichAnim(); });
 }
 
 function closeDD() {
+  stopEnrichAnim();
   ddPanel.style.transition = 'transform 0.3s cubic-bezier(0.32,0.72,0,1)';
   ddPanel.style.transform  = 'translateY(100%)';
   overlay.classList.remove('on');
@@ -627,7 +686,7 @@ function navigate(dir) {
     }); });
     enrichProduct(nextP).then(function(data) {
       if (panelOpen && curIdx === next) populateDeepDiveEnriched(data);
-    }).catch(function() {});
+    }).catch(function() { stopEnrichAnim(); });
   }, 150);
 }
 
@@ -683,10 +742,10 @@ async function sendMessage(text) {
     const data    = await apiFetch('/api/chat', { messages });
     removeTyping(typId);
     const content  = data.content || '';
-    const tokMatch = content.match(/SEARCH_MODELS:(\{[\s\S]*\})/);
+    const tokMatch = content.match(/SEARCH_MODELS:\s*(\{[\s\S]*\})/);
 
     if (tokMatch) {
-      const displayText = content.slice(0, content.indexOf('SEARCH_MODELS:')).trim();
+      const displayText = content.slice(0, content.indexOf('SEARCH_MODELS:')).replace(/\s*```[a-z]*\s*$/g, '').trim();
       if (displayText) addMessage('ai', displayText);
       messages.push({ role: 'assistant', content });
       userProfile = extractProfile(messages);
