@@ -614,12 +614,24 @@ function showPinOnboarding(p) {
 
   chatEl.style.overflow = 'visible';
   chatEl.appendChild(chipRow);
+  diagChips(chipRow);
   scrollChat();
   setTimeout(() => {
     const scroll = document.querySelector('.m-scroll') ||
                    document.querySelector('.d-scroll');
     if (scroll) scroll.scrollTop = scroll.scrollHeight + 200;
   }, 150);
+}
+
+function diagChips(el) {
+  let node = el;
+  while (node && node !== document.body) {
+    const s = window.getComputedStyle(node);
+    if (s.overflow === 'hidden' || s.overflowY === 'hidden') {
+      console.warn('[diag] overflow:hidden found on:', node.id || node.className, s.overflow, s.overflowY);
+    }
+    node = node.parentElement;
+  }
 }
 
 function updatePinTray() {
