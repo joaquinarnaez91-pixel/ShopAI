@@ -75,9 +75,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
 .c-photo img{width:100%;height:100%;object-fit:contain;object-position:center;}
 
 /* Pin btn */
-.pin-btn{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;background:#fff;box-shadow:0 1px 5px rgba(0,0,0,0.18);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3;font-size:13px;transition:background 0.15s,transform 0.1s;flex-shrink:0;}
+.pin-btn{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3;font-size:15px;transition:background 0.15s,transform 0.1s;flex-shrink:0;}
 .pin-btn:active{transform:scale(0.88);}
-.pin-btn.on{background:#111;}
+.pin-btn.on{background:var(--tx1);}
 
 /* Badge */
 .badge{position:absolute;top:8px;left:8px;z-index:3;padding:3px 8px;border-radius:20px;font-size:9px;font-weight:700;letter-spacing:0.2px;}
@@ -291,15 +291,17 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
 
 <script>
 // ── State ─────────────────────────────────────────────────────────────────
-let products         = [];
-let pinned           = new Set();
-let curIdx           = 0;
-let panelOpen        = false;
-let messages         = [];
-let userProfile      = {};
-let enrichCache      = {};
-let isLoading        = false;
-let enrichLoadTimer  = null;
+let products          = [];
+let pins              = [];           // ordered array of pinned product ids
+let pinnedProducts    = [];           // full product objects, survives re-renders
+let hasSentPinMessage = false;
+let curIdx            = 0;
+let panelOpen         = false;
+let messages          = [];
+let userProfile       = {};
+let enrichCache       = {};
+let isLoading         = false;
+let enrichLoadTimer   = null;
 
 const ENRICH_LABELS = [
   '🔄 Scanning expert reviews…',
@@ -453,16 +455,16 @@ function shortName(p) {
 // ── Cards ─────────────────────────────────────────────────────────────────
 function makeCard(p, isFirst) {
   const ind   = INDS[p.priceIndicator] || INDS.USUAL;
-  const isPin = pinned.has(p.id);
-  const pinSvg = isPin
-    ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'
-    : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
+  const isPin = pins.includes(p.id);
+  const topBadge = isPin
+    ? '<div class="badge b-expert">📌 Saved</div>'
+    : (p.why ? '<div class="badge b-expert">Expert Pick</div>' : '');
   return `
 <div class="card${isFirst ? ' tut-ring' : ''}" data-id="${p.id}" onclick="openDD(${p.id})">
   <div class="c-photo">
     <img src="${p.img || ''}" alt="${p.brand} ${p.name || ''}" loading="lazy" onerror="this.style.display='none'">
-    ${p.why ? '<div class="badge b-expert">Expert Pick</div>' : ''}
-    <button class="pin-btn${isPin ? ' on' : ''}" onclick="event.stopPropagation(); togglePin(event,${p.id})" aria-label="Pin">${pinSvg}</button>
+    ${topBadge}
+    <button class="pin-btn${isPin ? ' on' : ''}" onclick="event.stopPropagation(); togglePin(event,${p.id})" aria-label="${isPin ? 'Unpin' : 'Pin'}">📌</button>
   </div>
   <div class="c-body">
     <div class="c-brand">${p.brand || ''}</div>
@@ -479,14 +481,38 @@ function makeCard(p, isFirst) {
 }
 
 function renderProducts() {
-  const mg   = document.getElementById('mGrid');
-  const dg   = document.getElementById('dGrid');
-  const html = products.map((p, i) => makeCard(p, i === 0)).join('');
-  if (mg) mg.innerHTML = html;
-  if (dg) dg.innerHTML = html;
+  const pinned = pinnedProducts.filter(p => pins.includes(p.id));
+  const rest   = products.filter(p => !pins.includes(p.id));
+
+  ['mGrid', 'dGrid'].forEach(gridId => {
+    const grid = document.getElementById(gridId);
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    pinned.forEach((p, i) => {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = makeCard(p, i === 0);
+      grid.appendChild(tmp.firstElementChild);
+    });
+
+    if (pinned.length > 0 && rest.length > 0) {
+      const div = document.createElement('div');
+      div.style.cssText = 'grid-column:1/-1;padding:8px 0 2px;font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px';
+      div.textContent = 'More recommendations';
+      grid.appendChild(div);
+    }
+
+    rest.forEach((p, i) => {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = makeCard(p, pinned.length === 0 && i === 0);
+      grid.appendChild(tmp.firstElementChild);
+    });
+  });
+
   setTimeout(() => document.querySelectorAll('.tut-ring').forEach(el => el.classList.remove('tut-ring')), 3200);
 
-  const label = products.length + ' expert picks for you';
+  const total = pinned.length + rest.length;
+  const label = total + ' expert picks for you';
   const sl = document.getElementById('shopai-sec-label');
   const dl = document.getElementById('dProdCount');
   if (sl) { sl.textContent = label; sl.style.display = ''; }
@@ -497,101 +523,86 @@ function renderProducts() {
 
 function togglePin(e, id) {
   e.stopPropagation();
-  const wasPinned = pinned.has(id);
-  wasPinned ? pinned.delete(id) : pinned.add(id);
-  renderProducts();
-  const p = products.find(x => x.id === id);
+  const p = products.find(x => x.id === id) || pinnedProducts.find(x => x.id === id);
   if (!p) return;
-  if (wasPinned) {
-    addMessage('ai', shortName(p) + ' removed from shortlist.');
+
+  if (pins.includes(id)) {
+    pins = pins.filter(x => x !== id);
+    pinnedProducts = pinnedProducts.filter(x => x.id !== id);
   } else {
-    onPin(p);
+    if (pins.length >= 2) return;
+    pins.push(id);
+    if (!pinnedProducts.find(x => x.id === id)) pinnedProducts.push(p);
+  }
+
+  renderProducts();
+  updatePinTray();
+
+  if (pins.includes(id) && !hasSentPinMessage) {
+    hasSentPinMessage = true;
+    showPinOnboarding(p);
+  } else if (!pins.includes(id)) {
+    addMessage('ai', shortName(p) + ' removed from shortlist.');
+    scrollBottom();
   }
 }
 
-async function onPin(p) {
-  // 1. Confirmation bubble
-  addMessage('ai', '📌 <strong>' + shortName(p) + '</strong> saved! Finding more like this…');
-  scrollBottom();
+function showPinOnboarding(p) {
+  const chatEl = document.getElementById('shopai-chat');
+  if (!chatEl) return;
 
-  // 2. Silently fetch similar shoes (not added to chat message history)
-  const query = 'Find me 6 shoes similar to the ' + p.brand + ' ' + p.name +
-    ' — same category, similar price range $' + Math.round(p.price * 0.8) +
-    ' to $' + Math.round(p.price * 1.3) + '. Output ONLY SEARCH_MODELS JSON, no text.';
+  document.getElementById('pin-onboard')?.remove();
 
-  try {
-    const data = await apiFetch('/api/chat', {
-      messages: [...messages, { role: 'user', content: query }]
-    });
-    const content = data.content || '';
-    const tokMatch = content.match(/SEARCH_MODELS:\s*(\{[\s\S]*\})/);
-    if (tokMatch) {
-      let modelData;
-      try { modelData = JSON.parse(tokMatch[1]); } catch(e) { modelData = null; }
+  const wrap = document.createElement('div');
+  wrap.id = 'pin-onboard';
+  wrap.className = 'msg';
+  wrap.innerHTML =
+    '<div class="av ai" style="font-size:16px">🤖</div>' +
+    '<div class="bbl ai" style="max-width:90%">' +
+    '📌 <strong>' + (p.brand || '') + ' ' + shortName(p) + '</strong> saved to your shortlist!<br><br>' +
+    'Pin up to 2 shoes you love — they stay at the top as your finalist tray. ' +
+    'The more specific you are about what you like, the better I can find your perfect match.<br><br>' +
+    '<strong>What caught your eye about this one?</strong>' +
+    '</div>';
+  chatEl.appendChild(wrap);
 
-      if (modelData) {
-        const found = await apiFetch('/api/search', { models: modelData.models || [], userProfile });
-        if (found.length) {
-          const newProds = found.map((pr, i) => ({ ...pr, id: products.length + i + 1 }));
-          products = [...products, ...newProds];
+  const chips = document.createElement('div');
+  chips.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;padding:6px 0 10px;margin-left:36px';
 
-          // Append divider + new cards to both grids
-          ['mGrid', 'dGrid'].forEach(gridId => {
-            const grid = document.getElementById(gridId);
-            if (!grid) return;
-            const divider = document.createElement('div');
-            divider.style.cssText = 'grid-column:1/-1;padding:8px 0 4px;font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px';
-            divider.textContent = 'More like ' + (p.brand || 'this');
-            grid.appendChild(divider);
-            newProds.forEach(np => {
-              const tmp = document.createElement('div');
-              tmp.innerHTML = makeCard(np, false);
-              grid.appendChild(tmp.firstElementChild);
-            });
-          });
-
-          // Update count label
-          const sl = document.getElementById('shopai-sec-label');
-          const dl = document.getElementById('dProdCount');
-          const lbl = products.length + ' picks for you';
-          if (sl) sl.textContent = lbl;
-          if (dl) dl.textContent = lbl;
-
-          addMessage('ai', 'Here are ' + found.length + ' more options similar to the ' + shortName(p) + ' 👇');
+  [
+    { label: '💬 Tell me what I like', action: 'focus' },
+    { label: '🔍 More like these',     msg: 'Find more shoes like my pinned ones' },
+    { label: '🏷️ Same brand',          msg: 'Show more from ' + (p.brand || 'this brand') },
+    { label: '💰 Similar price',       msg: 'Find shoes in a similar price range to my pinned shoes' },
+    { label: '⚡ Similar tech/style',  msg: 'Find shoes with similar technology and style to ' + shortName(p) },
+    { label: '🎨 Similar colors',      msg: 'Find shoes in similar colors to my pinned shoes' },
+    { label: '🏆 More premium',        msg: 'Show premium upgrades similar to my pinned shoes' }
+  ].forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'chip';
+    btn.textContent = c.label;
+    btn.onclick = () => {
+      chips.remove();
+      if (c.action === 'focus') {
+        const inp = document.getElementById('mInput') || document.getElementById('dInput');
+        if (inp) {
+          inp.placeholder = 'What do you like about it? (comfort, style, price, brand...)';
+          inp.focus();
         }
+      } else {
+        sendMessage(c.msg);
       }
-    }
-  } catch(e) {
-    addMessage('ai', 'Could not load similar shoes right now — try "Find similar" below.');
-  }
-
-  // 3. Action chips (appended to both chat threads)
-  const chipDefs = [
-    { label: '⚖️ Compare pinned', msg: () => 'Compare: ' + [...pinned].map(id => { const x = products.find(q => q.id === id); return x ? shortName(x) : null; }).filter(Boolean).join(' vs ') },
-    { label: '💰 Lower budget',   msg: () => 'Show similar to ' + shortName(p) + ' but cheaper' },
-    { label: '🏆 More premium',   msg: () => 'Show premium alternatives to ' + shortName(p) }
-  ];
-
-  ['shopai-chat', 'dMsgs'].forEach(containerId => {
-    const el = document.getElementById(containerId);
-    if (!el) return;
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;padding:4px 0 10px';
-    chipDefs.forEach(c => {
-      const btn = document.createElement('button');
-      btn.className = 'chip';
-      btn.textContent = c.label;
-      btn.onclick = () => sendMessage(c.msg());
-      wrap.appendChild(btn);
-    });
-    el.appendChild(wrap);
+    };
+    chips.appendChild(btn);
   });
 
+  chatEl.appendChild(chips);
+  chatEl.scrollTop = chatEl.scrollHeight;
   scrollBottom();
 }
 
 function updatePinTray() {
-  const pinnedList = products.filter(p => pinned.has(p.id));
+  const pinnedList = pinnedProducts.filter(p => pins.includes(p.id));
   const row  = document.getElementById('shopai-pin-row');
   const tray = document.getElementById('shopai-pin-tray');
   const dg   = document.getElementById('dPinsGrid');
@@ -622,7 +633,7 @@ function updatePinTray() {
 }
 
 function findSimilar() {
-  const names = [...pinned].map(id => products.find(p => p.id === id)?.name).filter(Boolean);
+  const names = pins.map(id => pinnedProducts.find(p => p.id === id)?.name).filter(Boolean);
   if (!names.length) return;
   sendMessage('Find similar to my pinned shoes: ' + names.join(', '));
 }
@@ -732,7 +743,7 @@ ${data.funFact ? '<div class="dd-div"></div><div class="dd-stitle">🏅 Did you 
 }
 
 function openDD(id) {
-  const p = products.find(x => x.id === id);
+  const p = products.find(x => x.id === id) || pinnedProducts.find(x => x.id === id);
   if (!p) return;
   curIdx = products.indexOf(p);
   buildDots();
@@ -840,7 +851,15 @@ async function sendMessage(text) {
   const typId = showTyping();
 
   try {
-    const data    = await apiFetch('/api/chat', { messages });
+    const chatMessages = pinnedProducts.length > 0
+      ? [...messages.slice(0, -1), {
+          role: 'user',
+          content: messages[messages.length - 1].content +
+            '\n\n[Context: User has pinned these shoes as favorites: ' +
+            pinnedProducts.map(p => p.brand + ' ' + shortName(p)).join(', ') + ']'
+        }]
+      : messages;
+    const data    = await apiFetch('/api/chat', { messages: chatMessages });
     removeTyping(typId);
     const content  = data.content || '';
     const tokMatch = content.match(/SEARCH_MODELS:\s*(\{[\s\S]*\})/);
