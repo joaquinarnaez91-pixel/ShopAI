@@ -75,9 +75,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
 .c-photo img{width:100%;height:100%;object-fit:contain;object-position:center;}
 
 /* Pin btn */
-.pin-btn{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3;font-size:15px;transition:background 0.15s,transform 0.1s;flex-shrink:0;}
+.pin-btn{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3;color:#999;transition:background 0.15s,color 0.15s,transform 0.1s;flex-shrink:0;}
 .pin-btn:active{transform:scale(0.88);}
-.pin-btn.on{background:var(--tx1);}
+.pin-btn.on{background:#111;color:#fff;}
 
 /* Badge */
 .badge{position:absolute;top:8px;left:8px;z-index:3;padding:3px 8px;border-radius:20px;font-size:9px;font-weight:700;letter-spacing:0.2px;}
@@ -457,14 +457,14 @@ function makeCard(p, isFirst) {
   const ind   = INDS[p.priceIndicator] || INDS.USUAL;
   const isPin = pins.includes(p.id);
   const topBadge = isPin
-    ? '<div class="badge b-expert">📌 Saved</div>'
+    ? '<div class="badge b-expert">★ Saved</div>'
     : (p.why ? '<div class="badge b-expert">Expert Pick</div>' : '');
   return `
 <div class="card${isFirst ? ' tut-ring' : ''}" data-id="${p.id}" onclick="openDD(${p.id})">
   <div class="c-photo">
     <img src="${p.img || ''}" alt="${p.brand} ${p.name || ''}" loading="lazy" onerror="this.style.display='none'">
     ${topBadge}
-    <button class="pin-btn${isPin ? ' on' : ''}" onclick="event.stopPropagation(); togglePin(event,${p.id})" aria-label="${isPin ? 'Unpin' : 'Pin'}">📌</button>
+    <button class="pin-btn${isPin ? ' on' : ''}" onclick="event.stopPropagation(); togglePin(event,${p.id})" aria-label="${isPin ? 'Unpin' : 'Pin'}"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
   </div>
   <div class="c-body">
     <div class="c-brand">${p.brand || ''}</div>
@@ -537,6 +537,7 @@ function togglePin(e, id) {
 
   renderProducts();
   updatePinTray();
+  console.log('[pin] togglePin called, pins now:', pins);
 
   if (pins.includes(id) && !hasSentPinMessage) {
     hasSentPinMessage = true;
@@ -548,7 +549,10 @@ function togglePin(e, id) {
 }
 
 function showPinOnboarding(p) {
-  const chatEl = document.getElementById('shopai-chat');
+  console.log('[pin] showPinOnboarding fired for', p?.name);
+  const chatEl = document.getElementById('shopai-chat') ||
+                 document.getElementById('dMsgs') ||
+                 document.querySelector('.chat');
   if (!chatEl) return;
 
   document.getElementById('pin-onboard')?.remove();
