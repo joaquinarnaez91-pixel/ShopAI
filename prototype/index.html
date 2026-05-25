@@ -112,8 +112,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
 .msg-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;}
 .msg-chip{display:inline-flex;align-items:center;padding:5px 10px;border:1px solid var(--border);border-radius:14px;font-size:12px;color:var(--tx1);background:#fff;cursor:pointer;white-space:nowrap;font-family:var(--font);transition:background 0.12s,color 0.12s,border-color 0.12s;}
 .msg-chip:active,.msg-chip.hit{background:var(--tx1);color:#fff;border-color:var(--tx1);}
-.chip-inline{color:var(--accent);text-decoration:underline;cursor:pointer;font-weight:600;}
-.chip-inline:hover{opacity:0.75;}
 
 /* Enrich loading animation */
 .enrich-progress{height:2px;background:var(--border);border-radius:1px;margin:10px 0 4px;overflow:hidden;}
@@ -496,33 +494,42 @@ function togglePin(e, id) {
   const p = products.find(x => x.id === id);
   if (!p) return;
   if (wasPinned) {
-    addMessage('ai', p.name + ' removed from your shortlist.');
+    addMessage('ai', p.name + ' removed from shortlist.');
   } else {
-    const msg =
-      '📌 <strong>' + p.name + '</strong> added to your shortlist!\n\nWhat would you like to do?\n' +
-      '• <span class="chip-inline" onclick="chipAction(\'compare\')">Compare pinned shoes</span>\n' +
-      '• <span class="chip-inline" onclick="chipAction(\'similar:' + p.id + '\')">Find similar shoes</span>\n' +
-      '• <span class="chip-inline" onclick="chipAction(\'deal:' + p.id + '\')">Find better price</span>';
-    addMessage('ai', msg);
+    onPin(p);
   }
 }
 
-function chipAction(action) {
-  const pinnedNames = [...pinned].map(id => {
-    const p = products.find(x => x.id === id);
-    return p ? p.brand + ' ' + p.name : null;
-  }).filter(Boolean);
-  if (action === 'compare') {
-    sendMessage('Compare these shoes for me: ' + pinnedNames.join(' vs '));
-  } else if (action.startsWith('similar:')) {
-    const pid = parseInt(action.split(':')[1]);
-    const p = products.find(x => x.id === pid);
-    if (p) sendMessage('Find me shoes similar to the ' + p.brand + ' ' + p.name);
-  } else if (action.startsWith('deal:')) {
-    const pid = parseInt(action.split(':')[1]);
-    const p = products.find(x => x.id === pid);
-    if (p) sendMessage('Find a better price for the ' + p.brand + ' ' + p.name);
-  }
+function onPin(p) {
+  addMessage('ai', '📌 <strong>' + p.brand + ' ' + p.name + '</strong> saved to your shortlist!');
+
+  const compareLabel = [...pinned].map(id => {
+    const x = products.find(q => q.id === id);
+    return x ? x.brand + ' ' + x.name : null;
+  }).filter(Boolean).join(' vs ');
+
+  const actions = [
+    { label: '🔍 Find similar',  msg: 'Find shoes similar to the ' + p.brand + ' ' + p.name },
+    { label: '⚖️ Compare pinned', msg: 'Compare: ' + compareLabel },
+    { label: '💰 Better price',   msg: 'Find a better price for ' + p.brand + ' ' + p.name }
+  ];
+
+  ['shopai-chat', 'dMsgs'].forEach(containerId => {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;padding:6px 16px 10px';
+    actions.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'chip';
+      btn.textContent = c.label;
+      btn.onclick = () => sendMessage(c.msg);
+      wrap.appendChild(btn);
+    });
+    el.appendChild(wrap);
+  });
+
+  scrollBottom();
 }
 
 function updatePinTray() {
