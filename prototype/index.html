@@ -16,7 +16,7 @@
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font-family:var(--font);-webkit-font-smoothing:antialiased;}
 
 /* ── MOBILE APP ── */
-.m-app{display:flex;flex-direction:column;height:100dvh;overflow:hidden;}
+.m-app{display:flex;flex-direction:column;height:100dvh;overflow-x:hidden;overflow-y:visible;}
 
 /* Header */
 .header{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#fff;border-bottom:1px solid var(--border);flex-shrink:0;position:relative;z-index:10;}
@@ -612,9 +612,7 @@ function showPinOnboarding(p) {
     chipRow.appendChild(btn);
   });
 
-  chatEl.style.overflow = 'visible';
   chatEl.appendChild(chipRow);
-  diagChips(chipRow);
   scrollChat();
   setTimeout(() => {
     const scroll = document.querySelector('.m-scroll') ||
@@ -623,16 +621,6 @@ function showPinOnboarding(p) {
   }, 150);
 }
 
-function diagChips(el) {
-  let node = el;
-  while (node && node !== document.body) {
-    const s = window.getComputedStyle(node);
-    if (s.overflow === 'hidden' || s.overflowY === 'hidden') {
-      console.warn('[diag] overflow:hidden found on:', node.id || node.className, s.overflow, s.overflowY);
-    }
-    node = node.parentElement;
-  }
-}
 
 function updatePinTray() {
   const pinnedList = pinnedProducts.filter(p => pins.includes(p.id));
