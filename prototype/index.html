@@ -441,6 +441,15 @@ async function enrichProduct(p) {
   return data;
 }
 
+// ── Utilities ─────────────────────────────────────────────────────────────
+function shortName(p) {
+  let n = p.name || '';
+  const b = (p.brand || '').toLowerCase();
+  if (n.toLowerCase().startsWith(b + ' ' + b)) n = n.slice(p.brand.length + 1);
+  if (n.toLowerCase().startsWith(b)) n = p.brand + n.slice(p.brand.length);
+  return n.length > 40 ? n.slice(0, 38) + '…' : n;
+}
+
 // ── Cards ─────────────────────────────────────────────────────────────────
 function makeCard(p, isFirst) {
   const ind   = INDS[p.priceIndicator] || INDS.USUAL;
@@ -494,36 +503,85 @@ function togglePin(e, id) {
   const p = products.find(x => x.id === id);
   if (!p) return;
   if (wasPinned) {
-    addMessage('ai', p.name + ' removed from shortlist.');
+    addMessage('ai', shortName(p) + ' removed from shortlist.');
   } else {
     onPin(p);
   }
 }
 
-function onPin(p) {
-  addMessage('ai', '📌 <strong>' + p.brand + ' ' + p.name + '</strong> saved to your shortlist!');
+async function onPin(p) {
+  // 1. Confirmation bubble
+  addMessage('ai', '📌 <strong>' + shortName(p) + '</strong> saved! Finding more like this…');
+  scrollBottom();
 
-  const compareLabel = [...pinned].map(id => {
-    const x = products.find(q => q.id === id);
-    return x ? x.brand + ' ' + x.name : null;
-  }).filter(Boolean).join(' vs ');
+  // 2. Silently fetch similar shoes (not added to chat message history)
+  const query = 'Find me 6 shoes similar to the ' + p.brand + ' ' + p.name +
+    ' — same category, similar price range $' + Math.round(p.price * 0.8) +
+    ' to $' + Math.round(p.price * 1.3) + '. Output ONLY SEARCH_MODELS JSON, no text.';
 
-  const actions = [
-    { label: '🔍 Find similar',  msg: 'Find shoes similar to the ' + p.brand + ' ' + p.name },
-    { label: '⚖️ Compare pinned', msg: 'Compare: ' + compareLabel },
-    { label: '💰 Better price',   msg: 'Find a better price for ' + p.brand + ' ' + p.name }
+  try {
+    const data = await apiFetch('/api/chat', {
+      messages: [...messages, { role: 'user', content: query }]
+    });
+    const content = data.content || '';
+    const tokMatch = content.match(/SEARCH_MODELS:\s*(\{[\s\S]*\})/);
+    if (tokMatch) {
+      let modelData;
+      try { modelData = JSON.parse(tokMatch[1]); } catch(e) { modelData = null; }
+
+      if (modelData) {
+        const found = await apiFetch('/api/search', { models: modelData.models || [], userProfile });
+        if (found.length) {
+          const newProds = found.map((pr, i) => ({ ...pr, id: products.length + i + 1 }));
+          products = [...products, ...newProds];
+
+          // Append divider + new cards to both grids
+          ['mGrid', 'dGrid'].forEach(gridId => {
+            const grid = document.getElementById(gridId);
+            if (!grid) return;
+            const divider = document.createElement('div');
+            divider.style.cssText = 'grid-column:1/-1;padding:8px 0 4px;font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px';
+            divider.textContent = 'More like ' + (p.brand || 'this');
+            grid.appendChild(divider);
+            newProds.forEach(np => {
+              const tmp = document.createElement('div');
+              tmp.innerHTML = makeCard(np, false);
+              grid.appendChild(tmp.firstElementChild);
+            });
+          });
+
+          // Update count label
+          const sl = document.getElementById('shopai-sec-label');
+          const dl = document.getElementById('dProdCount');
+          const lbl = products.length + ' picks for you';
+          if (sl) sl.textContent = lbl;
+          if (dl) dl.textContent = lbl;
+
+          addMessage('ai', 'Here are ' + found.length + ' more options similar to the ' + shortName(p) + ' 👇');
+        }
+      }
+    }
+  } catch(e) {
+    addMessage('ai', 'Could not load similar shoes right now — try "Find similar" below.');
+  }
+
+  // 3. Action chips (appended to both chat threads)
+  const chipDefs = [
+    { label: '⚖️ Compare pinned', msg: () => 'Compare: ' + [...pinned].map(id => { const x = products.find(q => q.id === id); return x ? shortName(x) : null; }).filter(Boolean).join(' vs ') },
+    { label: '💰 Lower budget',   msg: () => 'Show similar to ' + shortName(p) + ' but cheaper' },
+    { label: '🏆 More premium',   msg: () => 'Show premium alternatives to ' + shortName(p) }
   ];
 
   ['shopai-chat', 'dMsgs'].forEach(containerId => {
     const el = document.getElementById(containerId);
     if (!el) return;
     const wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;padding:6px 16px 10px';
-    actions.forEach(c => {
+    wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;padding:4px 0 10px';
+    chipDefs.forEach(c => {
       const btn = document.createElement('button');
       btn.className = 'chip';
       btn.textContent = c.label;
-      btn.onclick = () => sendMessage(c.msg);
+      btn.onclick = () => sendMessage(c.msg());
       wrap.appendChild(btn);
     });
     el.appendChild(wrap);
