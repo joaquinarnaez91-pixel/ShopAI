@@ -539,70 +539,60 @@ function togglePin(e, id) {
   updatePinTray();
   console.log('[pin] togglePin called, pins now:', pins);
 
-  if (pins.includes(id) && !hasSentPinMessage) {
-    hasSentPinMessage = true;
-    showPinOnboarding(p);
-  } else if (!pins.includes(id)) {
+  if (pins.includes(id)) {
+    if (!hasSentPinMessage) {
+      hasSentPinMessage = true;
+      showPinOnboarding(p);
+    }
+  } else {
     addMessage('ai', shortName(p) + ' removed from shortlist.');
     scrollBottom();
   }
 }
 
 function showPinOnboarding(p) {
-  console.log('[pin] showPinOnboarding fired for', p?.name);
   const chatEl = document.getElementById('shopai-chat') ||
                  document.getElementById('dMsgs') ||
                  document.querySelector('.chat');
-  if (!chatEl) return;
+  if (!chatEl) { console.warn('[pin] no chat container found'); return; }
 
-  document.getElementById('pin-onboard')?.remove();
+  const name = (p.brand || '') + ' ' + shortName(p);
 
-  const wrap = document.createElement('div');
-  wrap.id = 'pin-onboard';
-  wrap.className = 'msg';
-  wrap.innerHTML =
-    '<div class="av ai" style="font-size:16px">🤖</div>' +
-    '<div class="bbl ai" style="max-width:90%">' +
-    '📌 <strong>' + (p.brand || '') + ' ' + shortName(p) + '</strong> saved to your shortlist!<br><br>' +
-    'Pin up to 2 shoes you love — they stay at the top as your finalist tray. ' +
-    'The more specific you are about what you like, the better I can find your perfect match.<br><br>' +
-    '<strong>What caught your eye about this one?</strong>' +
-    '</div>';
-  chatEl.appendChild(wrap);
+  addMessage('ai', '★ <strong>' + name + '</strong> saved to your shortlist!<br><br>' +
+    'You can pin up to 2 shoes — they stay at the top as your finalist tray. ' +
+    'What would you like to do next?');
 
-  const chips = document.createElement('div');
-  chips.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;padding:6px 0 10px;margin-left:36px';
-
-  [
-    { label: '💬 Tell me what I like', action: 'focus' },
-    { label: '🔍 More like these',     msg: 'Find more shoes like my pinned ones' },
-    { label: '🏷️ Same brand',          msg: 'Show more from ' + (p.brand || 'this brand') },
-    { label: '💰 Similar price',       msg: 'Find shoes in a similar price range to my pinned shoes' },
-    { label: '⚡ Similar tech/style',  msg: 'Find shoes with similar technology and style to ' + shortName(p) },
-    { label: '🎨 Similar colors',      msg: 'Find shoes in similar colors to my pinned shoes' },
-    { label: '🏆 More premium',        msg: 'Show premium upgrades similar to my pinned shoes' }
-  ].forEach(c => {
-    const btn = document.createElement('button');
-    btn.className = 'chip';
-    btn.textContent = c.label;
-    btn.onclick = () => {
-      chips.remove();
-      if (c.action === 'focus') {
-        const inp = document.getElementById('mInput') || document.getElementById('dInput');
-        if (inp) {
-          inp.placeholder = 'What do you like about it? (comfort, style, price, brand...)';
-          inp.focus();
+  setTimeout(() => {
+    const chips = document.createElement('div');
+    chips.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;padding:4px 16px 12px;';
+    [
+      { label: '💬 Tell me what I liked', action: 'focus' },
+      { label: '🔍 More like these',      msg: 'Find more shoes like my pinned ones' },
+      { label: '🏷️ Same brand',           msg: 'Show more from ' + (p.brand || 'this brand') },
+      { label: '💰 Similar price',        msg: 'Find shoes similar price to my pinned shoes' },
+      { label: '🎨 Similar colors',       msg: 'Find shoes in similar colors to ' + name },
+      { label: '🏆 More premium',         msg: 'Show premium upgrades similar to my pinned shoes' }
+    ].forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'chip';
+      btn.textContent = c.label;
+      btn.onclick = () => {
+        chips.remove();
+        if (c.action === 'focus') {
+          const inp = document.getElementById('mInput') || document.getElementById('dInput');
+          if (inp) {
+            inp.placeholder = 'What do you like about it? (comfort, style, color, brand...)';
+            inp.focus();
+          }
+        } else {
+          sendMessage(c.msg);
         }
-      } else {
-        sendMessage(c.msg);
-      }
-    };
-    chips.appendChild(btn);
-  });
-
-  chatEl.appendChild(chips);
-  chatEl.scrollTop = chatEl.scrollHeight;
-  scrollBottom();
+      };
+      chips.appendChild(btn);
+    });
+    chatEl.appendChild(chips);
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }, 100);
 }
 
 function updatePinTray() {
