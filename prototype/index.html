@@ -345,22 +345,23 @@ function stars(r) {
 }
 
 function parseMarkdown(t) {
-  t = t.replace(/```json[\s\S]*?```/g, '');
-  t = t.replace(/```[\s\S]*?```/g, '');
-  t = t.replace(/SEARCH_MODELS:\s*\{[\s\S]*\}/g, '');
-  // Transform the footer action line (starts with 🔍, must have | separators) into clickable chips
-  t = t.replace(/^(🔍[^\n]+\|[^\n]+)$/gm, (match) => {
-    const items = match.split(/\s*\|\s*/);
-    return '<div class="msg-chips">' +
-      items.map(item => `<button class="msg-chip" onclick="chipTap(this)">${item.trim()}</button>`).join('') +
-      '</div>';
-  });
+  if (!t) return '';
   return t
+    .replace(/SEARCH_MODELS:\{[\s\S]*?\}/g, '')
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/^#{1,3}\s+(.+)$/gm, '<strong>$1</strong>')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/\n\n/g, '<br><br>')
-    .replace(/\n/g, '<br>')
-    .trim();
+    .replace(/^---+$/gm, '<hr style="border:none;border-top:1px solid var(--border);margin:10px 0">')
+    .replace(/^\|\s*(.*?)\s*\|$/gm, (row) => {
+      if (/^[\s|:-]+$/.test(row)) return '';
+      const cells = row.split('|').filter(c => c.trim()).map(c => '<td style="padding:4px 8px;border:1px solid var(--border);font-size:12px">' + c.trim() + '</td>').join('');
+      return '<tr>' + cells + '</tr>';
+    })
+    .replace(/(<tr>.*<\/tr>\n?)+/gs, m => '<table style="border-collapse:collapse;width:100%;margin:8px 0">' + m + '</table>')
+    .replace(/^[-•]\s+(.+)$/gm, '<div style="padding:2px 0 2px 12px;border-left:2px solid var(--accent)">$1</div>')
+    .replace(/\n{2,}/g, '<br><br>')
+    .replace(/\n/g, '<br>');
 }
 
 function storeColor(src) { return STORE_COLORS[src] || '#999'; }
@@ -562,6 +563,23 @@ function findSimilar() {
 }
 
 // ── Chips ─────────────────────────────────────────────────────────────────
+function renderChips(container) {
+  const chipDefs = [
+    { label: '🔍 Compare these',   msg: 'Compare the shoes shown' },
+    { label: '💰 Lower budget',    msg: 'Show me lower budget options' },
+    { label: '🏆 More premium',    msg: 'Show me more premium options' },
+    { label: '🎨 Specific color',  msg: 'I want a specific color' },
+    { label: '👟 Different brand', msg: 'Show a different brand' }
+  ];
+  const wrap = document.createElement('div');
+  wrap.className = 'chips-wrap';
+  wrap.style.padding = '4px 0 8px';
+  wrap.innerHTML = '<div class="chips-inner">' +
+    chipDefs.map(c => '<button class="chip" onclick="sendMessage(\'' + c.msg + '\')">' + c.label + '</button>').join('') +
+    '</div>';
+  container.appendChild(wrap);
+}
+
 function chipTap(el) {
   el.classList.add('hit');
   setTimeout(() => el.classList.remove('hit'), 280);
@@ -791,6 +809,10 @@ async function sendMessage(text) {
           : "I found " + products.length + " options specifically for you — here are your top picks:");
 
         renderProducts();
+        const mc = document.getElementById('shopai-chat');
+        const dc = document.getElementById('dMsgs');
+        if (mc) renderChips(mc);
+        if (dc) renderChips(dc);
 
         const cw = document.getElementById('shopai-chips');
         if (cw) cw.style.display = '';

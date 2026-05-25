@@ -33,9 +33,7 @@ WHEN READY TO RECOMMEND (only after user answers your questions), output EXACTLY
 5. [Brand] [Model] — $[price]. [One sentence why.]
 6. [Brand] [Model] — $[price]. [One sentence why.]
 
-My pick for you: [Model] — [one sentence reason].
-
-🔍 Compare these  |  💰 Lower budget  |  🏆 More premium  |  🎨 Specific color  |  👟 Different brand"
+My pick for you: [Model] — [one sentence reason]."
 
 After the ranked list output SEARCH_MODELS on its own line — no markdown, no backticks, no code blocks:
 SEARCH_MODELS:{"models":[{"brand":"Nike","model":"Pegasus 41","query":"Nike Pegasus 41 running shoe men size 10","category":"Running","why":"Best daily trainer for neutral runners"}]}
@@ -53,7 +51,7 @@ ENGAGEMENT RULES (after recommendations):
 - "Find similar to [model]" → recommend 3 shoes with similar technology and price range, output SEARCH_MODELS
 - "Find similar to my pinned shoes: [...]" → recommend 3 new models not previously shown that match the style and use case of the listed shoes, output SEARCH_MODELS
 - "Better price for [model]" → search for that exact model at lower prices or strong alternatives at better value, output SEARCH_MODELS with query focused on deals
-- Always end with: 🔍 Compare these  |  💰 Lower budget  |  🏆 More premium  |  🎨 Specific color  |  👟 Different brand`;
+End your response here. Do not add a footer line.`;
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
