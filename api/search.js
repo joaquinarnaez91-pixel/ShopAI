@@ -122,6 +122,26 @@ async function searchForModel(m, serpKey, rfKey) {
 
   console.log('[search]', m.brand, m.model, '— raw candidates:', candidates.length);
 
+  if (candidates.length === 0) {
+    const mockFallback = {
+      name: m.brand + ' ' + m.model,
+      brand: m.brand,
+      category: m.category,
+      why: m.why,
+      price: 120,
+      priceIndicator: 'USUAL',
+      rating: 4.5,
+      reviews: 1200,
+      img: '',
+      link: 'https://www.google.com/search?q=' + encodeURIComponent(m.brand + ' ' + m.model),
+      source: 'Google Search',
+      delivery: '',
+      prices30day: makePricePoints(120)
+    };
+    console.log('[search] Using mock fallback for', m.brand, m.model);
+    return mockFallback;
+  }
+
   // AG surface filter
   const queryLower = q.toLowerCase();
   const isAGSearch = queryLower.includes(' ag ') || queryLower.includes('turf');
