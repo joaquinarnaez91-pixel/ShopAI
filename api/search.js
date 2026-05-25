@@ -76,11 +76,6 @@ async function serpGoogleShopping(query, serpKey, num = 15) {
   })).filter(p => p.price > 0);
 }
 
-// Site-specific searches via SerpAPI
-async function serpSiteSearch(query, site, serpKey) {
-  return serpGoogleShopping('site:' + site + ' ' + query, serpKey, 8);
-}
-
 // Rainforest Amazon search
 async function rainforestSearch(query, rfKey) {
   if (!rfKey) return [];
@@ -104,49 +99,18 @@ async function rainforestSearch(query, rfKey) {
 
 async function searchForModel(m, serpKey, rfKey) {
   const q = m.query;
-  const brand = (m.brand || '').toLowerCase();
+  console.log('[search] starting:', m.brand, m.model, '| query:', q);
 
-  // Determine which brand sites to search based on brand
-  const brandSites = {
-    'nike': 'nike.com',
-    'adidas': 'adidas.com',
-    'puma': 'puma.com',
-    'reebok': 'reebok.com',
-    'new balance': 'newbalance.com',
-    'asics': 'asics.com',
-    'hoka': 'hoka.com',
-    'brooks': 'brooksrunning.com',
-    'saucony': 'saucony.com',
-    'under armour': 'underarmour.com',
-    'salomon': 'salomon.com',
-    'on': 'on-running.com'
-  };
+  const enrichedQuery = q + ' zappos OR "foot locker" OR dsw OR "running warehouse"';
 
-  const brandSite = brandSites[brand] || null;
+  const [serpResult, rfResult] = await Promise.allSettled([
+    serpGoogleShopping(enrichedQuery, serpKey, 15),
+    rainforestSearch(q, rfKey)
+  ]);
 
-  // Fire all sources in parallel
-  const sources = [
-    serpGoogleShopping(q, serpKey, 15),                  // Google Shopping broad
-    serpSiteSearch(q, 'zappos.com', serpKey),             // Zappos — huge catalog
-    serpSiteSearch(q, 'running warehouse.com', serpKey),  // RunningWarehouse
-    rainforestSearch(q, rfKey),                           // Amazon
-  ];
-
-  // Add brand site if known
-  if (brandSite) {
-    sources.push(serpSiteSearch(q, brandSite, serpKey));
-  }
-
-  // Always add DSW and Foot Locker for footwear breadth
-  sources.push(serpSiteSearch(q, 'dsw.com', serpKey));
-  sources.push(serpSiteSearch(q, 'footlocker.com', serpKey));
-
-  const settled = await Promise.allSettled(sources);
-
-  // Merge all results, deduplicate by link
   const seen = new Set();
   const candidates = [];
-  for (const r of settled) {
+  for (const r of [serpResult, rfResult]) {
     if (r.status !== 'fulfilled') continue;
     for (const p of r.value) {
       if (!p.link || seen.has(p.link)) continue;
@@ -191,6 +155,8 @@ async function searchForModel(m, serpKey, rfKey) {
   }
 
   if (!best) { console.log('[search] No result for', m.brand, m.model); return null; }
+
+  console.log('[search] result for', m.brand, m.model, ':', best.title + ' $' + best.price);
 
   const prices30day = makePricePoints(best.price);
   return {
