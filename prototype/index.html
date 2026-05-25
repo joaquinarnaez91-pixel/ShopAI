@@ -25,11 +25,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
 .profile-btn{width:34px;height:34px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;}
 
 /* Scroll area */
-.m-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(120px + env(safe-area-inset-bottom,0px));}
+.m-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(140px + env(safe-area-inset-bottom,0px));}
 .m-scroll::-webkit-scrollbar{display:none;}
 
 /* Chat */
-.chat{padding:14px 16px 10px;display:flex;flex-direction:column;gap:10px;}
+.chat{padding:14px 16px 10px;display:flex;flex-direction:column;gap:10px;overflow:visible;}
 .msg{display:flex;gap:8px;align-items:flex-end;}
 .msg.u{flex-direction:row-reverse;}
 .av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
@@ -612,8 +612,14 @@ function showPinOnboarding(p) {
     chipRow.appendChild(btn);
   });
 
+  chatEl.style.overflow = 'visible';
   chatEl.appendChild(chipRow);
   scrollChat();
+  setTimeout(() => {
+    const scroll = document.querySelector('.m-scroll') ||
+                   document.querySelector('.d-scroll');
+    if (scroll) scroll.scrollTop = scroll.scrollHeight + 200;
+  }, 150);
 }
 
 function updatePinTray() {
