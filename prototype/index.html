@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>ShopAI</title>
+<title>Lumen — Your Personal Style Guide</title>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 :root{
@@ -21,8 +21,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
 /* Header */
 .header{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#fff;border-bottom:1px solid var(--border);flex-shrink:0;position:relative;z-index:10;}
 .logo{font-size:21px;font-weight:800;letter-spacing:-0.6px;color:var(--tx1);line-height:1;display:flex;align-items:center;gap:2px;}
-.logo-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);margin-left:1px;flex-shrink:0;margin-bottom:1px;}
+.logo-glow{width:8px;height:8px;border-radius:50%;background:radial-gradient(circle,#F5C842,#E8490F);margin-left:3px;flex-shrink:0;margin-bottom:1px;}
 .profile-btn{width:34px;height:34px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;}
+
+/* Tab bar */
+.tab-bar{display:flex;border-bottom:1px solid var(--border);background:#fff;flex-shrink:0;}
+.tab{flex:1;padding:12px 0;text-align:center;font-size:13px;font-weight:600;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
+.tab.active{color:var(--tx1);border-bottom-color:var(--tx1);}
 
 /* Scroll area */
 .m-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(140px + env(safe-area-inset-bottom,0px));}
@@ -188,8 +193,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
   .d-logo .logo{font-size:20px;}
   .d-profile{padding:16px 20px;border-bottom:1px solid var(--border);}
   .d-av{width:40px;height:40px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:8px;}
-  .d-name{font-size:14px;font-weight:600;color:var(--tx1);}
-  .d-detail{font-size:12px;color:var(--tx2);margin-top:2px;}
+  .d-name{font-size:14px;font-weight:600;color:var(--tx1);margin-bottom:6px;}
+  .d-profile-row{font-size:12px;color:var(--tx2);margin-top:2px;}
   .d-pins-sec{padding:16px 20px;}
   .d-pins-lbl{font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
   .d-pins-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
@@ -198,7 +203,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
   .d-pt-empty{aspect-ratio:1;border-radius:8px;border:1.5px dashed var(--border);display:flex;align-items:center;justify-content:center;color:var(--tx3);font-size:14px;}
 
   .d-chat{width:380px;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
-  .d-chat-head{height:60px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid var(--border);font-size:14px;font-weight:600;flex-shrink:0;}
+  .d-chat-head{flex-shrink:0;}
+  .d-tab-bar{display:flex;border-bottom:1px solid var(--border);background:#fff;}
   .d-msgs{flex:1;overflow-y:auto;padding:16px 16px 100px;display:flex;flex-direction:column;gap:10px;}
   .d-msgs::-webkit-scrollbar{display:none;}
   .d-inp-wrap{padding:12px 16px 16px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-shrink:0;}
@@ -219,8 +225,15 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
 <!-- ════════ MOBILE ════════ -->
 <div class="m-app">
   <div class="header">
-    <div class="logo">ShopAI<span class="logo-dot"></span></div>
+    <div class="logo">Lumen<span class="logo-glow"></span></div>
     <button class="profile-btn" aria-label="Profile">👤</button>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <div class="tab active" data-tab="style" onclick="switchTab('style')">Style Guide</div>
+    <div class="tab" data-tab="discover" onclick="switchTab('discover')">Discover</div>
+    <div class="tab" data-tab="wardrobe" onclick="switchTab('wardrobe')">Wardrobe</div>
   </div>
 
   <div class="m-scroll" id="mScroll">
@@ -228,7 +241,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
 
   <!-- Input -->
   <div class="input-bar">
-    <input class="inp" id="mInput" type="text" placeholder="Ask about shoes, sizing, or alternatives…" />
+    <input class="inp" id="mInput" type="text" placeholder="Ask anything about style…" />
     <button class="send" id="mSend" aria-label="Send">
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
@@ -241,14 +254,17 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
 <div class="d-app">
   <!-- Sidebar -->
   <div class="d-sidebar">
-    <div class="d-logo"><div class="logo">ShopAI<span class="logo-dot"></span></div></div>
+    <div class="d-logo"><div class="logo">Lumen<span class="logo-glow"></span></div></div>
     <div class="d-profile">
-      <div class="d-av">😊</div>
-      <div class="d-name" id="dProfileName">Your Profile</div>
-      <div class="d-detail" id="dProfileDetail">Tell me what you need</div>
+      <div class="d-av">✨</div>
+      <div class="d-name" id="dProfileName">Your Style Profile</div>
+      <div class="d-profile-row" id="dProfileColors">Colors: not yet analyzed</div>
+      <div class="d-profile-row" id="dProfileSeason">Season: unknown</div>
+      <div class="d-profile-row" id="dProfileStyle">Style: unknown</div>
+      <div class="d-profile-row" id="dProfileSize">Size: unknown</div>
     </div>
     <div class="d-pins-sec">
-      <div class="d-pins-lbl">📌 Shortlist</div>
+      <div class="d-pins-lbl">★ Shortlist</div>
       <div class="d-pins-grid" id="dPinsGrid">
         <div class="d-pt-empty">+</div>
         <div class="d-pt-empty">+</div>
@@ -260,10 +276,16 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
 
   <!-- Chat panel -->
   <div class="d-chat">
-    <div class="d-chat-head">Conversation</div>
+    <div class="d-chat-head">
+      <div class="d-tab-bar">
+        <div class="tab active" data-tab="style" onclick="switchTab('style')">Style Guide</div>
+        <div class="tab" data-tab="discover" onclick="switchTab('discover')">Discover</div>
+        <div class="tab" data-tab="wardrobe" onclick="switchTab('wardrobe')">Wardrobe</div>
+      </div>
+    </div>
     <div class="d-msgs" id="dMsgs"></div>
     <div class="d-inp-wrap">
-      <input class="inp" id="dInput" type="text" placeholder="Ask a follow-up…" />
+      <input class="inp" id="dInput" type="text" placeholder="Ask anything about style…" />
       <button class="send" id="dSend">
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
@@ -292,8 +314,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
 <script>
 // ── State ─────────────────────────────────────────────────────────────────
 let products          = [];
-let pins              = [];           // ordered array of pinned product ids
-let pinnedProducts    = [];           // full product objects, survives re-renders
+let pins              = [];
+let pinnedProducts    = [];
 let hasSentPinMessage = false;
 let curIdx            = 0;
 let panelOpen         = false;
@@ -302,12 +324,13 @@ let userProfile       = {};
 let enrichCache       = {};
 let isLoading         = false;
 let enrichLoadTimer   = null;
+let activeTab         = 'style';
 
 const ENRICH_LABELS = [
-  '🔄 Scanning expert reviews…',
-  '🔄 Analyzing value for money…',
-  '🔄 Checking buyer feedback…',
-  '🔄 Building your expert report…'
+  'Scanning expert reviews…',
+  'Analyzing value for money…',
+  'Checking buyer feedback…',
+  'Building your expert report…'
 ];
 
 function startEnrichAnim() {
@@ -348,6 +371,7 @@ function parseMarkdown(t) {
   if (!t) return '';
   return t
     .replace(/SEARCH_MODELS:\{[\s\S]*?\}/g, '')
+    .replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '')
     .replace(/```[\s\S]*?```/g, '')
     .replace(/^#{1,3}\s+(.+)$/gm, '<strong>$1</strong>')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -383,13 +407,36 @@ function extractProfile(msgs) {
 
 function updateProfileDisplay() {
   const nameEl   = document.getElementById('dProfileName');
-  const detailEl = document.getElementById('dProfileDetail');
+  const colorsEl = document.getElementById('dProfileColors');
+  const seasonEl = document.getElementById('dProfileSeason');
+  const styleEl  = document.getElementById('dProfileStyle');
+  const sizeEl   = document.getElementById('dProfileSize');
   if (!nameEl) return;
-  const parts = [];
-  if (userProfile.shoeSize) parts.push('Size ' + userProfile.shoeSize);
-  if (userProfile.width)    parts.push(userProfile.width.charAt(0).toUpperCase() + userProfile.width.slice(1));
-  if (userProfile.useCase)  parts.push(userProfile.useCase.charAt(0).toUpperCase() + userProfile.useCase.slice(1));
-  if (parts.length && detailEl) detailEl.textContent = parts.join(' · ');
+  if (colorsEl && userProfile.colors) colorsEl.textContent = 'Colors: ' + userProfile.colors;
+  if (seasonEl && userProfile.season) seasonEl.textContent = 'Season: ' + userProfile.season;
+  if (styleEl  && userProfile.style)  styleEl.textContent  = 'Style: '  + userProfile.style;
+  if (sizeEl   && userProfile.shoeSize) sizeEl.textContent = 'Size: '   + userProfile.shoeSize;
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(el => {
+    el.classList.toggle('active', el.dataset.tab === tab);
+  });
+
+  if (tab === 'wardrobe') {
+    addMessage('ai',
+      '👗 Your wardrobe is where the magic happens.<br><br>' +
+      'Soon you\'ll be able to:<br>' +
+      '• Photo your clothes and I\'ll catalog them<br>' +
+      '• Sync purchases from Zara, Amazon, H&amp;M<br>' +
+      '• Ask me to build outfits from what you own<br>' +
+      '• Scan receipts to auto-add new purchases<br><br>' +
+      'For now, just describe what you have and I\'ll work with it. ' +
+      'Try: <em>"I have a lot of basics — white tees, dark jeans, black boots. Help me make more outfits from these."</em>'
+    );
+  }
 }
 
 // ── Chat UI ───────────────────────────────────────────────────────────────
@@ -401,7 +448,7 @@ function scrollBottom() {
 }
 
 function scrollChat() {
-  const m = document.getElementById('shopai-chat');
+  const m = document.getElementById('lumen-chat');
   const d = document.getElementById('dMsgs');
   if (m) m.scrollTop = m.scrollHeight;
   if (d) d.scrollTop = d.scrollHeight;
@@ -409,8 +456,8 @@ function scrollChat() {
 
 function addMessage(role, text) {
   const isAI = role === 'ai';
-  const html  = `<div class="msg${isAI ? '' : ' u'}"><div class="av ${isAI ? 'ai' : 'u'}">${isAI ? '🤖' : '😊'}</div><div class="bbl ${isAI ? 'ai' : 'u'}">${isAI ? parseMarkdown(text) : text}</div></div>`;
-  const mc = document.getElementById('shopai-chat');
+  const html  = `<div class="msg${isAI ? '' : ' u'}"><div class="av ${isAI ? 'ai' : 'u'}">${isAI ? '✨' : '😊'}</div><div class="bbl ${isAI ? 'ai' : 'u'}">${isAI ? parseMarkdown(text) : text}</div></div>`;
+  const mc = document.getElementById('lumen-chat');
   const dc = document.getElementById('dMsgs');
   if (mc) mc.insertAdjacentHTML('beforeend', html);
   if (dc) dc.insertAdjacentHTML('beforeend', html);
@@ -420,8 +467,8 @@ function addMessage(role, text) {
 
 function showTyping() {
   const id   = 'typ' + Date.now();
-  const html = `<div class="msg" id="${id}"><div class="av ai">🤖</div><div class="bbl ai" style="color:var(--tx3);font-style:italic">ShopAI is thinking…</div></div>`;
-  const mc = document.getElementById('shopai-chat');
+  const html = `<div class="msg" id="${id}"><div class="av ai">✨</div><div class="bbl ai" style="color:var(--tx3);font-style:italic">Lumen is thinking…</div></div>`;
+  const mc = document.getElementById('lumen-chat');
   const dc = document.getElementById('dMsgs');
   if (mc) mc.insertAdjacentHTML('beforeend', html);
   if (dc) dc.insertAdjacentHTML('beforeend', html);
@@ -520,8 +567,8 @@ function renderProducts() {
   setTimeout(() => document.querySelectorAll('.tut-ring').forEach(el => el.classList.remove('tut-ring')), 3200);
 
   const total = pinned.length + rest.length;
-  const label = total + ' expert picks for you';
-  const sl = document.getElementById('shopai-sec-label');
+  const label = total + ' picks for you';
+  const sl = document.getElementById('lumen-sec-label');
   const dl = document.getElementById('dProdCount');
   if (sl) { sl.textContent = label; sl.style.display = ''; }
   if (dl) dl.textContent = label;
@@ -560,12 +607,12 @@ function togglePin(e, id) {
 }
 
 function showPinOnboarding(p) {
-  const chatEl = document.getElementById('shopai-chat') ||
+  const chatEl = document.getElementById('lumen-chat') ||
                  document.getElementById('dMsgs') ||
                  document.querySelector('.chat');
 
   if (!chatEl) {
-    console.error('[pin] FATAL: no chat container found. IDs tried: shopai-chat, dMsgs, .chat');
+    console.error('[pin] FATAL: no chat container found. IDs tried: lumen-chat, dMsgs, .chat');
     return;
   }
 
@@ -576,7 +623,7 @@ function showPinOnboarding(p) {
   const msgDiv = document.createElement('div');
   msgDiv.className = 'msg';
   msgDiv.innerHTML =
-    '<div class="av ai" style="font-size:15px">🤖</div>' +
+    '<div class="av ai" style="font-size:15px">✨</div>' +
     '<div class="bbl ai" style="max-width:88%">' +
       '★ <strong>' + name + '</strong> saved!<br><br>' +
       'Great pick — I\'ll keep that in mind. Pin one more if you want, or tell me what you\'d like to do next.' +
@@ -591,9 +638,9 @@ function showPinOnboarding(p) {
     .filter(Boolean);
 
   [
-    { label: '🔍 Find more like this', msg: 'Find more shoes like my pinned ones: ' + pinnedNames.join(', ') },
-    { label: '🎨 Explore colors',      msg: 'Show different colors for shoes like ' + name },
-    { label: '💰 Lower price',         msg: 'Find similar shoes to ' + name + ' at a lower price' },
+    { label: '🔍 Find more like this', msg: 'Find more like my pinned ones: ' + pinnedNames.join(', ') },
+    { label: '🎨 Explore colors',      msg: 'Show different colors for ' + name },
+    { label: '💰 Lower price',         msg: 'Find similar to ' + name + ' at a lower price' },
     { label: '⚡ Compare pinned',      msg: pinnedNames.length > 1 ? 'Compare these for me: ' + pinnedNames.join(' vs ') : 'Tell me more about ' + name },
     { label: '💬 Tell me what I liked', action: 'focus' }
   ].forEach(c => {
@@ -621,11 +668,10 @@ function showPinOnboarding(p) {
   }, 150);
 }
 
-
 function updatePinTray() {
   const pinnedList = pinnedProducts.filter(p => pins.includes(p.id));
-  const row  = document.getElementById('shopai-pin-row');
-  const tray = document.getElementById('shopai-pin-tray');
+  const row  = document.getElementById('lumen-pin-row');
+  const tray = document.getElementById('lumen-pin-tray');
   const dg   = document.getElementById('dPinsGrid');
 
   if (row) {
@@ -656,17 +702,17 @@ function updatePinTray() {
 function findSimilar() {
   const names = pins.map(id => pinnedProducts.find(p => p.id === id)?.name).filter(Boolean);
   if (!names.length) return;
-  sendMessage('Find similar to my pinned shoes: ' + names.join(', '));
+  sendMessage('Find similar to my pinned items: ' + names.join(', '));
 }
 
 // ── Chips ─────────────────────────────────────────────────────────────────
 function renderChips(container) {
   const chipDefs = [
-    { label: '🔍 Compare these',   msg: 'Compare the shoes shown' },
+    { label: '🔍 Compare these',   msg: 'Compare the items shown' },
     { label: '💰 Lower budget',    msg: 'Show me lower budget options' },
     { label: '🏆 More premium',    msg: 'Show me more premium options' },
     { label: '🎨 Specific color',  msg: 'I want a specific color' },
-    { label: '👟 Different brand', msg: 'Show a different brand' }
+    { label: '👗 Different style', msg: 'Show a different style' }
   ];
   const wrap = document.createElement('div');
   wrap.className = 'chips-wrap';
@@ -680,8 +726,8 @@ function renderChips(container) {
 function chipTap(el) {
   el.classList.add('hit');
   setTimeout(() => el.classList.remove('hit'), 280);
-  const txt = el.textContent.trim().replace(/^[^a-zA-Z]+/, '').trim();
-  if (txt) sendMessage(txt);
+  const txt = el.textContent.trim().replace(/^[^a-zA-Z✨👗🛍🔥💬]+/, '').trim();
+  if (txt) sendMessage(el.textContent.trim());
 }
 
 // ── Deep Dive ─────────────────────────────────────────────────────────────
@@ -726,7 +772,7 @@ function populateDeepDiveBasic(p) {
 <div style="margin-top:6px"><span class="ppill ${ind.cls}">${ind.lbl} price</span></div>
 <div id="enrich-section">
   <div class="dd-div"></div>
-  <div class="dd-stitle enrich-loading-label" style="color:var(--tx3)">🔄 Scanning expert reviews…</div>
+  <div class="dd-stitle enrich-loading-label" style="color:var(--tx3)">Scanning expert reviews…</div>
   <div class="enrich-progress"><div class="enrich-progress-fill"></div></div>
 </div>
 <a class="cta-btn" href="${p.link || '#'}" target="_blank" rel="noopener noreferrer" style="display:block;text-decoration:none;text-align:center;line-height:54px;margin-top:22px">Buy on ${p.source || ''} — $${p.price || ''}</a>
@@ -876,25 +922,41 @@ async function sendMessage(text) {
       ? [...messages.slice(0, -1), {
           role: 'user',
           content: messages[messages.length - 1].content +
-            '\n\n[Context: User has pinned these shoes as favorites: ' +
+            '\n\n[Context: User has saved these items: ' +
             pinnedProducts.map(p => p.brand + ' ' + shortName(p)).join(', ') + ']'
         }]
       : messages;
-    const data    = await apiFetch('/api/chat', { messages: chatMessages });
+
+    const data    = await apiFetch('/api/chat', { messages: chatMessages, tab: activeTab });
     removeTyping(typId);
     const content  = data.content || '';
+
+    // Parse PROFILE_UPDATE token
+    const profMatch = content.match(/PROFILE_UPDATE:\s*(\{[\s\S]*?\})/);
+    if (profMatch) {
+      try {
+        const profData = JSON.parse(profMatch[1]);
+        Object.assign(userProfile, profData);
+        updateProfileDisplay();
+      } catch(e) {}
+    }
+
     const tokMatch = content.match(/SEARCH_MODELS:\s*(\{[\s\S]*\})/);
 
     if (tokMatch) {
-      const displayText = content.slice(0, content.indexOf('SEARCH_MODELS:')).replace(/\s*```[a-z]*\s*$/g, '').trim();
+      const displayText = content
+        .slice(0, content.indexOf('SEARCH_MODELS:'))
+        .replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '')
+        .replace(/\s*```[a-z]*\s*$/g, '')
+        .trim();
       if (displayText) addMessage('ai', displayText);
       messages.push({ role: 'assistant', content });
-      userProfile = extractProfile(messages);
+      userProfile = { ...userProfile, ...extractProfile(messages) };
       updateProfileDisplay();
 
       let modelData;
       try { modelData = JSON.parse(tokMatch[1]); }
-      catch (e) { addMessage('ai', "Let me search for the best options for you…"); isLoading = false; return; }
+      catch (e) { addMessage('ai', 'Let me search for the best options for you…'); isLoading = false; return; }
 
       const srchTypId = showTyping();
       try {
@@ -910,16 +972,16 @@ async function sendMessage(text) {
         const hasWhy  = !!products[0].why;
         const useCase = (products[0] && products[0].category) || 'your needs';
         addMessage('ai', hasWhy
-          ? "Here are my expert picks for you — each selected specifically for " + useCase + ". I've matched the best models to your profile and found real prices across retailers."
-          : "I found " + products.length + " options specifically for you — here are your top picks:");
+          ? 'Here are my picks for you — each selected specifically for ' + useCase + '. I\'ve found real prices across retailers.'
+          : 'I found ' + products.length + ' options for you — here are your top picks:');
 
         renderProducts();
-        const mc = document.getElementById('shopai-chat');
+        const mc = document.getElementById('lumen-chat');
         const dc = document.getElementById('dMsgs');
         if (mc) renderChips(mc);
         if (dc) renderChips(dc);
 
-        const cw = document.getElementById('shopai-chips');
+        const cw = document.getElementById('lumen-chips');
         if (cw) cw.style.display = '';
         const ms = document.getElementById('mScroll');
         const mg = document.getElementById('mGrid');
@@ -927,12 +989,13 @@ async function sendMessage(text) {
 
       } catch (e) {
         removeTyping(srchTypId);
-        addMessage('ai', "I had trouble searching right now. Please try again in a moment.");
+        addMessage('ai', 'I had trouble searching right now. Please try again in a moment.');
       }
 
     } else {
+      const displayContent = content.replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '').trim();
       messages.push({ role: 'assistant', content });
-      addMessage('ai', content);
+      addMessage('ai', displayContent);
     }
 
   } catch (e) {
@@ -963,19 +1026,18 @@ function wireInput(inp, btn) {
   var mScrollEl = document.getElementById('mScroll');
   if (mScrollEl) {
     mScrollEl.innerHTML = [
-      '<div class="chat" id="shopai-chat"></div>',
-      '<div class="pin-tray" id="shopai-pin-tray" style="display:none">',
-      '  <div class="pin-tray-lbl">📌 Your shortlist</div>',
-      '  <div class="pin-row" id="shopai-pin-row"></div>',
+      '<div class="chat" id="lumen-chat"></div>',
+      '<div class="pin-tray" id="lumen-pin-tray" style="display:none">',
+      '  <div class="pin-tray-lbl">★ Your shortlist</div>',
+      '  <div class="pin-row" id="lumen-pin-row"></div>',
       '</div>',
-      '<div class="sec-label" id="shopai-sec-label" style="display:none"></div>',
+      '<div class="sec-label" id="lumen-sec-label" style="display:none"></div>',
       '<div class="m-grid" id="mGrid"></div>',
-      '<div class="chips-wrap" id="shopai-chips" style="display:none;margin-top:12px">',
+      '<div class="chips-wrap" id="lumen-chips" style="display:none;margin-top:12px">',
       '  <div class="chips-inner">',
-      '    <button class="chip" onclick="chipTap(this)">🔍 More like these</button>',
-      '    <button class="chip" onclick="chipTap(this)">🏷️ Same brand</button>',
+      '    <button class="chip" onclick="chipTap(this)">✨ Find my colors</button>',
+      '    <button class="chip" onclick="chipTap(this)">👗 Style an outfit</button>',
       '    <button class="chip" onclick="chipTap(this)">💰 Lower price</button>',
-      '    <button class="chip" onclick="chipTap(this)">⚡ Better tech</button>',
       '    <button class="chip" onclick="chipTap(this)">🎨 Other colors</button>',
       '    <button class="chip" onclick="chipTap(this)">🏆 Premium picks</button>',
       '  </div>',
@@ -984,14 +1046,49 @@ function wireInput(inp, btn) {
   }
 
   try {
-    var saved = localStorage.getItem('shopai_profile');
+    var saved = localStorage.getItem('lumen_profile');
     if (saved) userProfile = JSON.parse(saved);
   } catch (e) {}
 
   wireInput(document.getElementById('mInput'), document.getElementById('mSend'));
   wireInput(document.getElementById('dInput'), document.getElementById('dSend'));
 
-  addMessage('ai', "Hi! I'm ShopAI — your personal shoe expert. Tell me what you're looking for and I'll find the best deals across every store.");
+  addMessage('ai',
+    'Hi, I\'m Lumen — your personal style guide.<br>' +
+    'I\'m here to help you look and feel like yourself, whatever that means for you right now.<br><br>' +
+    'I can help you find the perfect outfit for an occasion, discover what colors work best for you, ' +
+    'refresh your wardrobe, or find specific pieces across every store.<br><br>' +
+    'Oh — and if you ever want truly personalized advice, you can share a photo. ' +
+    'I\'ll analyze your coloring and features to give you recommendations that are really specific to you. ' +
+    'No pressure though, I work just as well from what you tell me.<br><br>' +
+    'Where do you want to start?'
+  );
+
+  // Quick-reply chips on load
+  setTimeout(() => {
+    const startChips = [
+      { label: '✨ Find my colors',     msg: 'Help me find my colors' },
+      { label: '👗 Style an outfit',    msg: 'Help me style an outfit' },
+      { label: '🛍️ Shop for something', msg: 'I want to shop for something' },
+      { label: '🔥 Show me 2026 trends', msg: 'Show me the biggest fashion trends for 2026' },
+      { label: '💬 Just chat',           msg: 'I just want to chat about style' }
+    ];
+    [document.getElementById('lumen-chat'), document.getElementById('dMsgs')].forEach(container => {
+      if (!container) return;
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;padding:8px 0 4px;';
+      startChips.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className = 'chip';
+        btn.textContent = c.label;
+        btn.onclick = () => { row.remove(); sendMessage(c.msg); };
+        row.appendChild(btn);
+      });
+      container.appendChild(row);
+    });
+    scrollBottom();
+    scrollChat();
+  }, 50);
 })();
 </script>
 </body>
