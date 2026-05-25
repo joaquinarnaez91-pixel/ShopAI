@@ -113,6 +113,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
 .msg-chip{display:inline-flex;align-items:center;padding:5px 10px;border:1px solid var(--border);border-radius:14px;font-size:12px;color:var(--tx1);background:#fff;cursor:pointer;white-space:nowrap;font-family:var(--font);transition:background 0.12s,color 0.12s,border-color 0.12s;}
 .msg-chip:active,.msg-chip.hit{background:var(--tx1);color:#fff;border-color:var(--tx1);}
 .chip-inline{color:var(--accent);text-decoration:underline;cursor:pointer;font-weight:600;}
+.chip-inline:hover{opacity:0.75;}
 
 /* Enrich loading animation */
 .enrich-progress{height:2px;background:var(--border);border-radius:1px;margin:10px 0 4px;overflow:hidden;}
@@ -453,7 +454,7 @@ function makeCard(p, isFirst) {
   <div class="c-photo">
     <img src="${p.img || ''}" alt="${p.brand} ${p.name || ''}" loading="lazy" onerror="this.style.display='none'">
     ${p.why ? '<div class="badge b-expert">Expert Pick</div>' : ''}
-    <button class="pin-btn${isPin ? ' on' : ''}" onclick="togglePin(event,${p.id})" aria-label="Pin">${pinSvg}</button>
+    <button class="pin-btn${isPin ? ' on' : ''}" onclick="event.stopPropagation(); togglePin(event,${p.id})" aria-label="Pin">${pinSvg}</button>
   </div>
   <div class="c-body">
     <div class="c-brand">${p.brand || ''}</div>
@@ -493,16 +494,33 @@ function togglePin(e, id) {
   renderProducts();
   const p = products.find(x => x.id === id);
   if (!p) return;
-  if (!wasPinned) {
-    const esc = p.name.replace(/'/g, "\\'");
-    addMessage('ai',
-      `Good taste — <strong>${p.name}</strong> pinned to your shortlist 📌\n\nNow you can:\n` +
-      `🔍 <span class='chip-inline' onclick='sendMessage("Compare my pinned shoes")'>Compare pinned shoes</span>\n` +
-      `🎯 <span class='chip-inline' onclick='sendMessage("Find similar to ${esc}")'>Find similar</span>\n` +
-      `💰 <span class='chip-inline' onclick='sendMessage("Better price for ${esc}")'>Find better price</span>`
-    );
-  } else {
+  if (wasPinned) {
     addMessage('ai', p.name + ' removed from your shortlist.');
+  } else {
+    const msg =
+      '📌 <strong>' + p.name + '</strong> added to your shortlist!\n\nWhat would you like to do?\n' +
+      '• <span class="chip-inline" onclick="chipAction(\'compare\')">Compare pinned shoes</span>\n' +
+      '• <span class="chip-inline" onclick="chipAction(\'similar:' + p.id + '\')">Find similar shoes</span>\n' +
+      '• <span class="chip-inline" onclick="chipAction(\'deal:' + p.id + '\')">Find better price</span>';
+    addMessage('ai', msg);
+  }
+}
+
+function chipAction(action) {
+  const pinnedNames = [...pinned].map(id => {
+    const p = products.find(x => x.id === id);
+    return p ? p.brand + ' ' + p.name : null;
+  }).filter(Boolean);
+  if (action === 'compare') {
+    sendMessage('Compare these shoes for me: ' + pinnedNames.join(' vs '));
+  } else if (action.startsWith('similar:')) {
+    const pid = parseInt(action.split(':')[1]);
+    const p = products.find(x => x.id === pid);
+    if (p) sendMessage('Find me shoes similar to the ' + p.brand + ' ' + p.name);
+  } else if (action.startsWith('deal:')) {
+    const pid = parseInt(action.split(':')[1]);
+    const p = products.find(x => x.id === pid);
+    if (p) sendMessage('Find a better price for the ' + p.brand + ' ' + p.name);
   }
 }
 

@@ -18,6 +18,13 @@ function stripHtml(str) {
   return str.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, 80);
 }
 
+function cleanTitle(title) {
+  return (title || '')
+    .replace(/\(#[\w/]+\)/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 function makePricePoints(price) {
   const pts = Array.from({length: 30}, (_, i) => {
     const wave = Math.sin(i / 4) * 0.08 + Math.sin(i / 9 + 1.2) * 0.04;
@@ -44,11 +51,12 @@ function isBlocked(title, source) {
 
 function scoreMatch(title, brand, modelName) {
   const t = (title || '').toLowerCase();
-  if (!t.includes((brand || '').toLowerCase())) return -1;
-  const words = (modelName || '').toLowerCase().split(/\s+/).filter(w => w.length > 1);
+  const b = (brand || '').toLowerCase();
+  if (!t.includes(b)) return -1;
+  const words = (modelName || '').toLowerCase().split(/\s+/).filter(w => w.length > 2);
+  if (words.length === 0) return 1;
   const hits = words.filter(w => t.includes(w)).length;
-  if (hits === 0) return -1;
-  return hits;
+  return hits > 0 ? hits : -1;
 }
 
 async function serpSearch(query, serpKey) {
@@ -59,7 +67,7 @@ async function serpSearch(query, serpKey) {
   return (data.shopping_results || []).map(item => {
     const price = parseFloat((item.price || '0').replace(/[^0-9.]/g, '')) || 0;
     return {
-      title: item.title || '',
+      title: cleanTitle(item.title || ''),
       source: item.source || 'Retailer',
       price,
       rating: item.rating || 0,
@@ -82,7 +90,7 @@ async function rainforestSearch(query, rfKey) {
     .map(item => {
       const price = parseFloat((item.price.value || '0').toString().replace(/[^0-9.]/g, '')) || 0;
       return {
-        title: item.title || '',
+        title: cleanTitle(item.title || ''),
         source: 'Amazon',
         price,
         rating: item.rating || 0,
