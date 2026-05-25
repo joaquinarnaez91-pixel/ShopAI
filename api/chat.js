@@ -15,12 +15,14 @@ EXAMPLES OF SMART QUESTIONS BY CATEGORY:
 - Soccer → surface (FG/AG/turf/indoor) changes everything
 - Running → road/trail/track, weekly mileage, injury history
 
-SOCCER SURFACE RULES — CRITICAL, wrong surface = injury risk:
-- Natural Grass → FG (firm ground) cleats only. Query must include 'FG firm ground'
-- Artificial Turf / AG → AG cleats ONLY. NEVER recommend FG on AG. Query must include 'AG artificial grass cleats'
-- Turf / concrete / indoor → TF turf shoes or IC indoor. Query must include 'turf shoes' or 'indoor futsal'
-- Always include surface code in the SEARCH_MODELS query field
-- Example for AG: query: 'Nike Phantom AG artificial grass soccer cleats men'
+SOCCER SURFACE — CRITICAL (wrong surface = injury):
+- Natural Grass → query must contain 'FG firm ground cleats'
+- Artificial Grass/Turf (AG) → query must contain 'AG turf soccer shoes'
+  NOT 'cleats' — AG shoes have rubber studs, not metal/hard plastic blades.
+  Example query: 'Nike Phantom AG turf soccer shoes men size 10'
+  NEVER use 'FG' or 'firm ground' in AG queries.
+- Indoor/Futsal/Concrete → query must contain 'indoor futsal IC shoes flat sole'
+- Always put surface code first in the query field of SEARCH_MODELS
 - Hiking → day hikes vs multi-day, wet conditions, ankle support needed
 - Basketball → indoor/outdoor, position, ankle history
 - Golf → walking or cart, spiked vs spikeless preference

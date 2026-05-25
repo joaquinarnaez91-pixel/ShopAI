@@ -52,16 +52,23 @@ function isBlocked(title, source) {
 function scoreMatch(title, brand, modelName) {
   const t = (title || '').toLowerCase();
   const b = (brand || '').toLowerCase();
+
   if (!t.includes(b)) return -1;
-  const words = (modelName || '').toLowerCase().split(/\s+/).filter(w => w.length > 2);
+
+  const words = (modelName || '').toLowerCase()
+    .split(/\s+/)
+    .filter(w => w.length > 1);
+
   if (words.length === 0) return 1;
+
   const hits = words.filter(w => t.includes(w)).length;
-  return hits > 0 ? hits : -1;
+
+  return hits >= 1 ? hits : -1;
 }
 
 async function serpSearch(query, serpKey) {
   const params = new URLSearchParams({
-    api_key: serpKey, engine: 'google_shopping', q: query, num: '10', gl: 'us', hl: 'en'
+    api_key: serpKey, engine: 'google_shopping', q: query, num: '15', gl: 'us', hl: 'en'
   });
   const data = await httpsGet('https://serpapi.com/search?' + params.toString());
   return (data.shopping_results || []).map(item => {
@@ -108,10 +115,24 @@ async function searchForModel(m, serpKey, rfKey) {
     rainforestSearch(m.query, rfKey)
   ]);
 
-  const candidates = [
+  let candidates = [
     ...(serpResult.status === 'fulfilled' ? serpResult.value : []),
     ...(rfResult.status === 'fulfilled'   ? rfResult.value   : [])
   ].filter(p => !isBlocked(p.title, p.source));
+
+  const queryLower = (m.query || '').toLowerCase();
+  const isAGSearch = queryLower.includes(' ag ') || queryLower.includes('turf');
+  const isFGSearch = queryLower.includes(' fg ') || queryLower.includes('firm ground');
+
+  if (isAGSearch) {
+    candidates = candidates.filter(p => {
+      const t = p.title.toLowerCase();
+      const hasFG = t.includes('firm ground') || t.includes(' fg ') || t.includes('/fg');
+      const hasAG = t.includes(' ag ') || t.includes('/ag') || t.includes('turf');
+      if (hasFG && !hasAG) return false;
+      return true;
+    });
+  }
 
   if (serpResult.status === 'rejected') console.log('[search] SerpAPI error for', m.query + ':', serpResult.reason?.message);
   if (rfResult.status === 'rejected')   console.log('[search] Rainforest error for', m.query + ':', rfResult.reason?.message);
