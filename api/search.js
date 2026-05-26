@@ -123,23 +123,52 @@ async function searchForModel(m, serpKey, rfKey) {
   console.log('[search]', m.brand, m.model, '— raw candidates:', candidates.length);
 
   if (candidates.length === 0) {
-    const mockFallback = {
-      name: m.brand + ' ' + m.model,
-      brand: m.brand,
-      category: m.category,
-      why: m.why,
-      price: 120,
-      priceIndicator: 'USUAL',
-      rating: 4.5,
-      reviews: 1200,
-      img: '',
-      link: 'https://www.google.com/search?q=' + encodeURIComponent(m.brand + ' ' + m.model),
-      source: 'Google Search',
-      delivery: '',
-      prices30day: makePricePoints(120)
+    const categoryMocks = {
+      soccer: [
+        { brand:'Nike',   model:'Phantom GX II Academy AG', price:89,  rating:4.6, reviews:1200 },
+        { brand:'Adidas', model:'Predator Club AG',          price:75,  rating:4.7, reviews:980  },
+        { brand:'Puma',   model:'Future 7 Play AG',          price:65,  rating:4.5, reviews:750  },
+      ],
+      running: [
+        { brand:'ASICS', model:'Novablast 5',  price:130, rating:4.7, reviews:2100 },
+        { brand:'Nike',  model:'Pegasus 41',   price:135, rating:4.6, reviews:3200 },
+        { brand:'Hoka',  model:'Clifton 9',    price:145, rating:4.8, reviews:1800 },
+      ],
+      basketball: [
+        { brand:'Nike',   model:'LeBron NXXT Gen',     price:160, rating:4.6, reviews:980  },
+        { brand:'Adidas', model:'Harden Vol. 8',        price:130, rating:4.5, reviews:720  },
+        { brand:'Nike',   model:'KD 17',                price:150, rating:4.7, reviews:1100 },
+      ],
+      hiking: [
+        { brand:'Salomon',    model:'X Ultra 4 GTX', price:165, rating:4.7, reviews:2300 },
+        { brand:'Merrell',    model:'Moab Speed 2',  price:135, rating:4.6, reviews:1800 },
+        { brand:'Hoka',       model:'Anacapa 2 GTX', price:185, rating:4.8, reviews:900  },
+      ],
+      default: [
+        { brand:'Nike',        model:'Air Force 1',  price:110, rating:4.6, reviews:8000 },
+        { brand:'Adidas',      model:'Stan Smith',   price:85,  rating:4.5, reviews:6000 },
+        { brand:'New Balance', model:'574',           price:90,  rating:4.5, reviews:4000 },
+      ]
     };
-    console.log('[search] Using mock fallback for', m.brand, m.model);
-    return mockFallback;
+    const cat   = (m.category || '').toLowerCase();
+    const mocks = categoryMocks[Object.keys(categoryMocks).find(k => cat.includes(k))] || categoryMocks.default;
+    const mock  = mocks[Math.floor(Math.random() * mocks.length)];
+    console.log('[search] Using category mock fallback for', m.brand, m.model, '→', mock.brand, mock.model);
+    return {
+      name:          mock.brand + ' ' + mock.model,
+      brand:         m.brand,
+      category:      m.category,
+      why:           m.why,
+      price:         mock.price,
+      priceIndicator:'USUAL',
+      rating:        mock.rating,
+      reviews:       mock.reviews,
+      img:           '',
+      link:          'https://www.google.com/search?q=' + encodeURIComponent(mock.brand + ' ' + mock.model),
+      source:        'Google Search',
+      delivery:      '',
+      prices30day:   makePricePoints(mock.price)
+    };
   }
 
   // AG surface filter

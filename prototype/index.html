@@ -522,7 +522,7 @@ function renderChipGroup(chips, onSelect) {
       btn.textContent = c.label;
       btn.onclick = () => {
         document.querySelectorAll('.chip-group').forEach(el => el.remove());
-        onSelect(c);
+        if (onSelect) onSelect(c.msg, c.action);
       };
       row.appendChild(btn);
     });
@@ -592,18 +592,38 @@ function switchTab(tab) {
       renderLastMessages(6);
       addSeparator('continuing search');
     }
-    addMessage('ai',
-      'What are you shopping for? Tell me the type of shoe or clothing, ' +
-      'and I\'ll find the best options across every store — personalized to your style.'
-    );
-    setTimeout(() => {
-      renderChipGroup([
-        { label: '👟 Shoes',        msg: 'I\'m looking for shoes' },
-        { label: '👗 Clothing',     msg: 'I\'m looking for clothing' },
-        { label: '⌚ Accessories',  msg: 'I\'m looking for accessories' },
-        { label: '🔥 Trending now', msg: 'Show me what\'s trending right now' },
-      ], c => sendMessage(c.msg));
-    }, 50);
+
+    // FIX 5: if coming from an active style session, send context automatically
+    if (styleMessages.length > 0 && discoverMessages.length === 0) {
+      const profileParts = [
+        userGender || null,
+        userAge    || null,
+        userCurrentSeason ? userCurrentSeason + ' season' : null,
+        styleProfile.season && styleProfile.season !== userCurrentSeason
+          ? 'color season: ' + styleProfile.season : null,
+      ].filter(Boolean);
+      setTimeout(() => {
+        sendMessage(
+          'I just finished my style guide session. My profile: ' +
+          (profileParts.join(', ') || 'style session done') +
+          '. Based on this, what should I shop for first? ' +
+          'Give me 3 specific suggestions and then ask what I want to search.'
+        );
+      }, 100);
+    } else {
+      addMessage('ai',
+        'What are you shopping for? Tell me the type of shoe or clothing, ' +
+        'and I\'ll find the best options across every store — personalized to your style.'
+      );
+      setTimeout(() => {
+        renderChipGroup([
+          { label: '👟 Shoes',        msg: 'I\'m looking for shoes' },
+          { label: '👗 Clothing',     msg: 'I\'m looking for clothing' },
+          { label: '⌚ Accessories',  msg: 'I\'m looking for accessories' },
+          { label: '🔥 Trending now', msg: 'Show me what\'s trending right now' },
+        ], (msg) => sendMessage(msg));
+      }, 50);
+    }
 
   } else if (tab === 'wardrobe') {
     messages = [];
@@ -1203,6 +1223,85 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'ArrowLeft')  navigate(-1);
 });
 
+// ── Outfit formula cards (FIX 2) ─────────────────────────────────────────
+function renderOutfitCards(text) {
+  if (!text || (!/Outfit\s+\d+/i.test(text) && !/\*\*Outfit/i.test(text))) return false;
+
+  const outfitBlocks = [];
+  const regex = /\*?\*?Outfit\s+(\d+)[^*\n]*[-—]([^\n]+)\*?\*?\n([\s\S]*?)(?=\*?\*?Outfit\s+\d+|$)/gi;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    outfitBlocks.push({
+      number:   match[1],
+      occasion: match[2].trim(),
+      content:  match[3].trim()
+    });
+  }
+  if (outfitBlocks.length === 0) return false;
+
+  const containers = [document.getElementById('lumen-chat'), document.getElementById('dMsgs')].filter(Boolean);
+  if (!containers.length) return false;
+
+  outfitBlocks.forEach(outfit => {
+    const makeCard = () => {
+      const card = document.createElement('div');
+      card.style.cssText = 'margin:6px 0;border-radius:14px;border:1.5px solid var(--border);overflow:hidden;background:#fff;';
+
+      const header = document.createElement('div');
+      header.style.cssText = 'padding:12px 14px 8px;border-bottom:1px solid var(--border);';
+      header.innerHTML =
+        '<div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px">Outfit ' + outfit.number + '</div>' +
+        '<div style="font-size:14px;font-weight:600;color:var(--tx1);margin-top:2px">' + outfit.occasion + '</div>';
+
+      const body = document.createElement('div');
+      body.style.cssText = 'padding:10px 14px 12px;font-size:13px;color:var(--tx2);line-height:1.5;white-space:pre-wrap;';
+      body.textContent = outfit.content;
+
+      const actions = document.createElement('div');
+      actions.style.cssText = 'padding:8px 14px 12px;display:flex;gap:6px;flex-wrap:wrap;';
+      ['🛍️ Shop this look', '📌 Save outfit'].forEach(label => {
+        const btn = document.createElement('button');
+        btn.className = 'chip';
+        btn.style.cssText = 'font-size:11px;padding:5px 10px;';
+        btn.textContent = label;
+        btn.onclick = () => {
+          if (label.includes('Shop')) {
+            sendMessage('Find me the pieces for the ' + outfit.occasion + ' outfit: ' + outfit.content);
+          } else {
+            addMessage('ai', '📌 Outfit ' + outfit.number + ' saved!');
+          }
+        };
+        actions.appendChild(btn);
+      });
+
+      card.appendChild(header);
+      card.appendChild(body);
+      card.appendChild(actions);
+      return card;
+    };
+    containers.forEach(el => el.appendChild(makeCard()));
+  });
+
+  setTimeout(() => {
+    addMessage('ai', 'Want to find actual pieces for any of these looks?');
+    renderChipGroup([
+      { label: '🛍️ Shop these looks', msg: 'Find clothes for my outfit formulas in Discover' },
+      { label: '✨ Refine my style',   msg: 'Tell me more about my style and give me more outfits' },
+      { label: '📷 Visual search',     action: 'photo' },
+    ], (msg, action) => {
+      if (action === 'photo') {
+        const inp = document.getElementById('photoInput') || document.getElementById('photoInputD');
+        if (inp) inp.click();
+      } else {
+        sendMessage(msg);
+      }
+    });
+    scrollToLatest();
+  }, 400);
+
+  return true;
+}
+
 // ── Send Message ──────────────────────────────────────────────────────────
 async function sendMessage(text) {
   if (!text.trim() || isLoading) return;
@@ -1407,6 +1506,7 @@ async function sendMessage(text) {
       const displayContent = content.replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '').trim();
       messages.push({ role: 'assistant', content });
       addMessage('ai', displayContent);
+      renderOutfitCards(displayContent);
 
       // Mark onboarding complete after outfit reveal (step 3 AI response)
       if (onboardingActive && onboardingStep === 3 && activeTab === 'style') {
@@ -1437,7 +1537,7 @@ function wireInput(inp, btn) {
   }
 }
 
-// ── Onboarding welcome — sequential chip flow (FIX 8) ────────────────────
+// ── Onboarding welcome — sequential chip flow ────────────────────────────
 function showOnboardingWelcome() {
   onboardingStep = 0;
   addMessage('ai', 'Hi! I\'m Lumen ✨<br>Quick setup — just 3 taps and I\'ll personalize everything for you.');
@@ -1445,46 +1545,53 @@ function showOnboardingWelcome() {
   setTimeout(() => {
     addMessage('ai', 'How do you identify?');
     renderChipGroup([
-      { label: '👨 Man' },
-      { label: '👩 Woman' },
-      { label: '🧑 Non-binary' },
-    ], c => {
-      userGender = c.label.replace(/\p{Emoji}/gu, '').trim().toLowerCase();
-      addMessage('user', c.label);
+      { label: '👨 Man',        msg: '👨 Man' },
+      { label: '👩 Woman',      msg: '👩 Woman' },
+      { label: '🧑 Non-binary', msg: '🧑 Non-binary' },
+    ], (msg) => {
+      userGender = msg.replace(/\p{Emoji}/gu, '').trim().toLowerCase();
+      addMessage('user', msg);
 
       setTimeout(() => {
         addMessage('ai', 'Age range?');
         renderChipGroup([
-          { label: '18–24' },
-          { label: '25–34' },
-          { label: '35–44' },
-          { label: '45+' },
-        ], c => {
-          userAge = c.label;
-          addMessage('user', c.label);
+          { label: '18–24', msg: '18–24' },
+          { label: '25–34', msg: '25–34' },
+          { label: '35–44', msg: '35–44' },
+          { label: '45+',   msg: '45+' },
+        ], (msg) => {
+          userAge = msg;
+          addMessage('user', msg);
 
           setTimeout(() => {
             addMessage('ai', 'Know your color season?');
             renderChipGroup([
-              { label: '🌸 Spring' },
-              { label: '☀️ Summer' },
-              { label: '🍂 Autumn' },
-              { label: '❄️ Winter' },
-              { label: 'Not sure yet' },
-            ], c => {
-              userCurrentSeason = c.label === 'Not sure yet' ? null : c.label.replace(/\p{Emoji}/gu, '').trim();
-              addMessage('user', c.label);
+              { label: '🌸 Spring',    msg: '🌸 Spring' },
+              { label: '☀️ Summer',   msg: '☀️ Summer' },
+              { label: '🍂 Autumn',   msg: '🍂 Autumn' },
+              { label: '❄️ Winter',   msg: '❄️ Winter' },
+              { label: 'Not sure yet', msg: 'Not sure yet' },
+            ], (msg) => {
+              userCurrentSeason = msg === 'Not sure yet' ? null : msg.replace(/\p{Emoji}/gu, '').trim();
+              addMessage('user', msg);
 
+              // FIX 1: Ask about photo before intent chips
               setTimeout(() => {
-                addMessage('ai', 'What would you like to start with?');
+                addMessage('ai',
+                  'One more thing — for the most accurate color analysis, ' +
+                  'a photo works best. Want to share one now, or I can ' +
+                  'figure it out from a few quick questions?');
                 renderChipGroup([
-                  { label: '✨ Discover my colors', msg: 'I want to know my colors' },
-                  { label: '👗 Build outfits',      msg: 'Help me build outfits' },
-                  { label: '🔥 2026 trends for me', msg: 'Show me 2026 trends for me' },
-                  { label: '💬 I\'ll tell Lumen',   msg: 'I\'ll tell you what I need' },
-                ], c => {
+                  { label: '📷 Share a photo',      action: 'photo' },
+                  { label: '💬 Ask me questions',   msg: 'Ask me questions to find my colors' },
+                ], (msg, action) => {
                   onboardingStep = 1;
-                  sendMessage(c.msg);
+                  if (action === 'photo') {
+                    const inp = document.getElementById('photoInput') || document.getElementById('photoInputD');
+                    if (inp) inp.click();
+                  } else {
+                    sendMessage(msg);
+                  }
                 });
               }, 300);
             });
