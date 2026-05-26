@@ -234,9 +234,27 @@ async function searchForModel(m, apiKey, cx, rfKey) {
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
+
+  if (req.method === 'GET' && req.url && req.url.includes('test')) {
+    const apiKey = process.env.GOOGLE_CSE_KEY;
+    const cx     = process.env.GOOGLE_CSE_CX;
+    console.log('[test] key set:', !!apiKey, 'cx set:', !!cx);
+    try {
+      const results = await googleCSESearch('Nike running shoes buy', apiKey, cx, 3);
+      console.log('[test] results:', results.length);
+      return res.status(200).json({
+        keySet:      !!apiKey,
+        cxSet:       !!cx,
+        resultCount: results.length,
+        sample:      results[0] || null
+      });
+    } catch(e) {
+      return res.status(200).json({ error: e.message });
+    }
+  }
 
   const { models } = req.body;
   const apiKey = process.env.GOOGLE_CSE_KEY;

@@ -123,28 +123,34 @@ export default async function handler(req, res) {
   const basePrompt = system || (tab === 'style' ? STYLE_SYSTEM_PROMPT : DISCOVER_SYSTEM_PROMPT);
   const selectedPrompt = userContext ? basePrompt + '\n\n[User profile: ' + userContext + ']' : basePrompt;
 
+  const useWebSearch = tab === 'discover';
+  const tools = useWebSearch
+    ? [{ type: 'web_search_20250305', name: 'web_search' }]
+    : undefined;
+
   const payload = JSON.stringify({
     model: 'claude-sonnet-4-6',
     max_tokens: 2048,
     system: selectedPrompt,
-    tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-    tool_choice: { type: 'auto' },
+    ...(tools ? { tools, tool_choice: { type: 'auto' } } : {}),
     messages: messages || []
   });
+
+  const reqHeaders = {
+    'Content-Type': 'application/json',
+    'x-api-key': process.env.ANTHROPIC_API_KEY,
+    'anthropic-version': '2023-06-01',
+    'Content-Length': Buffer.byteLength(payload)
+  };
+  if (useWebSearch) reqHeaders['anthropic-beta'] = 'web-search-2025-03-05';
 
   return new Promise((resolve) => {
     const r = https.request({
       hostname: 'api.anthropic.com',
       path: '/v1/messages',
       method: 'POST',
-      timeout: 25000,
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'web-search-2025-03-05',
-        'Content-Length': Buffer.byteLength(payload)
-      }
+      timeout: 55000,
+      headers: reqHeaders
     }, apiRes => {
       let d = '';
       apiRes.on('data', c => d += c);
