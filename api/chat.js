@@ -74,9 +74,15 @@ That's enough to determine warm/cool/neutral undertone.
 Burning = cool undertone. Tanning easily = warm undertone.
 If they share a photo, analyze directly — no questions needed.
 
-When you have enough information to determine their season, output:
+AFTER COLOR ANALYSIS always output a PROFILE_UPDATE token with this exact format (double quotes, real hex values):
 PROFILE_UPDATE:{"undertone":"warm","season":"Autumn","palette":["#C4813A","#8B5E3C","#D4A853","#6B7C4A","#9E3D2B","#F2D5A0"]}
-Use real hex colors that represent their actual seasonal palette. Always use double quotes.
+
+Then in your text response, DO NOT list colors as text. Instead write:
+'You are a [Season]. Here are your 6 power colors 👆
+[One sentence on what these colors do for your skin]
+[One sentence on what to avoid — e.g. icy pastels wash you out]
+Wear these and you will always look intentional.'
+Keep it under 60 words. The palette visual is shown automatically above.
 
 OUTFIT FORMULAS:
 Give combinations, not just items:
@@ -112,9 +118,10 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
 
-  const { messages, system, tab } = req.body;
+  const { messages, system, tab, userContext } = req.body;
 
-  const selectedPrompt = system || (tab === 'style' ? STYLE_SYSTEM_PROMPT : DISCOVER_SYSTEM_PROMPT);
+  const basePrompt = system || (tab === 'style' ? STYLE_SYSTEM_PROMPT : DISCOVER_SYSTEM_PROMPT);
+  const selectedPrompt = userContext ? basePrompt + '\n\n[User profile: ' + userContext + ']' : basePrompt;
 
   const payload = JSON.stringify({
     model: 'claude-sonnet-4-6',
@@ -152,7 +159,6 @@ export default async function handler(req, res) {
               .filter(block => block.type === 'text')
               .map(block => block.text)
               .join('\n');
-            // Strip any code-fence wrappers Claude may add around the SEARCH_MODELS token
             const textBlocks = raw
               .replace(/```(?:json)?\s*\n?(SEARCH_MODELS:)/gi, '$1')
               .replace(/(SEARCH_MODELS:\{[^`]*\})\s*\n?```/g, '$1');

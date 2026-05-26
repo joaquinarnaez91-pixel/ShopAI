@@ -29,6 +29,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
 .tab{flex:1;padding:12px 0;text-align:center;font-size:13px;font-weight:600;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
 .tab.active{color:var(--tx1);border-bottom-color:var(--tx1);}
 
+/* Profile bar */
+.m-profile-bar{display:none;padding:7px 16px;background:#fafafa;border-bottom:1px solid var(--border);align-items:center;gap:8px;flex-shrink:0;}
+
 /* Scroll area */
 .m-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(140px + env(safe-area-inset-bottom,0px));}
 .m-scroll::-webkit-scrollbar{display:none;}
@@ -244,6 +247,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
     <div class="tab" data-tab="wardrobe" onclick="switchTab('wardrobe')">Wardrobe</div>
   </div>
 
+  <!-- Profile bar (FIX 7) -->
+  <div id="m-profile-bar" class="m-profile-bar">
+    <div id="m-profile-palette" style="display:flex;gap:4px;align-items:center"></div>
+    <span id="m-profile-season" style="font-size:11px;font-weight:600;color:var(--tx2)"></span>
+  </div>
+
   <div class="m-scroll" id="mScroll">
   </div>
 
@@ -353,6 +362,15 @@ let styleProfile = {
   occasions: [],
   lifeContext: null
 };
+
+// Onboarding profile chips state (FIX 8)
+let userGender        = null;
+let userAge           = null;
+let userCurrentSeason = null;
+
+// Per-tab message history (FIX 6)
+let styleMessages   = [];
+let discoverMessages = [];
 
 // Photo upload state
 let photoBase64   = null;
@@ -468,6 +486,74 @@ function updateProfileDisplay() {
   }
 }
 
+// ── Palette in chat (FIX 3) ───────────────────────────────────────────────
+function renderPaletteInChat(palette, season) {
+  if (!palette || !palette.length) return;
+  const dots = palette.map(hex =>
+    '<div style="width:30px;height:30px;border-radius:50%;background:' + hex +
+    ';border:1px solid rgba(0,0,0,0.08);flex-shrink:0" title="' + hex + '"></div>'
+  ).join('');
+  const html =
+    '<div class="msg">' +
+      '<div class="av ai">✨</div>' +
+      '<div class="bbl ai">' +
+        '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:2px 0">' +
+          dots +
+          (season ? '<span style="font-size:11px;font-weight:600;color:var(--tx3);margin-left:4px">' + season + '</span>' : '') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  [document.getElementById('lumen-chat'), document.getElementById('dMsgs')].forEach(el => {
+    if (el) el.insertAdjacentHTML('beforeend', html);
+  });
+  scrollToLatest();
+}
+
+// ── Chip group helper (FIX 8) ─────────────────────────────────────────────
+function renderChipGroup(chips, onSelect) {
+  [document.getElementById('lumen-chat'), document.getElementById('dMsgs')].forEach(container => {
+    if (!container) return;
+    const row = document.createElement('div');
+    row.className = 'chip-group';
+    row.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;padding:8px 0 4px;';
+    chips.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'chip';
+      btn.textContent = c.label;
+      btn.onclick = () => {
+        document.querySelectorAll('.chip-group').forEach(el => el.remove());
+        onSelect(c);
+      };
+      row.appendChild(btn);
+    });
+    container.appendChild(row);
+  });
+  scrollToLatest();
+}
+
+// ── Tab history helpers (FIX 6) ───────────────────────────────────────────
+function renderLastMessages(n) {
+  const toRender = messages.slice(-n);
+  const mc = document.getElementById('lumen-chat');
+  const dc = document.getElementById('dMsgs');
+  toRender.forEach(m => {
+    const isAI = m.role === 'assistant';
+    const text = typeof m.content === 'string' ? m.content : '';
+    const clean = text.replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '').replace(/SEARCH_MODELS:\{[\s\S]*?\}/g, '').trim();
+    if (!clean) return;
+    const html = `<div class="msg${isAI ? '' : ' u'}"><div class="av ${isAI ? 'ai' : 'u'}">${isAI ? '✨' : '😊'}</div><div class="bbl ${isAI ? 'ai' : 'u'}">${isAI ? parseMarkdown(clean) : clean}</div></div>`;
+    if (mc) mc.insertAdjacentHTML('beforeend', html);
+    if (dc) dc.insertAdjacentHTML('beforeend', html);
+  });
+}
+
+function addSeparator(label) {
+  const html = `<div style="text-align:center;font-size:10px;color:var(--tx3);padding:10px 0 4px;letter-spacing:0.5px;text-transform:uppercase">— ${label} —</div>`;
+  [document.getElementById('lumen-chat'), document.getElementById('dMsgs')].forEach(el => {
+    if (el) el.insertAdjacentHTML('beforeend', html);
+  });
+}
+
 // ── Tabs ──────────────────────────────────────────────────────────────────
 function clearChatDOM() {
   const mc = document.getElementById('lumen-chat');
@@ -486,43 +572,41 @@ function clearProductsDOM() {
 
 function switchTab(tab) {
   const prev = activeTab;
+  if (prev === tab) return;
+
+  // Save current messages before switching (FIX 6)
+  if (prev === 'style') styleMessages = [...messages];
+  else if (prev === 'discover') discoverMessages = [...messages];
+
   activeTab = tab;
   document.querySelectorAll('.tab').forEach(el => {
     el.classList.toggle('active', el.dataset.tab === tab);
   });
 
+  clearChatDOM();
+
   if (tab === 'discover') {
-    clearChatDOM();
     clearProductsDOM();
-    messages = [];
+    messages = [...discoverMessages];
+    if (messages.length > 0) {
+      renderLastMessages(6);
+      addSeparator('continuing search');
+    }
     addMessage('ai',
       'What are you shopping for? Tell me the type of shoe or clothing, ' +
       'and I\'ll find the best options across every store — personalized to your style.'
     );
     setTimeout(() => {
-      const discoverChips = [
+      renderChipGroup([
         { label: '👟 Shoes',        msg: 'I\'m looking for shoes' },
         { label: '👗 Clothing',     msg: 'I\'m looking for clothing' },
         { label: '⌚ Accessories',  msg: 'I\'m looking for accessories' },
         { label: '🔥 Trending now', msg: 'Show me what\'s trending right now' },
-      ];
-      [document.getElementById('lumen-chat'), document.getElementById('dMsgs')].forEach(container => {
-        if (!container) return;
-        const row = document.createElement('div');
-        row.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;padding:8px 0 4px;';
-        discoverChips.forEach(c => {
-          const btn = document.createElement('button');
-          btn.className = 'chip';
-          btn.textContent = c.label;
-          btn.onclick = () => { row.remove(); sendMessage(c.msg); };
-          row.appendChild(btn);
-        });
-        container.appendChild(row);
-      });
-      scrollBottom(); scrollChat();
+      ], c => sendMessage(c.msg));
     }, 50);
 
   } else if (tab === 'wardrobe') {
+    messages = [];
     addMessage('ai',
       '👗 Your wardrobe is where the magic happens.<br><br>' +
       'Soon you\'ll be able to:<br>' +
@@ -535,33 +619,24 @@ function switchTab(tab) {
     );
 
   } else if (tab === 'style') {
-    if (prev === 'discover') {
-      // Coming back from Discover — restore style guide context
-      clearChatDOM();
-      messages = [];
-      if (onboardingStep < 3) {
-        showOnboardingWelcome();
-      } else {
-        addMessage('ai', 'Welcome back! What can I help you with for your style today?');
-      }
+    messages = [...styleMessages];
+    if (messages.length > 0) {
+      renderLastMessages(6);
+      addSeparator('continuing your style session');
+    } else {
+      if (onboardingStep < 3) showOnboardingWelcome();
+      else addMessage('ai', 'Welcome back! What can I help you with for your style today?');
     }
-    // From wardrobe: leave DOM as-is, conversation continues
   }
 }
 
 // ── Chat UI ───────────────────────────────────────────────────────────────
-function scrollBottom() {
-  const ms = document.getElementById('mScroll');
-  const dc = document.getElementById('dMsgs');
-  if (ms) ms.scrollTop = ms.scrollHeight;
-  if (dc) dc.scrollTop = dc.scrollHeight;
-}
-
-function scrollChat() {
-  const m = document.getElementById('lumen-chat');
-  const d = document.getElementById('dMsgs');
-  if (m) m.scrollTop = m.scrollHeight;
-  if (d) d.scrollTop = d.scrollHeight;
+function scrollToLatest() {
+  [document.getElementById('lumen-chat'), document.getElementById('dMsgs')].forEach(el => {
+    if (!el) return;
+    const last = el.lastElementChild;
+    if (last) last.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 }
 
 function addMessage(role, text) {
@@ -571,8 +646,7 @@ function addMessage(role, text) {
   const dc = document.getElementById('dMsgs');
   if (mc) mc.insertAdjacentHTML('beforeend', html);
   if (dc) dc.insertAdjacentHTML('beforeend', html);
-  scrollBottom();
-  scrollChat();
+  scrollToLatest();
 }
 
 function showTyping() {
@@ -582,7 +656,7 @@ function showTyping() {
   const dc = document.getElementById('dMsgs');
   if (mc) mc.insertAdjacentHTML('beforeend', html);
   if (dc) dc.insertAdjacentHTML('beforeend', html);
-  scrollBottom();
+  scrollToLatest();
   return id;
 }
 
@@ -710,7 +784,6 @@ function togglePin(e, id) {
     }
   } else {
     addMessage('ai', shortName(p) + ' removed from shortlist.');
-    scrollBottom();
   }
 }
 
@@ -762,11 +835,7 @@ function showPinOnboarding(p) {
   });
 
   chatEl.appendChild(chipRow);
-  scrollChat();
-  setTimeout(() => {
-    const scroll = document.querySelector('.m-scroll') || document.querySelector('.d-scroll');
-    if (scroll) scroll.scrollTop = scroll.scrollHeight + 200;
-  }, 150);
+  scrollToLatest();
 }
 
 function updatePinTray() {
@@ -931,7 +1000,7 @@ function renderStyleQuiz() {
     }
   }
 
-  scrollBottom(); scrollChat();
+  scrollToLatest();
 }
 
 // ── Photo Upload ──────────────────────────────────────────────────────────
@@ -947,7 +1016,7 @@ function handlePhotoUpload(e) {
     [document.getElementById('lumen-chat'), document.getElementById('dMsgs')].forEach(el => {
       if (el) el.insertAdjacentHTML('beforeend', preview);
     });
-    scrollBottom(); scrollChat();
+    scrollToLatest();
 
     photoBase64   = ev.target.result.split(',')[1];
     photoMimeType = file.type;
@@ -1177,7 +1246,13 @@ async function sendMessage(text) {
       photoMimeType = null;
     }
 
-    const data    = await apiFetch('/api/chat', { messages: apiMessages, tab: activeTab });
+    const userContext = [
+      userGender        ? 'Gender: ' + userGender              : null,
+      userAge           ? 'Age: ' + userAge                    : null,
+      userCurrentSeason ? 'Color season: ' + userCurrentSeason : null,
+    ].filter(Boolean).join(', ') || undefined;
+
+    const data    = await apiFetch('/api/chat', { messages: apiMessages, tab: activeTab, userContext });
     removeTyping(typId);
     const content  = data.content || '';
 
@@ -1205,6 +1280,7 @@ async function sendMessage(text) {
         if (prof.palette && Array.isArray(prof.palette)) {
           styleProfile.palette = prof.palette;
           userProfile.palette  = prof.palette;
+          // Desktop sidebar dots
           const dotsEl = document.getElementById('dProfileColors');
           if (dotsEl) {
             dotsEl.innerHTML =
@@ -1215,6 +1291,22 @@ async function sendMessage(text) {
               ).join('') +
               ' <span style="font-size:10px;color:var(--tx3)">' + (prof.season || '') + '</span>';
           }
+          // Mobile profile bar (FIX 7)
+          const bar = document.getElementById('m-profile-bar');
+          const barPalette = document.getElementById('m-profile-palette');
+          const barSeason  = document.getElementById('m-profile-season');
+          if (bar) {
+            bar.style.display = 'flex';
+            if (barPalette) {
+              barPalette.innerHTML = prof.palette.map(hex =>
+                '<div style="width:14px;height:14px;border-radius:50%;background:' + hex +
+                ';border:1px solid rgba(0,0,0,0.1);flex-shrink:0"></div>'
+              ).join('');
+            }
+            if (barSeason && prof.season) barSeason.textContent = prof.season;
+          }
+          // Render palette swatches in chat (FIX 3)
+          renderPaletteInChat(prof.palette, prof.season);
         }
         if (prof.style) {
           const el = document.getElementById('dProfileStyle');
@@ -1254,7 +1346,7 @@ async function sendMessage(text) {
               });
               container.appendChild(row);
             });
-            scrollBottom(); scrollChat();
+            scrollToLatest();
           }, 400);
         }
       } catch(e) { console.error('[profile] parse error:', e.message, profMatch[1]); }
@@ -1304,7 +1396,7 @@ async function sendMessage(text) {
         if (cw) cw.style.display = '';
         const ms = document.getElementById('mScroll');
         const mg = document.getElementById('mGrid');
-        if (ms && mg) setTimeout(function() { mg.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
+        if (mg) setTimeout(function() { mg.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
 
       } catch (e) {
         removeTyping(srchTypId);
@@ -1345,40 +1437,62 @@ function wireInput(inp, btn) {
   }
 }
 
-// ── Onboarding welcome (reusable) ─────────────────────────────────────────
+// ── Onboarding welcome — sequential chip flow (FIX 8) ────────────────────
 function showOnboardingWelcome() {
   onboardingStep = 0;
-  const welcomeText =
-    'Hi, I\'m Lumen — your personal style guide ✨<br><br>' +
-    'I\'m here to help you look and feel like yourself — whatever that means for you right now.<br><br>' +
-    'Tell me a little about yourself to get started. What\'s going on in your life these days? ' +
-    '(An occasion coming up, a wardrobe rut, a new chapter — anything works.)' +
-    '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:11px;color:var(--tx3)">' +
-    '📷 Want color analysis? You can share a photo anytime — private, never stored, completely optional.' +
-    '</div>';
-  addMessage('ai', welcomeText);
+  addMessage('ai', 'Hi! I\'m Lumen ✨<br>Quick setup — just 3 taps and I\'ll personalize everything for you.');
+
   setTimeout(() => {
-    const startChips = [
-      { label: '✨ I want to know my colors',   msg: 'I want to know my colors' },
-      { label: '👗 Help me build outfits',      msg: 'Help me build outfits' },
-      { label: '🔥 Show me 2026 trends for me', msg: 'Show me 2026 trends for me' },
-      { label: '💬 I\'ll just tell you',        msg: 'I\'ll just tell you what I need' }
-    ];
-    [document.getElementById('lumen-chat'), document.getElementById('dMsgs')].forEach(container => {
-      if (!container) return;
-      const row = document.createElement('div');
-      row.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;padding:8px 0 4px;';
-      startChips.forEach(c => {
-        const btn = document.createElement('button');
-        btn.className = 'chip';
-        btn.textContent = c.label;
-        btn.onclick = () => { row.remove(); sendMessage(c.msg); };
-        row.appendChild(btn);
-      });
-      container.appendChild(row);
+    addMessage('ai', 'How do you identify?');
+    renderChipGroup([
+      { label: '👨 Man' },
+      { label: '👩 Woman' },
+      { label: '🧑 Non-binary' },
+    ], c => {
+      userGender = c.label.replace(/\p{Emoji}/gu, '').trim().toLowerCase();
+      addMessage('user', c.label);
+
+      setTimeout(() => {
+        addMessage('ai', 'Age range?');
+        renderChipGroup([
+          { label: '18–24' },
+          { label: '25–34' },
+          { label: '35–44' },
+          { label: '45+' },
+        ], c => {
+          userAge = c.label;
+          addMessage('user', c.label);
+
+          setTimeout(() => {
+            addMessage('ai', 'Know your color season?');
+            renderChipGroup([
+              { label: '🌸 Spring' },
+              { label: '☀️ Summer' },
+              { label: '🍂 Autumn' },
+              { label: '❄️ Winter' },
+              { label: 'Not sure yet' },
+            ], c => {
+              userCurrentSeason = c.label === 'Not sure yet' ? null : c.label.replace(/\p{Emoji}/gu, '').trim();
+              addMessage('user', c.label);
+
+              setTimeout(() => {
+                addMessage('ai', 'What would you like to start with?');
+                renderChipGroup([
+                  { label: '✨ Discover my colors', msg: 'I want to know my colors' },
+                  { label: '👗 Build outfits',      msg: 'Help me build outfits' },
+                  { label: '🔥 2026 trends for me', msg: 'Show me 2026 trends for me' },
+                  { label: '💬 I\'ll tell Lumen',   msg: 'I\'ll tell you what I need' },
+                ], c => {
+                  onboardingStep = 1;
+                  sendMessage(c.msg);
+                });
+              }, 300);
+            });
+          }, 300);
+        });
+      }, 300);
     });
-    scrollBottom(); scrollChat();
-  }, 50);
+  }, 500);
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────
@@ -1413,6 +1527,8 @@ function showOnboardingWelcome() {
   wireInput(document.getElementById('mInput'), document.getElementById('mSend'));
   wireInput(document.getElementById('dInput'), document.getElementById('dSend'));
 
+  // messages starts as styleMessages reference
+  messages = styleMessages;
   showOnboardingWelcome();
 })();
 </script>
