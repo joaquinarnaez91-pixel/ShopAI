@@ -13,6 +13,10 @@ function httpsGet(url, timeoutMs = 8000) {
   });
 }
 
+function stripHtml(str) {
+  return (str || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, 80);
+}
+
 function cleanTitle(title) {
   return (title || '')
     .replace(/\(#[\w/#]+\)/g, '')
@@ -54,40 +58,30 @@ function scoreMatch(title, brand, modelName) {
   return hits >= 1 ? hits : 0.5;
 }
 
-// Google Custom Search Engine
-async function googleCSESearch(query, apiKey, cx, num = 10) {
+async function serpSearch(query, serpKey, num = 15) {
   const params = new URLSearchParams({
-    key: apiKey,
-    cx:  cx,
-    q:   query,
-    num: String(Math.min(num, 10)),
-    gl:  'us',
-    hl:  'en'
+    api_key: serpKey,
+    engine: 'google_shopping',
+    q: query,
+    num: String(num),
+    gl: 'us',
+    hl: 'en'
   });
   const data = await httpsGet(
-    'https://www.googleapis.com/customsearch/v1?' + params.toString()
+    'https://serpapi.com/search?' + params.toString()
   );
-  return (data.items || []).map(item => {
-    const priceMatch = (item.snippet || item.title || '')
-      .match(/\$[\d,]+\.?\d*/);
-    const price = priceMatch
-      ? parseFloat(priceMatch[0].replace(/[$,]/g, ''))
-      : 0;
-    return {
-      title:    cleanTitle(item.title || ''),
-      source:   item.displayLink || 'Retailer',
-      price,
-      rating:   0,
-      reviews:  0,
-      img:      item.pagemap?.cse_image?.[0]?.src ||
-                item.pagemap?.cse_thumbnail?.[0]?.src || '',
-      link:     item.link || '',
-      delivery: ''
-    };
-  });
+  return (data.shopping_results || []).map(item => ({
+    title:    cleanTitle(item.title || ''),
+    source:   item.source || 'Retailer',
+    price:    parseFloat((item.price || '0').replace(/[^0-9.]/g, '')) || 0,
+    rating:   item.rating || 0,
+    reviews:  item.reviews || 0,
+    img:      item.thumbnail || '',
+    link:     item.product_link || item.link || '',
+    delivery: stripHtml(item.delivery || '')
+  })).filter(p => p.price > 0);
 }
 
-// Rainforest Amazon search
 async function rainforestSearch(query, rfKey) {
   if (!rfKey) return [];
   const params = new URLSearchParams({
@@ -108,18 +102,18 @@ async function rainforestSearch(query, rfKey) {
     })).filter(p => p.price > 0);
 }
 
-async function searchForModel(m, apiKey, cx, rfKey) {
+async function searchForModel(m, serpKey, rfKey) {
   const q = m.query;
   console.log('[search] starting:', m.brand, m.model, '| query:', q);
 
-  const [cseResult, rfResult] = await Promise.allSettled([
-    googleCSESearch(q + ' buy price', apiKey, cx, 10),
+  const [serpResult, rfResult] = await Promise.allSettled([
+    serpSearch(q, serpKey, 15),
     rainforestSearch(q, rfKey)
   ]);
 
   const seen = new Set();
   const candidates = [];
-  for (const r of [cseResult, rfResult]) {
+  for (const r of [serpResult, rfResult]) {
     if (r.status !== 'fulfilled') continue;
     for (const p of r.value) {
       if (!p.link || seen.has(p.link)) continue;
@@ -154,16 +148,18 @@ async function searchForModel(m, apiKey, cx, rfKey) {
     if (qs > bestScore) { bestScore = qs; best = p; }
   }
 
-  // Fallback — take any candidate with brand match
+  // Fallback — relax to highest-rated candidate
   if (!best) {
-    best = filtered.find(p =>
-      p.title.toLowerCase().includes((m.brand || '').toLowerCase())
-    ) || filtered[0] || null;
-    if (best) console.log('[search] fallback result:', best.title);
+    best = filtered.sort((a, b) =>
+      ((b.rating || 0) * Math.log((b.reviews || 0) + 1)) -
+      ((a.rating || 0) * Math.log((a.reviews || 0) + 1))
+    )[0] || null;
+    if (best) console.log('[search] fallback:', best.title);
   }
 
-  // Mock fallback if still nothing
+  // Mock fallback
   if (!best) {
+    console.log('[search] mock for', m.brand, m.model);
     const categoryMocks = {
       soccer: [
         { brand:'Nike',   model:'Phantom GX II Academy AG', price:89,  rating:4.6, reviews:1200 },
@@ -194,14 +190,13 @@ async function searchForModel(m, apiKey, cx, rfKey) {
     const cat   = (m.category || '').toLowerCase();
     const mocks = categoryMocks[Object.keys(categoryMocks).find(k => cat.includes(k))] || categoryMocks.default;
     const mock  = mocks[Math.floor(Math.random() * mocks.length)];
-    console.log('[search] mock fallback for', m.brand, m.model, '→', mock.brand, mock.model);
-    const price = mock.price;
+    console.log('[search] mock fallback →', mock.brand, mock.model);
     return {
       name:           mock.brand + ' ' + mock.model,
       brand:          m.brand,
       category:       m.category,
       why:            m.why,
-      price,
+      price:          mock.price,
       priceIndicator: 'USUAL',
       rating:         mock.rating,
       reviews:        mock.reviews,
@@ -209,25 +204,11 @@ async function searchForModel(m, apiKey, cx, rfKey) {
       link:           'https://www.google.com/search?q=' + encodeURIComponent(mock.brand + ' ' + mock.model),
       source:         'Google Search',
       delivery:       '',
-      prices30day:    makePricePoints(price)
+      prices30day:    makePricePoints(mock.price)
     };
   }
 
-  if (!best.price || best.price === 0) {
-    const categoryPrices = {
-      'running': 130, 'trail': 140, 'hiking': 125,
-      'casual': 90,   'soccer': 85, 'golf': 150,
-      'basketball': 120, 'tennis': 100, 'default': 110
-    };
-    const cat = (m.category || '').toLowerCase();
-    const basePrice = categoryPrices[Object.keys(categoryPrices).find(k => cat.includes(k))] ||
-                      categoryPrices.default;
-    const variance = (m.model.length % 5) * 8;
-    best.price = basePrice + variance;
-    console.log('[search] price estimated:', best.price, 'for category:', cat);
-  }
-
-  console.log('[search] result for', m.brand, m.model, ':', best.title, '$' + best.price);
+  console.log('[search] result:', best.title, '$' + best.price);
   const prices30day = makePricePoints(best.price);
   return {
     name:           best.title,
@@ -248,47 +229,13 @@ async function searchForModel(m, apiKey, cx, rfKey) {
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
 
-  if (req.method === 'GET' && req.url && req.url.includes('test')) {
-    const apiKey = process.env.GOOGLE_CSE_KEY;
-    const cx     = process.env.GOOGLE_CSE_CX;
-    console.log('[test] key set:', !!apiKey, 'cx set:', !!cx);
-    try {
-      const params = new URLSearchParams({
-        key: apiKey, cx, q: 'Nike running shoes buy', num: '3', gl: 'us', hl: 'en'
-      });
-      const raw = await httpsGet('https://www.googleapis.com/customsearch/v1?' + params.toString());
-      const results = (raw.items || []).map(item => {
-        const priceMatch = (item.snippet || item.title || '').match(/\$[\d,]+\.?\d*/);
-        return {
-          title:  cleanTitle(item.title || ''),
-          source: item.displayLink || '',
-          price:  priceMatch ? parseFloat(priceMatch[0].replace(/[$,]/g, '')) : 0,
-          img:    item.pagemap?.cse_image?.[0]?.src || item.pagemap?.cse_thumbnail?.[0]?.src || '',
-          link:   item.link || ''
-        };
-      });
-      console.log('[test] results:', results.length);
-      return res.status(200).json({
-        keySet:      !!apiKey,
-        cxSet:       !!cx,
-        totalItems:  raw.searchInformation?.totalResults || '0',
-        resultCount: results.length,
-        apiError:    raw.error ? { code: raw.error.code, message: raw.error.message } : null,
-        sample:      results[0] || null
-      });
-    } catch(e) {
-      return res.status(200).json({ error: e.message });
-    }
-  }
-
   const { models } = req.body;
-  const apiKey = process.env.GOOGLE_CSE_KEY;
-  const cx     = process.env.GOOGLE_CSE_CX;
-  const rfKey  = process.env.RAINFOREST_API_KEY;
+  const serpKey = process.env.SERPAPI_KEY;
+  const rfKey   = process.env.RAINFOREST_API_KEY;
 
   if (!Array.isArray(models) || models.length === 0) {
     return res.status(400).json({ error: 'models array is required' });
@@ -298,7 +245,7 @@ export default async function handler(req, res) {
     models.map(m => m.brand + ' ' + m.model).join(' | '));
 
   const settled = await Promise.allSettled(
-    models.map(m => searchForModel(m, apiKey, cx, rfKey))
+    models.map(m => searchForModel(m, serpKey, rfKey))
   );
 
   const products = settled
