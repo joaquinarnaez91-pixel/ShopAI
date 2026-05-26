@@ -251,7 +251,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
   <div class="input-bar">
     <label class="photo-btn" title="Share a photo">
       📷
-      <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
+      <input type="file" id="photoInput" accept="image/*" capture="user" style="display:none" onchange="handlePhotoUpload(event)">
     </label>
     <input class="inp" id="mInput" type="text" placeholder="Ask anything about style…" />
     <button class="send" id="mSend" aria-label="Send">
@@ -299,7 +299,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
     <div class="d-inp-wrap">
       <label class="photo-btn" title="Share a photo">
         📷
-        <input type="file" id="photoInputD" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
+        <input type="file" id="photoInputD" accept="image/*" capture="user" style="display:none" onchange="handlePhotoUpload(event)">
       </label>
       <input class="inp" id="dInput" type="text" placeholder="Ask anything about style…" />
       <button class="send" id="dSend">
@@ -469,13 +469,60 @@ function updateProfileDisplay() {
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────────
+function clearChatDOM() {
+  const mc = document.getElementById('lumen-chat');
+  const dc = document.getElementById('dMsgs');
+  if (mc) mc.innerHTML = '';
+  if (dc) dc.innerHTML = '';
+}
+
+function clearProductsDOM() {
+  products = [];
+  const mg = document.getElementById('mGrid'); if (mg) mg.innerHTML = '';
+  const dg = document.getElementById('dGrid'); if (dg) dg.innerHTML = '';
+  const sl = document.getElementById('lumen-sec-label'); if (sl) sl.style.display = 'none';
+  const pc = document.getElementById('dProdCount'); if (pc) pc.textContent = 'Ready to search';
+}
+
 function switchTab(tab) {
+  const prev = activeTab;
   activeTab = tab;
   document.querySelectorAll('.tab').forEach(el => {
     el.classList.toggle('active', el.dataset.tab === tab);
   });
 
-  if (tab === 'wardrobe') {
+  if (tab === 'discover') {
+    clearChatDOM();
+    clearProductsDOM();
+    messages = [];
+    addMessage('ai',
+      'What are you shopping for? Tell me the type of shoe or clothing, ' +
+      'and I\'ll find the best options across every store — personalized to your style.'
+    );
+    setTimeout(() => {
+      const discoverChips = [
+        { label: '👟 Shoes',        msg: 'I\'m looking for shoes' },
+        { label: '👗 Clothing',     msg: 'I\'m looking for clothing' },
+        { label: '⌚ Accessories',  msg: 'I\'m looking for accessories' },
+        { label: '🔥 Trending now', msg: 'Show me what\'s trending right now' },
+      ];
+      [document.getElementById('lumen-chat'), document.getElementById('dMsgs')].forEach(container => {
+        if (!container) return;
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;padding:8px 0 4px;';
+        discoverChips.forEach(c => {
+          const btn = document.createElement('button');
+          btn.className = 'chip';
+          btn.textContent = c.label;
+          btn.onclick = () => { row.remove(); sendMessage(c.msg); };
+          row.appendChild(btn);
+        });
+        container.appendChild(row);
+      });
+      scrollBottom(); scrollChat();
+    }, 50);
+
+  } else if (tab === 'wardrobe') {
     addMessage('ai',
       '👗 Your wardrobe is where the magic happens.<br><br>' +
       'Soon you\'ll be able to:<br>' +
@@ -486,6 +533,19 @@ function switchTab(tab) {
       'For now, just describe what you have and I\'ll work with it. ' +
       'Try: <em>"I have a lot of basics — white tees, dark jeans, black boots. Help me make more outfits from these."</em>'
     );
+
+  } else if (tab === 'style') {
+    if (prev === 'discover') {
+      // Coming back from Discover — restore style guide context
+      clearChatDOM();
+      messages = [];
+      if (onboardingStep < 3) {
+        showOnboardingWelcome();
+      } else {
+        addMessage('ai', 'Welcome back! What can I help you with for your style today?');
+      }
+    }
+    // From wardrobe: leave DOM as-is, conversation continues
   }
 }
 
@@ -772,68 +832,106 @@ function chipTap(el) {
 
 // ── Style Quiz ────────────────────────────────────────────────────────────
 function renderStyleQuiz() {
-  const STYLES = [
-    { id: 'minimalist', emoji: '⬜', label: 'Clean & minimal',    desc: 'White tee, straight leg trousers, leather sneakers. Nothing extra.' },
-    { id: 'classic',    emoji: '🤎', label: 'Timeless classic',   desc: 'Blazer, tailored jeans, loafers. Always polished, never trendy.' },
-    { id: 'street',     emoji: '🖤', label: 'Street & relaxed',   desc: 'Oversized hoodie, cargo pants, chunky sneakers. Cool without trying.' },
-    { id: 'bohemian',   emoji: '🌿', label: 'Boho & flowy',       desc: 'Linen dress, woven bag, sandals. Effortless and earthy.' },
-    { id: 'elevated',   emoji: '✨', label: 'Elevated everyday',  desc: 'Silk shirt, wide leg pants, mules. Looks expensive, isn\'t.' },
+  const chatEl = document.getElementById('lumen-chat') ||
+                 document.getElementById('dMsgs') ||
+                 document.querySelector('.chat');
+  if (!chatEl) { console.error('[quiz] no chat container'); return; }
+  console.log('[quiz] rendering in', chatEl.id);
+
+  const styles = [
+    { id: 'minimalist', emoji: '⬜', label: 'Clean & minimal',
+      desc: 'White tee, straight trousers, leather sneakers. Nothing extra.' },
+    { id: 'classic',    emoji: '🤎', label: 'Timeless classic',
+      desc: 'Blazer, tailored jeans, loafers. Polished, never trendy.' },
+    { id: 'street',     emoji: '🖤', label: 'Street & relaxed',
+      desc: 'Oversized hoodie, cargo pants, chunky sneakers. Cool without trying.' },
+    { id: 'bohemian',   emoji: '🌿', label: 'Boho & flowy',
+      desc: 'Linen dress, woven bag, sandals. Effortless and earthy.' },
+    { id: 'elevated',   emoji: '✨', label: 'Elevated everyday',
+      desc: 'Silk shirt, wide leg pants, mules. Looks expensive, isn\'t.' },
   ];
 
-  function buildQuiz(container) {
-    if (!container) return;
-    const selected = new Set();
+  const selected = new Set();
 
-    const wrap = document.createElement('div');
-    wrap.className = 'style-quiz-instance';
-    wrap.style.cssText = 'padding:0 0 8px';
+  const quizWrap = document.createElement('div');
+  quizWrap.className = 'style-quiz-instance';
+  quizWrap.style.cssText = 'padding:4px 0 8px;';
 
-    const hint = document.createElement('div');
-    hint.style.cssText = 'font-size:12px;color:var(--tx3);margin-bottom:10px';
-    hint.textContent = 'Tap everything that feels like you';
-    wrap.appendChild(hint);
+  const hint = document.createElement('div');
+  hint.style.cssText = 'font-size:11px;color:var(--tx3);margin-bottom:8px;';
+  hint.textContent = 'Select all that feel like you';
+  quizWrap.appendChild(hint);
 
-    const confirmBtn = document.createElement('button');
-    confirmBtn.className = 'cta-btn';
-    confirmBtn.style.cssText = 'display:none;margin-top:8px;font-size:14px;height:46px;border-radius:12px;';
-    confirmBtn.textContent = 'This is me →';
+  const confirmBtn = document.createElement('button');
+  confirmBtn.style.cssText = 'display:none;width:100%;border-radius:10px;height:44px;margin-top:4px;' +
+    'font-size:14px;font-weight:600;font-family:var(--font);cursor:pointer;' +
+    'background:var(--tx1);color:#fff;border:none;';
+  confirmBtn.textContent = 'This is me →';
 
-    STYLES.forEach(s => {
-      const card = document.createElement('div');
-      card.className = 'style-card';
-      card.dataset.styleId = s.id;
-      card.innerHTML = '<div class="style-card-emoji">' + s.emoji + '</div><div><div class="style-card-label">' + s.label + '</div><div class="style-card-desc">' + s.desc + '</div></div>';
-      card.onclick = () => {
-        if (selected.has(s.id)) {
-          selected.delete(s.id);
-          card.classList.remove('selected');
-        } else {
-          selected.add(s.id);
-          card.classList.add('selected');
-        }
-        confirmBtn.style.display = selected.size > 0 ? '' : 'none';
-      };
-      wrap.appendChild(card);
-    });
-
-    confirmBtn.onclick = () => {
-      const selectedStyles = STYLES.filter(s => selected.has(s.id));
-      if (selectedStyles.length === 0) return;
-      styleProfile.aesthetic = selectedStyles.map(s => s.id);
-      document.querySelectorAll('.style-quiz-instance').forEach(el => el.remove());
-      onboardingStep = 3;
-      const seasonText = styleProfile.season ? ' and my ' + styleProfile.season + ' palette' : '';
-      const msg = 'My style is: ' + selectedStyles.map(s => s.label).join(', ') + '. Based on my colors' + seasonText + ' and this taste, give me 3 outfit formulas I can wear this week.';
-      sendMessage(msg);
+  styles.forEach(s => {
+    const card = document.createElement('div');
+    card.style.cssText = 'display:flex;align-items:flex-start;gap:10px;padding:12px 14px;' +
+      'border-radius:10px;border:1.5px solid var(--border);margin-bottom:8px;' +
+      'cursor:pointer;background:#fff;transition:all 0.15s;';
+    card.innerHTML =
+      '<div style="font-size:20px;flex-shrink:0;line-height:1.3">' + s.emoji + '</div>' +
+      '<div><div style="font-size:13px;font-weight:600;color:var(--tx1)">' + s.label + '</div>' +
+      '<div style="font-size:11px;color:var(--tx2);margin-top:2px;line-height:1.4">' + s.desc + '</div></div>';
+    card.onclick = () => {
+      if (selected.has(s.id)) {
+        selected.delete(s.id);
+        card.style.border = '1.5px solid var(--border)';
+        card.style.background = '#fff';
+      } else {
+        selected.add(s.id);
+        card.style.border = '1.5px solid var(--tx1)';
+        card.style.background = 'var(--card)';
+      }
+      confirmBtn.style.display = selected.size > 0 ? 'block' : 'none';
     };
+    quizWrap.appendChild(card);
+  });
 
-    wrap.appendChild(confirmBtn);
-    container.appendChild(wrap);
+  confirmBtn.onclick = () => {
+    const labels = styles.filter(s => selected.has(s.id)).map(s => s.label);
+    if (labels.length === 0) return;
+    styleProfile.aesthetic = styles.filter(s => selected.has(s.id)).map(s => s.id);
+    document.querySelectorAll('.style-quiz-instance').forEach(el => el.remove());
+    onboardingStep = 3;
+    const seasonText = styleProfile.season ? ' and my ' + styleProfile.season + ' palette' : '';
+    sendMessage('My style is: ' + labels.join(', ') + '. Based on my colors' + seasonText + ' and this taste, give me 3 specific outfit formulas I can wear this week.');
+  };
+
+  quizWrap.appendChild(confirmBtn);
+  chatEl.appendChild(quizWrap);
+
+  // Also add to dMsgs if chatEl was lumen-chat
+  if (chatEl.id === 'lumen-chat') {
+    const dc = document.getElementById('dMsgs');
+    if (dc) {
+      const clone = quizWrap.cloneNode(true);
+      clone.querySelectorAll('div[style*="cursor:pointer"]').forEach((card, i) => {
+        const s = styles[i];
+        card.onclick = () => {
+          if (selected.has(s.id)) {
+            selected.delete(s.id);
+            card.style.border = '1.5px solid var(--border)';
+            card.style.background = '#fff';
+          } else {
+            selected.add(s.id);
+            card.style.border = '1.5px solid var(--tx1)';
+            card.style.background = 'var(--card)';
+          }
+          confirmBtn.style.display = selected.size > 0 ? 'block' : 'none';
+        };
+      });
+      const cloneBtn = clone.querySelector('button');
+      if (cloneBtn) cloneBtn.onclick = confirmBtn.onclick;
+      dc.appendChild(clone);
+    }
   }
 
-  [document.getElementById('lumen-chat'), document.getElementById('dMsgs')].forEach(buildQuiz);
-  scrollBottom();
-  scrollChat();
+  scrollBottom(); scrollChat();
 }
 
 // ── Photo Upload ──────────────────────────────────────────────────────────
@@ -1062,6 +1160,7 @@ async function sendMessage(text) {
 
     // Attach photo to last user message if one was uploaded
     let apiMessages = chatMessages;
+    const hadPhoto = !!photoBase64;
     if (photoBase64) {
       const last = apiMessages[apiMessages.length - 1];
       apiMessages = [
@@ -1082,28 +1181,83 @@ async function sendMessage(text) {
     removeTyping(typId);
     const content  = data.content || '';
 
-    // Parse PROFILE_UPDATE token
+    // Parse PROFILE_UPDATE token — lenient parser handles single quotes
     const profMatch = content.match(/PROFILE_UPDATE:\s*(\{[\s\S]*?\})/);
+    console.log('[profile] raw match:', profMatch ? profMatch[1] : 'none');
     if (profMatch) {
       try {
-        const profData = JSON.parse(profMatch[1]);
-        Object.assign(userProfile, profData);
-        // Mirror into styleProfile for onboarding
-        if (profData.undertone) styleProfile.undertone = profData.undertone;
-        if (profData.season)    styleProfile.season    = profData.season;
-        if (profData.palette)   styleProfile.palette   = profData.palette;
-        updateProfileDisplay();
+        const cleaned = profMatch[1]
+          .replace(/'/g, '"')
+          .replace(/(\w+):/g, '"$1":')
+          .replace(/"(\w+)":\s*"([^"]*)"/g, '"$1":"$2"');
+        const prof = JSON.parse(cleaned);
 
-        // Advance onboarding: color analysis just completed → show style quiz
-        if (onboardingActive && onboardingStep === 1 && activeTab === 'style' &&
-            profData.palette && profData.palette.length > 0) {
-          onboardingStep = 2;
-          setTimeout(() => {
-            addMessage('ai', 'Now let me get a sense of your style taste. I\'ll show you some outfit vibes — just tell me which ones feel like you, even if it\'s just a feeling.');
-            setTimeout(renderStyleQuiz, 400);
-          }, 600);
+        if (prof.season) {
+          const el = document.getElementById('dProfileSeason');
+          if (el) el.textContent = 'Season: ' + prof.season;
+          styleProfile.season = prof.season;
+          userProfile.season  = prof.season;
         }
-      } catch(e) {}
+        if (prof.undertone) {
+          styleProfile.undertone = prof.undertone;
+          userProfile.undertone  = prof.undertone;
+        }
+        if (prof.palette && Array.isArray(prof.palette)) {
+          styleProfile.palette = prof.palette;
+          userProfile.palette  = prof.palette;
+          const dotsEl = document.getElementById('dProfileColors');
+          if (dotsEl) {
+            dotsEl.innerHTML =
+              prof.palette.map(hex =>
+                '<span style="display:inline-block;width:14px;height:14px;border-radius:50%;' +
+                'background:' + hex + ';margin-right:3px;vertical-align:middle;' +
+                'border:1px solid rgba(0,0,0,0.1)"></span>'
+              ).join('') +
+              ' <span style="font-size:10px;color:var(--tx3)">' + (prof.season || '') + '</span>';
+          }
+        }
+        if (prof.style) {
+          const el = document.getElementById('dProfileStyle');
+          if (el) el.textContent = 'Style: ' + prof.style;
+          userProfile.style = prof.style;
+        }
+
+        // Advance onboarding when color analysis completes (palette received)
+        if (onboardingStep === 1 && prof.palette && prof.palette.length > 0) {
+          onboardingStep = 2;
+          setTimeout(() => renderStyleQuiz(), 600);
+        }
+
+        // Post-photo chips after palette analysis
+        if (hadPhoto && prof.palette && prof.palette.length > 0) {
+          setTimeout(() => {
+            const postPhotoChips = [
+              { label: '👗 Build outfits for me', msg: 'Based on my colors, give me 3 outfit formulas' },
+              { label: '🛍️ Shop my palette',     msg: 'Find clothes in my color palette on Discover' },
+              { label: '✨ See my style quiz',    msg: null, action: 'quiz' },
+            ];
+            const chatContainers = [document.getElementById('lumen-chat'), document.getElementById('dMsgs')];
+            chatContainers.forEach(container => {
+              if (!container) return;
+              const row = document.createElement('div');
+              row.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;padding:6px 0 10px;';
+              postPhotoChips.forEach(c => {
+                const btn = document.createElement('button');
+                btn.className = 'chip';
+                btn.textContent = c.label;
+                btn.onclick = () => {
+                  row.remove();
+                  if (c.action === 'quiz') renderStyleQuiz();
+                  else sendMessage(c.msg);
+                };
+                row.appendChild(btn);
+              });
+              container.appendChild(row);
+            });
+            scrollBottom(); scrollChat();
+          }, 400);
+        }
+      } catch(e) { console.error('[profile] parse error:', e.message, profMatch[1]); }
     }
 
     const tokMatch = content.match(/SEARCH_MODELS:\s*(\{[\s\S]*\})/);
@@ -1191,6 +1345,42 @@ function wireInput(inp, btn) {
   }
 }
 
+// ── Onboarding welcome (reusable) ─────────────────────────────────────────
+function showOnboardingWelcome() {
+  onboardingStep = 0;
+  const welcomeText =
+    'Hi, I\'m Lumen — your personal style guide ✨<br><br>' +
+    'I\'m here to help you look and feel like yourself — whatever that means for you right now.<br><br>' +
+    'Tell me a little about yourself to get started. What\'s going on in your life these days? ' +
+    '(An occasion coming up, a wardrobe rut, a new chapter — anything works.)' +
+    '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:11px;color:var(--tx3)">' +
+    '📷 Want color analysis? You can share a photo anytime — private, never stored, completely optional.' +
+    '</div>';
+  addMessage('ai', welcomeText);
+  setTimeout(() => {
+    const startChips = [
+      { label: '✨ I want to know my colors',   msg: 'I want to know my colors' },
+      { label: '👗 Help me build outfits',      msg: 'Help me build outfits' },
+      { label: '🔥 Show me 2026 trends for me', msg: 'Show me 2026 trends for me' },
+      { label: '💬 I\'ll just tell you',        msg: 'I\'ll just tell you what I need' }
+    ];
+    [document.getElementById('lumen-chat'), document.getElementById('dMsgs')].forEach(container => {
+      if (!container) return;
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;padding:8px 0 4px;';
+      startChips.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className = 'chip';
+        btn.textContent = c.label;
+        btn.onclick = () => { row.remove(); sendMessage(c.msg); };
+        row.appendChild(btn);
+      });
+      container.appendChild(row);
+    });
+    scrollBottom(); scrollChat();
+  }, 50);
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────
 (function init() {
   var mScrollEl = document.getElementById('mScroll');
@@ -1223,42 +1413,7 @@ function wireInput(inp, btn) {
   wireInput(document.getElementById('mInput'), document.getElementById('mSend'));
   wireInput(document.getElementById('dInput'), document.getElementById('dSend'));
 
-  // Step 0 — Onboarding welcome
-  const welcomeText =
-    'Hi, I\'m Lumen — your personal style guide ✨<br><br>' +
-    'I\'m here to help you look and feel like yourself — whatever that means for you right now.<br><br>' +
-    'Tell me a little about yourself to get started. What\'s going on in your life these days? ' +
-    '(An occasion coming up, a wardrobe rut, a new chapter — anything works.)' +
-    '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:11px;color:var(--tx3)">' +
-    '📷 Want color analysis? You can share a photo anytime — private, never stored, completely optional.' +
-    '</div>';
-
-  addMessage('ai', welcomeText);
-
-  // Quick-start chips for onboarding
-  setTimeout(() => {
-    const startChips = [
-      { label: '✨ I want to know my colors', msg: 'I want to know my colors' },
-      { label: '👗 Help me build outfits',    msg: 'Help me build outfits' },
-      { label: '🔥 Show me 2026 trends for me', msg: 'Show me 2026 trends for me' },
-      { label: '💬 I\'ll just tell you',       msg: 'I\'ll just tell you what I need' }
-    ];
-    [document.getElementById('lumen-chat'), document.getElementById('dMsgs')].forEach(container => {
-      if (!container) return;
-      const row = document.createElement('div');
-      row.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;padding:8px 0 4px;';
-      startChips.forEach(c => {
-        const btn = document.createElement('button');
-        btn.className = 'chip';
-        btn.textContent = c.label;
-        btn.onclick = () => { row.remove(); sendMessage(c.msg); };
-        row.appendChild(btn);
-      });
-      container.appendChild(row);
-    });
-    scrollBottom();
-    scrollChat();
-  }, 50);
+  showOnboardingWelcome();
 })();
 </script>
 </body>
