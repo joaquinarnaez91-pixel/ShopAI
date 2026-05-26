@@ -257,12 +257,27 @@ export default async function handler(req, res) {
     const cx     = process.env.GOOGLE_CSE_CX;
     console.log('[test] key set:', !!apiKey, 'cx set:', !!cx);
     try {
-      const results = await googleCSESearch('Nike running shoes buy', apiKey, cx, 3);
+      const params = new URLSearchParams({
+        key: apiKey, cx, q: 'Nike running shoes buy', num: '3', gl: 'us', hl: 'en'
+      });
+      const raw = await httpsGet('https://www.googleapis.com/customsearch/v1?' + params.toString());
+      const results = (raw.items || []).map(item => {
+        const priceMatch = (item.snippet || item.title || '').match(/\$[\d,]+\.?\d*/);
+        return {
+          title:  cleanTitle(item.title || ''),
+          source: item.displayLink || '',
+          price:  priceMatch ? parseFloat(priceMatch[0].replace(/[$,]/g, '')) : 0,
+          img:    item.pagemap?.cse_image?.[0]?.src || item.pagemap?.cse_thumbnail?.[0]?.src || '',
+          link:   item.link || ''
+        };
+      });
       console.log('[test] results:', results.length);
       return res.status(200).json({
         keySet:      !!apiKey,
         cxSet:       !!cx,
+        totalItems:  raw.searchInformation?.totalResults || '0',
         resultCount: results.length,
+        apiError:    raw.error ? { code: raw.error.code, message: raw.error.message } : null,
         sample:      results[0] || null
       });
     } catch(e) {
