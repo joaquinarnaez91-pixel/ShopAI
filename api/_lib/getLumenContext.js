@@ -62,3 +62,9 @@ export async function updateProfile(userId, updates) {
       updated_at: new Date().toISOString()
     });
 }
+
+export async function recordTasteSignal(userId, signalType, content = {}) {
+  await supabaseAdmin
+    .from('taste_signals')
+    .insert({ user_id: userId, signal_type: signalType, content });
+}

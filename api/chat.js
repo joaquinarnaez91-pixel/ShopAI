@@ -1,5 +1,5 @@
 import https from 'https';
-import { verifyUser, getLumenContext, saveMessage, updateProfile } from './_lib/getLumenContext.js';
+import { verifyUser, getLumenContext, saveMessage, updateProfile, recordTasteSignal } from './_lib/getLumenContext.js';
 
 const DISCOVER_SYSTEM_PROMPT = `You are Lumen — a personal style companion with expert knowledge of fashion, brands, clothing, shoes, bags, and accessories across all categories and price points as of 2026.
 
@@ -208,9 +208,20 @@ ${lumenContext.recentHistory.map(m => m.role + ': ' + m.content).join('\n')}
                       undertone: prof.undertone,
                       palette: prof.palette
                     });
+                    recordTasteSignal(userId, 'color_analysis', {
+                      season: prof.season,
+                      undertone: prof.undertone
+                    }).catch(() => {});
                   } catch (e) {
                     console.error('[profile] save error:', e.message);
                   }
+                }
+
+                // 9. Record product search signal when discover mode returns results
+                if (tab === 'discover' && responseText.includes('SEARCH_MODELS:')) {
+                  const lastMsg = messages[messages.length - 1];
+                  const query = typeof lastMsg?.content === 'string' ? lastMsg.content : '';
+                  recordTasteSignal(userId, 'product_search', { query, tab }).catch(() => {});
                 }
               }
 
