@@ -1,6 +1,8 @@
 {
   "outputDirectory": "prototype",
   "functions": {
-    "api/*.js": { "maxDuration": 60 }
+    "api/*.js": { "maxDuration": 60 },
+    "api/warp.js": { "maxDuration": 300 },
+    "api/segment.js": { "maxDuration": 120 }
   }
 }
