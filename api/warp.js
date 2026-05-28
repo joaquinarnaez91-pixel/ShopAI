@@ -19,24 +19,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    // FLUX-VTON — handles body detection internally, no external mask needed.
-    // image   = person photo
-    // garment = product/clothing image
-    // part    = body region enum
-    const output = await replicate.run(
-      "subhash25rawat/flux-vton:a02643ce418c0e12bad371c4adbfaec0dd1cb34b034ef37650ef205f92ad6199",
-      {
-        input: {
-          image: personUrl,
-          garment: productUrl,
-          part
-        }
-      }
-    );
-
-    // Replicate v1.x returns FileOutput objects — convert to plain URL string
-    const resultUrl = Array.isArray(output) ? String(output[0]) : String(output);
-    res.status(200).json({ success: true, resultUrl });
+    // Fire-and-forget: create prediction and return ID immediately.
+    // Client polls /api/warp-poll until status === 'succeeded'.
+    const prediction = await replicate.predictions.create({
+      version: "a02643ce418c0e12bad371c4adbfaec0dd1cb34b034ef37650ef205f92ad6199",
+      input: { image: personUrl, garment: productUrl, part }
+    });
+    res.status(202).json({ success: true, predictionId: prediction.id, status: prediction.status });
   } catch (error) {
     console.error('[warp] error:', error.message);
     res.status(500).json({ error: error.message });

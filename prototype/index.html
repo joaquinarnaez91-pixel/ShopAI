@@ -178,6 +178,17 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--tx1)
   <!-- OVERLAY -->
   <div class="l-overlay" id="overlay" onclick="handleOverlayClick()"></div>
 
+  <!-- VIRTUAL TRY-ON MODAL -->
+  <div id="tryOnModal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.72);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center">
+    <div style="width:100%;max-width:480px;background:var(--bg);border-radius:20px 20px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom,0px));max-height:90vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div style="font-size:17px;font-weight:700">Virtual Try-On</div>
+        <button onclick="closeTryOn()" style="width:32px;height:32px;border-radius:50%;background:var(--card);border:1.5px solid var(--border);cursor:pointer;font-size:16px;color:var(--tx2)">✕</button>
+      </div>
+      <div id="tryOnContent"></div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -196,6 +207,8 @@ let isLoading       = false;
 let enrichLoadTimer = null;
 let deepDiveOpen    = false;
 let profileOpen     = false;
+let currentDiveProduct = null;
+let tryOnPersonDataUri = null;
 
 // Onboarding
 let onboardingStep   = 0;
@@ -518,6 +531,7 @@ function renderScoreBars(scores) {
 function openDeepDive(p) {
   const dd      = document.getElementById('deepDive');
   const overlay = document.getElementById('overlay');
+  currentDiveProduct = p;
 
   dd.innerHTML =
     `<div style="padding:12px 16px 0;display:flex;justify-content:center">` +
@@ -530,9 +544,13 @@ function openDeepDive(p) {
       `<div style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px">${p.brand || ''}</div>` +
       `<div style="font-size:18px;font-weight:700;color:var(--tx1);margin:4px 0 8px;line-height:1.3">${p.name || ''}</div>` +
       `<div style="font-size:22px;font-weight:700;color:var(--tx1);margin-bottom:12px">$${p.price || '—'}</div>` +
-      `<a href="${p.link || '#'}" target="_blank" style="display:block;text-align:center;padding:14px;background:var(--tx1);color:#fff;border-radius:12px;font-size:15px;font-weight:600;text-decoration:none;margin-bottom:16px">` +
+      `<a href="${p.link || '#'}" target="_blank" style="display:block;text-align:center;padding:14px;background:var(--tx1);color:#fff;border-radius:12px;font-size:15px;font-weight:600;text-decoration:none;margin-bottom:10px">` +
         `Buy at ${p.source || 'Store'} →` +
       `</a>` +
+      `<button onclick="openTryOn()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:var(--card);color:var(--tx1);border:1.5px solid var(--border);border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:16px">` +
+        `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>` +
+        `Try On` +
+      `</button>` +
       `<div id="dd-enrich-${p.id}">` +
         `<div style="text-align:center;color:var(--tx3);font-size:13px;padding:20px 0">` +
           `<div class="enrich-loading-label" style="margin-bottom:8px">Loading expert analysis…</div>` +
@@ -579,6 +597,134 @@ function closeDeepDive() {
   if (!profileOpen) overlay.classList.remove('show');
   deepDiveOpen = false;
   stopEnrichAnim();
+}
+
+// ── Virtual Try-On ────────────────────────────────────────────────────────
+function detectGarmentPart(p) {
+  const text = ((p.name || '') + ' ' + (p.category || '')).toLowerCase();
+  if (/dress|gown|jumpsuit|romper|bodysuit/.test(text)) return 'dresses';
+  if (/skirt|pants|jeans|shorts|leggings|trousers|chinos|jogger/.test(text)) return 'lower_body';
+  return 'upper_body';
+}
+
+function openTryOn() {
+  tryOnPersonDataUri = null;
+  const modal = document.getElementById('tryOnModal');
+  modal.style.display = 'flex';
+  renderTryOnUpload();
+}
+
+function closeTryOn() {
+  document.getElementById('tryOnModal').style.display = 'none';
+  tryOnPersonDataUri = null;
+}
+
+function renderTryOnUpload() {
+  document.getElementById('tryOnContent').innerHTML =
+    `<div style="font-size:14px;color:var(--tx2);line-height:1.5;margin-bottom:20px">Upload a photo of yourself (ideally full-body, plain background) to see how this looks on you.</div>` +
+    `<label style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:200px;border:2px dashed var(--border);border-radius:16px;cursor:pointer;gap:10px;color:var(--tx3);background:var(--card)">` +
+      `<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>` +
+      `<div style="font-size:14px;font-weight:500">Tap to choose photo</div>` +
+      `<div style="font-size:12px">JPG or PNG</div>` +
+      `<input type="file" id="tryOnFileInput" accept="image/*" style="display:none" onchange="handleTryOnFile(this)">` +
+    `</label>`;
+}
+
+function handleTryOnFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    tryOnPersonDataUri = e.target.result;
+    renderTryOnConfirm();
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderTryOnConfirm() {
+  const p = currentDiveProduct;
+  document.getElementById('tryOnContent').innerHTML =
+    `<div style="display:flex;gap:12px;margin-bottom:20px">` +
+      `<img src="${tryOnPersonDataUri}" style="width:120px;height:160px;object-fit:cover;border-radius:12px;flex-shrink:0">` +
+      `<div style="flex:1">` +
+        `<div style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Garment</div>` +
+        `<div style="font-size:14px;font-weight:600;color:var(--tx1);line-height:1.3;margin-bottom:8px">${p ? p.name : ''}</div>` +
+        (p && p.img ? `<img src="${p.img}" style="width:80px;height:80px;object-fit:cover;border-radius:8px">` : '') +
+      `</div>` +
+    `</div>` +
+    `<button onclick="startTryOn()" style="display:block;width:100%;padding:14px;background:var(--tx1);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px">Try It On →</button>` +
+    `<button onclick="renderTryOnUpload()" style="display:block;width:100%;padding:12px;background:var(--card);color:var(--tx2);border:1.5px solid var(--border);border-radius:12px;font-size:14px;cursor:pointer">Choose different photo</button>`;
+}
+
+async function startTryOn() {
+  const p = currentDiveProduct;
+  if (!p || !tryOnPersonDataUri) return;
+  renderTryOnProcessing('Starting…');
+
+  try {
+    const session = JSON.parse(localStorage.getItem('lumen_session') || '{}');
+    const token = session?.access_token || '';
+    const res = await fetch('/api/warp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({
+        personUrl: tryOnPersonDataUri,
+        productUrl: p.img,
+        part: detectGarmentPart(p)
+      })
+    });
+    const data = await res.json();
+    if (!data.predictionId) throw new Error(data.error || 'No prediction ID returned');
+    renderTryOnProcessing('Processing…');
+    const resultUrl = await pollWarp(data.predictionId);
+    renderTryOnResult(resultUrl);
+  } catch (err) {
+    renderTryOnError(err.message);
+  }
+}
+
+async function pollWarp(predictionId) {
+  const session = JSON.parse(localStorage.getItem('lumen_session') || '{}');
+  const token = session?.access_token || '';
+  for (let i = 0; i < 40; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    const res = await fetch('/api/warp-poll?id=' + encodeURIComponent(predictionId), {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await res.json();
+    if (data.status === 'succeeded') return data.resultUrl;
+    if (data.status === 'failed' || data.status === 'canceled') throw new Error(data.error || 'Try-on failed');
+    renderTryOnProcessing(data.status === 'processing' ? 'Fitting garment…' : 'Starting…');
+  }
+  throw new Error('Timed out — try again');
+}
+
+function renderTryOnProcessing(statusText) {
+  const el = document.getElementById('tryOnContent');
+  if (!el) return;
+  el.innerHTML =
+    `<div style="text-align:center;padding:40px 0">` +
+      `<div class="enrich-progress" style="margin:0 auto 16px;width:120px"><div class="enrich-progress-fill"></div></div>` +
+      `<div id="tryOnStatus" style="font-size:14px;color:var(--tx2)">${statusText}</div>` +
+      `<div style="font-size:12px;color:var(--tx3);margin-top:8px">This takes 30–90 seconds…</div>` +
+    `</div>`;
+}
+
+function renderTryOnResult(resultUrl) {
+  document.getElementById('tryOnContent').innerHTML =
+    `<img src="${resultUrl}" style="width:100%;border-radius:16px;margin-bottom:16px;display:block">` +
+    `<button onclick="closeTryOn()" style="display:block;width:100%;padding:14px;background:var(--tx1);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px">Done</button>` +
+    `<a href="${resultUrl}" download="tryon.jpg" style="display:block;text-align:center;padding:12px;background:var(--card);color:var(--tx2);border:1.5px solid var(--border);border-radius:12px;font-size:14px;text-decoration:none">Save Image</a>`;
+}
+
+function renderTryOnError(msg) {
+  document.getElementById('tryOnContent').innerHTML =
+    `<div style="text-align:center;padding:32px 0">` +
+      `<div style="font-size:32px;margin-bottom:12px">⚠️</div>` +
+      `<div style="font-size:15px;font-weight:600;color:var(--tx1);margin-bottom:8px">Try-on failed</div>` +
+      `<div style="font-size:13px;color:var(--tx3);margin-bottom:20px">${msg}</div>` +
+      `<button onclick="renderTryOnConfirm()" style="padding:12px 24px;background:var(--tx1);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer">Try Again</button>` +
+    `</div>`;
 }
 
 // ── Profile sheet ─────────────────────────────────────────────────────────
