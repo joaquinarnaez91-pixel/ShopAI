@@ -27,7 +27,7 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--tx1)
 .l-profile-btn { width:36px; height:36px; border-radius:50%; background:var(--card); border:1.5px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--tx2); }
 
 /* CHAT */
-.l-chat { flex:1; overflow-y:auto !important; overflow-x:hidden; -webkit-overflow-scrolling:touch; padding:16px 0 140px; scroll-behavior:smooth; }
+.l-chat { flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; padding:12px 0; padding-bottom:160px; scroll-behavior:smooth; }
 .l-chat::-webkit-scrollbar { display:none; }
 
 /* MESSAGES */
@@ -71,7 +71,7 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--tx1)
 .l-expert-badge { position:absolute; top:8px; left:8px; background:var(--accent); color:white; font-size:9px; font-weight:700; padding:3px 7px; border-radius:6px; text-transform:uppercase; letter-spacing:0.5px; }
 
 /* INPUT BAR */
-.l-input-bar { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px)); background:var(--bg); border-top:1px solid var(--border); display:flex; align-items:center; gap:8px; z-index:10; }
+.l-input-bar { position:fixed; bottom:0; left:0; right:0; width:100%; max-width:480px; margin:0 auto; padding:10px 12px; padding-bottom:calc(10px + env(safe-area-inset-bottom,16px)); background:var(--bg); border-top:1px solid var(--border); display:flex; align-items:center; gap:8px; z-index:10; box-sizing:border-box; }
 .l-input { flex:1; padding:10px 16px; border-radius:24px; border:1.5px solid var(--border); background:var(--card); font-size:15px; font-family:var(--font); color:var(--tx1); outline:none; }
 .l-input:focus { border-color:var(--tx1); }
 .l-send-btn { width:40px; height:40px; border-radius:50%; background:var(--tx1); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -99,12 +99,17 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--tx1)
 .enrich-progress-fill { height:100%; width:35%; background:var(--tx3); border-radius:1px; animation:enrichSlide 1.4s ease-in-out infinite; }
 @keyframes enrichSlide { 0%{transform:translateX(-200%);} 100%{transform:translateX(500%);} }
 
+/* TABLET: un-fix input bar once viewport is wider than mobile */
+@media (min-width:481px) {
+  .l-input-bar { position:sticky; bottom:0; left:auto; right:auto; width:100%; max-width:100%; }
+}
+
 /* DESKTOP */
 @media (min-width:768px) {
   .lumen-app { max-width:100%; flex-direction:row; }
   .l-sidebar { width:280px; border-right:1px solid var(--border); padding:24px 20px; flex-shrink:0; overflow-y:auto; display:flex; flex-direction:column; gap:12px; }
   .l-main { flex:1; display:flex; flex-direction:column; height:100vh; max-width:520px; }
-  .l-input-bar { position:sticky; bottom:0; transform:none; left:auto; max-width:none; }
+  .l-input-bar { position:sticky; bottom:0; left:auto; right:auto; max-width:none; }
   .l-profile-sheet, .l-deep-dive { max-width:560px; }
 }
 </style>
@@ -313,8 +318,8 @@ function scrollToLatest() {
   const chatEl = document.getElementById('lumenChat');
   if (!chatEl) return;
   setTimeout(() => {
-    chatEl.scrollTop = chatEl.scrollHeight;
-  }, 150);
+    chatEl.scrollTop = chatEl.scrollHeight + 200;
+  }, 200);
 }
 
 function addMessage(role, text, id) {
