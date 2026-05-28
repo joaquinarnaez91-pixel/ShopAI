@@ -27,7 +27,7 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--tx1)
 .l-profile-btn { width:36px; height:36px; border-radius:50%; background:var(--card); border:1.5px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--tx2); }
 
 /* CHAT */
-.l-chat { flex:1; overflow-y:auto !important; overflow-x:hidden; padding:16px 0 140px; -webkit-overflow-scrolling:touch; height:calc(100vh - 60px - 72px); }
+.l-chat { flex:1; overflow-y:auto !important; overflow-x:hidden; -webkit-overflow-scrolling:touch; padding:16px 0 140px; scroll-behavior:smooth; }
 .l-chat::-webkit-scrollbar { display:none; }
 
 /* MESSAGES */
@@ -50,9 +50,9 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--tx1)
 .l-card-row::-webkit-scrollbar { display:none; }
 
 /* PRODUCT CARD */
-.l-card { flex-shrink:0; width:220px; border-radius:16px; border:1.5px solid var(--border); background:var(--bg); overflow:hidden; cursor:pointer; scroll-snap-align:start; box-shadow:0 2px 8px rgba(0,0,0,0.06); transition:transform 0.15s,box-shadow 0.15s; position:relative; }
-.l-card:active { transform:scale(0.97); box-shadow:0 1px 4px rgba(0,0,0,0.08); }
-.l-card-img { width:100%; height:200px; background:var(--photo); display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; }
+.l-card { flex-shrink:0; width:220px; border-radius:16px; border:1.5px solid var(--border); background:var(--bg); overflow:hidden; cursor:pointer; scroll-snap-align:start; box-shadow:0 2px 12px rgba(0,0,0,0.07); transition:transform 0.15s,box-shadow 0.15s; position:relative; }
+.l-card:active { transform:scale(0.97); }
+.l-card-img { width:100%; height:200px; background:var(--photo); overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:40px; color:var(--tx3); }
 .l-card-img img { width:100%; height:100%; object-fit:cover; }
 .l-card-body { padding:10px 12px 12px; }
 .l-card-brand { font-size:10px; font-weight:700; color:var(--tx3); text-transform:uppercase; letter-spacing:0.5px; }
@@ -312,12 +312,9 @@ function chat() { return document.getElementById('lumenChat'); }
 function scrollToLatest() {
   const chatEl = document.getElementById('lumenChat');
   if (!chatEl) return;
-  const items = chatEl.querySelectorAll('.l-msg, .l-chips, .l-card-row');
-  if (!items.length) return;
-  const last = items[items.length - 1];
   setTimeout(() => {
-    last.scrollIntoView({ behavior:'smooth', block:'start' });
-  }, 100);
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }, 150);
 }
 
 function addMessage(role, text, id) {
@@ -363,15 +360,18 @@ function renderChipGroup(chips, onSelect) {
       document.querySelectorAll('.chip-group').forEach(el => el.remove());
       row.remove();
       if (chip.action === 'gallery') {
-        document.getElementById('galleryInput').click();
-      } else if (chip.action === 'camera') {
-        document.getElementById('cameraInput').click();
-      } else if (chip.action === 'focus') {
-        const inp = document.getElementById('lumenInput');
-        if (inp) inp.focus();
-      } else if (onSelect) {
-        onSelect(chip.msg, chip.action);
+        document.getElementById('galleryInput')?.click();
+        return;
       }
+      if (chip.action === 'camera') {
+        document.getElementById('cameraInput')?.click();
+        return;
+      }
+      if (chip.action === 'focus') {
+        document.getElementById('lumenInput')?.focus();
+        return;
+      }
+      if (chip.msg) sendMessage(chip.msg);
     };
     row.appendChild(btn);
   });
@@ -963,10 +963,9 @@ function renderVisionResults(analysis, originalImage) {
   }, 300);
 }
 
-window.searchVisionItem = function(query) {
-  console.log('[vision] Triggering search for:', query);
+function searchVisionItem(query) {
   sendMessage('Find me this: ' + query);
-};
+}
 
 // ── Style Quiz ────────────────────────────────────────────────────────────
 function renderStyleQuiz() {
@@ -1189,7 +1188,7 @@ function showOnboardingWelcome() {
 
   setTimeout(() => {
     renderChipGroup([
-      { label:'📷 Rate my outfit',          msg:'I want you to rate my outfit' },
+      { label:'📷 Share a photo',            action:'gallery' },
       { label:'🛍️ Find something I saw',    msg:'I saw something I love and want to find it' },
       { label:'👗 Help me plan what to wear', msg:'Help me plan what to wear' },
       { label:'✨ Just browsing',            msg:'I\'m just browsing, show me what\'s trending' },
