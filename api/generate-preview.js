@@ -10,6 +10,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'No OpenAI key' });
   }
 
+  console.log('[preview] key prefix:', process.env.OPENAI_API_KEY?.slice(0, 10));
+
   const prompt =
     'Fashion editorial photo. ' +
     'Outfit: ' + outfitDescription + '. ' +
@@ -19,50 +21,43 @@ export default async function handler(req, res) {
     'Professional fashion photography. ' +
     'No face needed, focus on clothing.';
 
-  console.log('[preview] generating...');
+  const models = ['gpt-image-1', 'dall-e-3'];
+  let url = null;
 
-  try {
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-image-1',
-        prompt: prompt,
-        size: '1024x1024',
-        quality: 'standard',
-        n: 1,
-        response_format: 'url'
-      })
-    });
+  for (const model of models) {
+    try {
+      console.log('[preview] trying model:', model);
+      const response = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model,
+          prompt,
+          size: '1024x1024',
+          n: 1
+        })
+      });
 
-    const responseText = await response.text();
-    const data = JSON.parse(responseText);
-    console.log('[preview] status:', response.status);
-    console.log('[preview] data keys:', Object.keys(data));
+      const data = await response.json();
+      console.log('[preview] model', model, 'status:', response.status,
+        'error:', data.error?.message || 'none');
 
-    if (!response.ok) {
-      console.error('[preview] error:', data.error?.message);
-      return res.status(400).json({ error: data.error?.message });
+      if (response.ok && data.data?.[0]) {
+        url = data.data[0].url ||
+          (data.data[0].b64_json ?
+            'data:image/png;base64,' + data.data[0].b64_json : null);
+        if (url) {
+          console.log('[preview] success with:', model);
+          break;
+        }
+      }
+    } catch(e) {
+      console.error('[preview]', model, 'threw:', e.message);
     }
-
-    // gpt-image-1 may return url or b64_json
-    const item = data.data?.[0];
-    let url = item?.url;
-
-    if (!url && item?.b64_json) {
-      // Convert base64 to data URL
-      url = 'data:image/png;base64,' + item.b64_json;
-      console.log('[preview] using base64 response');
-    }
-
-    console.log('[preview] url received:', !!url);
-    return res.status(200).json({ url });
-
-  } catch(e) {
-    console.error('[preview] failed:', e.message);
-    return res.status(500).json({ error: e.message });
   }
+
+  return res.status(200).json({ url });
 }

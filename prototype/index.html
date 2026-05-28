@@ -1136,16 +1136,7 @@ async function runOutfitCheck(base64, mimeType, dataUrl, occasion) {
 }
 
 async function fetchOutfitPreview(outfitDesc, changeDesc) {
-  const chatEl = document.getElementById('lumenChat');
-  const previewWrap = document.createElement('div');
-  previewWrap.id = 'outfit-preview-wrap';
-  previewWrap.style.cssText =
-    'margin:4px 16px;border-radius:12px;background:var(--card);padding:16px;' +
-    'text-align:center;color:var(--tx3);font-size:13px;border:1.5px solid var(--border)';
-  previewWrap.innerHTML = '✨ Generating style preview...';
-  chatEl.appendChild(previewWrap);
-  scrollToLatest();
-
+  // Placeholder already created by renderOutfitCheckResult — just populate it
   try {
     const result = await fetch('/api/generate-preview', {
       method: 'POST',
@@ -1188,48 +1179,98 @@ function renderOutfitCheckResult(result, photoUrl) {
   const chatEl = document.getElementById('lumenChat');
   if (!chatEl) return;
 
-  const changeItem = (result.change_item || 'this item').replace(/'/g, '&#39;');
-
   const card = document.createElement('div');
   card.style.cssText =
     'margin:4px 16px;border-radius:16px;' +
     'border:1.5px solid var(--border);overflow:hidden;background:#fff;';
 
-  card.innerHTML =
-    '<div style="padding:14px 16px 10px;border-bottom:1px solid var(--border)">' +
-      '<div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Lumen\'s verdict</div>' +
-      '<div style="font-size:15px;font-weight:600;color:var(--tx1);line-height:1.4">' + (result.verdict || '') + '</div>' +
-    '</div>' +
-    '<div style="padding:10px 16px;border-bottom:1px solid var(--border);background:#F0FFF4">' +
-      '<div style="font-size:10px;font-weight:700;color:#2E7D32;margin-bottom:2px">✓ WORKS</div>' +
-      '<div style="font-size:13px;color:var(--tx1)">' + (result.what_works || '') + '</div>' +
-    '</div>' +
-    '<div style="padding:10px 16px;border-bottom:1px solid var(--border);background:#FFF8E1">' +
-      '<div style="font-size:10px;font-weight:700;color:#F57F17;margin-bottom:2px">→ ONE CHANGE</div>' +
-      '<div style="font-size:13px;color:var(--tx1)">' + (result.one_change || '') + '</div>' +
-    '</div>' +
-    (result.previewUrl ?
-      '<div style="padding:12px 16px;border-bottom:1px solid var(--border)">' +
-        '<div style="font-size:10px;font-weight:700;color:var(--tx3);margin-bottom:8px">HERE\'S WHAT I MEAN →</div>' +
-        '<img src="' + result.previewUrl + '" style="width:100%;border-radius:10px;object-fit:cover">' +
-      '</div>' : '') +
-    '<div style="padding:10px 16px 12px;display:flex;gap:6px;flex-wrap:wrap">' +
-      '<button class="l-chip" style="font-size:12px;padding:6px 12px" ' +
-        'onclick="sendMessage(\'Find me: ' + changeItem + '\')">🛍️ Find this piece</button>' +
-      '<button class="l-chip" style="font-size:12px;padding:6px 12px" ' +
-        'onclick="sendMessage(\'I have something similar to ' + changeItem + '\')">👗 I have something similar</button>' +
-    '</div>';
+  // Verdict header
+  const header = document.createElement('div');
+  header.style.cssText = 'padding:14px 16px 10px;border-bottom:1px solid var(--border)';
+  header.innerHTML =
+    '<div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;' +
+    'letter-spacing:1px;margin-bottom:4px">Lumen\'s verdict</div>' +
+    '<div style="font-size:15px;font-weight:600;color:var(--tx1);line-height:1.4">' +
+    (result.verdict || '') + '</div>';
+  card.appendChild(header);
 
+  // What works
+  const works = document.createElement('div');
+  works.style.cssText = 'padding:10px 16px;border-bottom:1px solid var(--border);background:#F0FFF4';
+  works.innerHTML =
+    '<div style="font-size:10px;font-weight:700;color:#2E7D32;margin-bottom:2px">✓ WORKS</div>' +
+    '<div style="font-size:13px;color:var(--tx1)">' + (result.what_works || '') + '</div>';
+  card.appendChild(works);
+
+  // One change
+  const change = document.createElement('div');
+  change.style.cssText = 'padding:10px 16px;border-bottom:1px solid var(--border);background:#FFF8E1';
+  change.innerHTML =
+    '<div style="font-size:10px;font-weight:700;color:#F57F17;margin-bottom:2px">→ ONE CHANGE</div>' +
+    '<div style="font-size:13px;color:var(--tx1)">' + (result.one_change || '') + '</div>';
+  card.appendChild(change);
+
+  // Action buttons — built with DOM to avoid quote-escaping bugs
+  const actions = document.createElement('div');
+  actions.style.cssText = 'padding:10px 16px 12px;display:flex;gap:8px;flex-wrap:wrap';
+
+  const findBtn = document.createElement('button');
+  findBtn.className = 'l-chip';
+  findBtn.style.cssText = 'font-size:12px;padding:6px 12px';
+  findBtn.textContent = '🛍️ Find this piece';
+  findBtn.onclick = () => sendMessage(
+    'Find me: ' + (result.change_item || result.one_change || 'this item')
+  );
+  actions.appendChild(findBtn);
+
+  const similarBtn = document.createElement('button');
+  similarBtn.className = 'l-chip';
+  similarBtn.style.cssText = 'font-size:12px;padding:6px 12px';
+  similarBtn.textContent = '👗 I have something similar';
+  similarBtn.onclick = () => {
+    _outfitCheckMode = true;
+    addMessage('ai', 'Show me what you have and I\'ll tell you if it works with your outfit.');
+    setTimeout(() => {
+      renderChipGroup([
+        { label: '📷 Take photo', action: 'camera' },
+        { label: '🖼️ From gallery', action: 'gallery' }
+      ], () => {});
+      scrollToLatest();
+    }, 300);
+  };
+  actions.appendChild(similarBtn);
+  card.appendChild(actions);
   chatEl.appendChild(card);
 
+  // Async preview placeholder — fetchOutfitPreview will populate this
+  if (result.previewPending) {
+    const previewWrap = document.createElement('div');
+    previewWrap.id = 'outfit-preview-wrap';
+    previewWrap.style.cssText =
+      'margin:4px 16px;border-radius:12px;background:var(--card);padding:20px;' +
+      'text-align:center;color:var(--tx3);font-size:13px;border:1.5px solid var(--border)';
+    previewWrap.textContent = '✨ Generating style preview...';
+    chatEl.appendChild(previewWrap);
+  }
+
+  // Follow-up chips
   setTimeout(() => {
     renderChipGroup([
-      { label: '✅ Love it, I\'m ready',     msg: 'This outfit works for me, thanks!' },
-      { label: '🔄 Try a different look',    msg: 'Show me a completely different outfit direction' },
-      { label: '📷 Try another outfit',      action: 'camera' }
-    ], (msg) => sendMessage(msg));
+      { label: '✅ Love it, I\'m ready',  msg: 'This outfit works, thanks!' },
+      { label: '🔄 Try a different look', msg: 'Show me a completely different outfit direction' },
+      { label: '📷 Try another outfit',   action: 'camera' }
+    ], (msg, action) => {
+      if (action === 'camera') {
+        _outfitCheckMode = true;
+        document.getElementById('cameraInput')?.click();
+      } else {
+        sendMessage(msg);
+      }
+    });
     scrollToLatest();
   }, 300);
+
+  scrollToLatest();
 }
 
 function renderVisionResults(analysis, originalImage) {
