@@ -32,7 +32,9 @@ export default async function handler(req, res) {
       }
     );
 
-    res.status(200).json({ success: true, resultUrl: output });
+    // Replicate v1.x returns FileOutput objects — convert to plain URL string
+    const resultUrl = Array.isArray(output) ? String(output[0]) : String(output);
+    res.status(200).json({ success: true, resultUrl });
   } catch (error) {
     console.error('[warp] error:', error.message);
     res.status(500).json({ error: error.message });

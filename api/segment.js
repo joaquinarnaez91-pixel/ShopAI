@@ -16,7 +16,9 @@ export default async function handler(req, res) {
       { input: { image: imageUrl } }
     );
 
-    res.status(200).json({ success: true, maskUrl: output });
+    // Replicate v1.x returns FileOutput objects — convert to plain URL string
+    const maskUrl = Array.isArray(output) ? String(output[0]) : String(output);
+    res.status(200).json({ success: true, maskUrl });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
