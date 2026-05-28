@@ -258,9 +258,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
 
   <!-- Input -->
   <div class="input-bar">
-    <label class="photo-btn" title="Share a photo">
-      📷
-      <input type="file" id="photoInput" accept="image/*" capture="user" style="display:none" onchange="handlePhotoUpload(event)">
+    <label for="photoInput" title="Find something you saw" style="cursor:pointer;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:var(--card);flex-shrink:0;border:1.5px solid var(--border)">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoUpload(event)">
     </label>
     <input class="inp" id="mInput" type="text" placeholder="Ask anything about style…" />
     <button class="send" id="mSend" aria-label="Send">
@@ -306,9 +306,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
     </div>
     <div class="d-msgs" id="dMsgs"></div>
     <div class="d-inp-wrap">
-      <label class="photo-btn" title="Share a photo">
-        📷
-        <input type="file" id="photoInputD" accept="image/*" capture="user" style="display:none" onchange="handlePhotoUpload(event)">
+      <label for="photoInputD" title="Find something you saw" style="cursor:pointer;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:var(--card);flex-shrink:0;border:1.5px solid var(--border)">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <input type="file" id="photoInputD" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoUpload(event)">
       </label>
       <input class="inp" id="dInput" type="text" placeholder="Ask anything about style…" />
       <button class="send" id="dSend">
@@ -664,9 +664,10 @@ function scrollToLatest() {
   });
 }
 
-function addMessage(role, text) {
-  const isAI = role === 'ai';
-  const html  = `<div class="msg${isAI ? '' : ' u'}"><div class="av ${isAI ? 'ai' : 'u'}">${isAI ? '✨' : '😊'}</div><div class="bbl ${isAI ? 'ai' : 'u'}">${isAI ? parseMarkdown(text) : text}</div></div>`;
+function addMessage(role, text, id) {
+  const isAI   = role === 'ai';
+  const idAttr = id ? ` id="${id}"` : '';
+  const html  = `<div class="msg${isAI ? '' : ' u'}"${idAttr}><div class="av ${isAI ? 'ai' : 'u'}">${isAI ? '✨' : '😊'}</div><div class="bbl ${isAI ? 'ai' : 'u'}">${isAI ? parseMarkdown(text) : text}</div></div>`;
   const mc = document.getElementById('lumen-chat');
   const dc = document.getElementById('dMsgs');
   if (mc) mc.insertAdjacentHTML('beforeend', html);
@@ -1034,25 +1035,119 @@ function renderStyleQuiz() {
 }
 
 // ── Photo Upload ──────────────────────────────────────────────────────────
-function handlePhotoUpload(e) {
+async function handlePhotoUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
   e.target.value = '';
 
   const reader = new FileReader();
-  reader.onload = function(ev) {
-    const imgSrc = ev.target.result;
-    const preview = '<div class="msg u"><div class="av u">😊</div><div class="bbl u" style="padding:6px"><img src="' + imgSrc + '" style="width:80px;height:80px;object-fit:cover;border-radius:8px;display:block"></div></div>';
-    [document.getElementById('lumen-chat'), document.getElementById('dMsgs')].forEach(el => {
-      if (el) el.insertAdjacentHTML('beforeend', preview);
+  reader.onload = async function(ev) {
+    const dataUrl  = ev.target.result;
+    const base64   = dataUrl.split(',')[1];
+    const mimeType = file.type;
+
+    const chatEls = [
+      document.getElementById('lumen-chat'),
+      document.getElementById('dMsgs')
+    ].filter(Boolean);
+
+    // Show photo preview in chat
+    chatEls.forEach(chatEl => {
+      const preview = document.createElement('div');
+      preview.className = 'msg u';
+      preview.innerHTML =
+        '<div class="av u">😊</div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">' +
+        '<img src="' + dataUrl + '" style="width:120px;height:120px;object-fit:cover;border-radius:12px;border:1.5px solid var(--border)">' +
+        '<div class="bbl u" style="font-size:12px">Analyzing your photo...</div></div>';
+      chatEl.appendChild(preview);
     });
     scrollToLatest();
 
-    photoBase64   = ev.target.result.split(',')[1];
-    photoMimeType = file.type;
-    sendMessage('Please analyze my coloring from this photo and tell me my color season and best palette.');
+    const loadingId = 'vision-loading-' + Date.now();
+    addMessage('ai', '🔍 Let me take a look at this...', loadingId);
+
+    try {
+      const result = await fetch('/api/vision', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + (currentSession?.access_token || '')
+        },
+        body: JSON.stringify({ imageBase64: base64, mimeType, mode: 'identify' })
+      }).then(r => r.json());
+
+      document.querySelectorAll('#' + loadingId).forEach(el => el.remove());
+
+      if (result.error) {
+        addMessage('ai', 'I had trouble analyzing that photo. Try a clearer image or describe what you see.');
+        return;
+      }
+
+      renderVisionResults(result, dataUrl);
+
+    } catch(err) {
+      document.querySelectorAll('#' + loadingId).forEach(el => el.remove());
+      addMessage('ai', 'Something went wrong. Please try again.');
+    }
   };
   reader.readAsDataURL(file);
+}
+
+function renderVisionResults(analysis, originalImage) {
+  const chatEls = [
+    document.getElementById('lumen-chat'),
+    document.getElementById('dMsgs')
+  ].filter(Boolean);
+  if (!chatEls.length) return;
+
+  const items    = analysis.items || [];
+  const keyPiece = analysis.key_piece || (items[0]?.description) || '';
+
+  const verdictText = items.length > 0
+    ? 'I can see ' + items.length + ' item' + (items.length > 1 ? 's' : '') + ' in this photo. ' +
+      (analysis.scene_context ? analysis.scene_context + '. ' : '') +
+      (items[0]?.style_match
+        ? '✨ This works beautifully with your palette.'
+        : "This might not be your usual style — but if you love it, let's find it.")
+    : "Here's what I found in your photo.";
+
+  addMessage('ai', verdictText);
+
+  items.slice(0, 3).forEach(item => {
+    const makeCard = () => {
+      const card = document.createElement('div');
+      card.style.cssText = 'margin:4px 0;border-radius:12px;border:1.5px solid var(--border);overflow:hidden;background:#fff;';
+      card.innerHTML =
+        '<div style="padding:12px 14px">' +
+          '<div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px">' + (item.type || 'Item') + '</div>' +
+          '<div style="font-size:14px;font-weight:600;color:var(--tx1);margin:2px 0">' + item.description + '</div>' +
+          '<div style="font-size:12px;color:var(--tx2)">' + item.color +
+            (item.brand_guess ? ' · ' + item.brand_guess : '') +
+            ' · ' + (item.price_range || 'mid') + ' range</div>' +
+        '</div>' +
+        '<div style="padding:0 14px 12px;display:flex;gap:6px;flex-wrap:wrap">' +
+          '<button class="chip" style="font-size:11px;padding:5px 10px" onclick="searchVisionItem(' + JSON.stringify(item.search_query) + ')">🛍️ Find this</button>' +
+          '<button class="chip" style="font-size:11px;padding:5px 10px" onclick="searchVisionItem(' + JSON.stringify('similar to ' + item.search_query) + ')">🔍 Find similar</button>' +
+        '</div>';
+      return card;
+    };
+    chatEls.forEach(el => el.appendChild(makeCard()));
+  });
+
+  setTimeout(() => {
+    renderChipGroup([
+      { label: '🛍️ Find the key piece',   msg: 'Find this for me: ' + keyPiece },
+      { label: '💰 Find cheaper similar',  msg: 'Find something similar but more affordable: ' + keyPiece },
+      { label: '✨ Does this suit me?',    msg: 'Does this outfit work for my style and palette?' }
+    ], (msg) => sendMessage(msg));
+    scrollToLatest();
+  }, 300);
+}
+
+function searchVisionItem(query) {
+  switchTab('discover');
+  setTimeout(() => sendMessage('Find me this: ' + query), 300);
 }
 
 // ── Deep Dive ─────────────────────────────────────────────────────────────
