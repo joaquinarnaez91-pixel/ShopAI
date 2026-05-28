@@ -15,22 +15,19 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Virtual try-on via IDM-VTON.
-    // Verify / update the version hash at:
-    //   https://replicate.com/adirik/virtual-try-on
-    // human_img  = the body silhouette / person photo from Step 1
-    // garm_img   = the product/garment image
+    // Virtual try-on via FLUX-VTON.
+    // Get the exact version hash at:
+    //   https://replicate.com/subhash25rawat/flux-vton
+    // image  = the product/garment image
+    // mask   = the body silhouette from Step 1
     const output = await replicate.run(
-      "adirik/virtual-try-on:c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
+      "subhash25rawat/flux-vton:hash_que_aparezca_en_la_web",
       {
         input: {
-          human_img: maskUrl,
-          garm_img: productUrl,
-          garment_des: "clothing item",
-          is_checked: true,
-          is_checked_crop: false,
-          denoise_steps: 30,
-          seed: 42
+          image: productUrl,
+          mask: maskUrl,
+          prompt: "professional photo of a person wearing the garment, high quality, realistic fashion photography",
+          strength: 0.85
         }
       }
     );
