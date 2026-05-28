@@ -7,345 +7,177 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Lumen — Your Personal Style Guide</title>
 <style>
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-:root{
-  --bg:#FFFFFF;--card:#F5F5F5;--photo:#F0EEEC;--tx1:#111111;--tx2:#666666;--tx3:#999999;
-  --accent:#E8490F;--border:#E5E5E5;
+:root {
+  --bg:#FFFFFF; --card:#F5F5F5; --photo:#F0EEEC;
+  --tx1:#111111; --tx2:#666666; --tx3:#999999;
+  --accent:#E8490F; --border:#E5E5E5;
   --font:-apple-system,"SF Pro Display","Helvetica Neue",Arial,sans-serif;
 }
-html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font-family:var(--font);-webkit-font-smoothing:antialiased;}
 
-/* ── MOBILE APP ── */
-.m-app{display:flex;flex-direction:column;height:100dvh;overflow-x:hidden;overflow-y:visible;}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
 
-/* Header */
-.header{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#fff;border-bottom:1px solid var(--border);flex-shrink:0;position:relative;z-index:10;}
-.logo{font-size:21px;font-weight:800;letter-spacing:-0.6px;color:var(--tx1);line-height:1;display:flex;align-items:center;gap:2px;}
-.logo-glow{width:8px;height:8px;border-radius:50%;background:radial-gradient(circle,#F5C842,#E8490F);margin-left:3px;flex-shrink:0;margin-bottom:1px;}
-.profile-btn{width:34px;height:34px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;}
+html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--tx1); font-family:var(--font); -webkit-font-smoothing:antialiased; }
 
-/* Tab bar */
-.tab-bar{display:flex;border-bottom:1px solid var(--border);background:#fff;flex-shrink:0;}
-.tab{flex:1;padding:12px 0;text-align:center;font-size:13px;font-weight:600;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
-.tab.active{color:var(--tx1);border-bottom-color:var(--tx1);}
+.lumen-app { display:flex; flex-direction:column; height:100vh; max-width:480px; margin:0 auto; position:relative; }
 
-/* Profile bar */
-.m-profile-bar{display:none;padding:7px 16px;background:#fafafa;border-bottom:1px solid var(--border);align-items:center;gap:8px;flex-shrink:0;}
+/* HEADER */
+.l-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); background:var(--bg); flex-shrink:0; z-index:10; }
+.l-logo { font-size:20px; font-weight:700; color:var(--tx1); display:flex; align-items:center; gap:4px; }
+.l-dot { width:8px; height:8px; border-radius:50%; background:radial-gradient(circle,#F5C842,#E8490F); display:inline-block; flex-shrink:0; }
+.l-profile-btn { width:36px; height:36px; border-radius:50%; background:var(--card); border:1.5px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--tx2); }
 
-/* Scroll area */
-.m-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(140px + env(safe-area-inset-bottom,0px));}
-.m-scroll::-webkit-scrollbar{display:none;}
+/* CHAT */
+.l-chat { flex:1; overflow-y:auto; overflow-x:hidden; padding:16px 0 140px; -webkit-overflow-scrolling:touch; }
+.l-chat::-webkit-scrollbar { display:none; }
 
-/* Chat */
-.chat{padding:14px 16px 10px;display:flex;flex-direction:column;gap:10px;overflow:visible;}
-.msg{display:flex;gap:8px;align-items:flex-end;}
-.msg.u{flex-direction:row-reverse;}
-.av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
-.av.ai{background:#111;}
-.av.u{background:#E8E8E8;}
-.bbl{padding:10px 14px;font-size:14px;line-height:1.5;}
-.bbl.ai{background:var(--card);border-radius:18px 18px 18px 4px;color:var(--tx1);max-width:82%;}
-.bbl.u{background:var(--tx1);border-radius:18px 18px 4px 18px;color:#fff;max-width:75%;}
+/* MESSAGES */
+.l-msg { display:flex; align-items:flex-end; gap:8px; padding:3px 16px; margin-bottom:2px; }
+.l-msg.ai { flex-direction:row; }
+.l-msg.user { flex-direction:row-reverse; }
+.l-av { width:28px; height:28px; border-radius:50%; background:var(--tx1); display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; margin-bottom:2px; }
+.l-av.user { background:#E8E8E8; }
+.l-bbl { max-width:78%; padding:10px 14px; border-radius:18px; font-size:14px; line-height:1.5; }
+.l-bbl.ai { background:var(--card); color:var(--tx1); border-bottom-left-radius:4px; }
+.l-bbl.user { background:var(--tx1); color:#fff; border-bottom-right-radius:4px; }
 
-/* Pin tray */
-.pin-tray{margin:2px 16px 14px;background:var(--card);border-radius:12px;padding:12px 14px;}
-.pin-tray-lbl{font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
-.pin-row{display:flex;align-items:center;gap:7px;}
-.pin-th{width:52px;height:52px;border-radius:8px;overflow:hidden;flex-shrink:0;background:var(--photo);}
-.pin-th img{width:100%;height:100%;object-fit:cover;}
-.pin-th-empty{width:52px;height:52px;border-radius:8px;border:1.5px dashed var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--tx3);font-size:18px;font-weight:300;}
-.pin-action{margin-left:auto;font-size:12px;font-weight:600;color:var(--tx1);text-decoration:underline;cursor:pointer;white-space:nowrap;}
+/* CHIPS */
+.l-chips { display:flex; flex-wrap:wrap; gap:7px; padding:4px 16px 8px 52px; }
+.l-chip { padding:7px 14px; border-radius:20px; border:1.5px solid var(--border); background:var(--bg); font-size:13px; font-weight:500; color:var(--tx1); cursor:pointer; font-family:var(--font); transition:all 0.15s; white-space:nowrap; }
+.l-chip:active { background:var(--tx1); color:#fff; border-color:var(--tx1); }
 
-/* Section label */
-.sec-label{font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;padding:0 16px;}
+/* PRODUCT CARD ROW */
+.l-card-row { padding:8px 16px; display:flex; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.l-card-row::-webkit-scrollbar { display:none; }
 
-/* Grid */
-.m-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px;}
+/* PRODUCT CARD */
+.l-card { flex-shrink:0; width:200px; border-radius:16px; border:1.5px solid var(--border); background:var(--bg); overflow:hidden; cursor:pointer; scroll-snap-align:start; transition:transform 0.15s; position:relative; }
+.l-card:active { transform:scale(0.97); }
+.l-card-img { width:100%; height:180px; background:var(--photo); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.l-card-img img { width:100%; height:100%; object-fit:cover; }
+.l-card-body { padding:10px 12px 12px; }
+.l-card-brand { font-size:10px; font-weight:700; color:var(--tx3); text-transform:uppercase; letter-spacing:0.5px; }
+.l-card-name { font-size:13px; font-weight:600; color:var(--tx1); margin:2px 0 4px; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.l-card-price-row { display:flex; align-items:center; justify-content:space-between; }
+.l-card-price { font-size:15px; font-weight:700; color:var(--tx1); }
+.l-card-indicator { font-size:10px; padding:2px 6px; border-radius:10px; font-weight:600; }
+.l-card-indicator.LOW { background:#E8F5E9; color:#2E7D32; }
+.l-card-indicator.USUAL { background:#FFF8E1; color:#F57F17; }
+.l-card-indicator.HIGH { background:#FFEBEE; color:#C62828; }
+.l-card-source { font-size:11px; color:var(--tx3); margin-top:4px; }
+.l-card-stars { font-size:11px; color:var(--tx2); margin-top:2px; }
+.l-card-pin { position:absolute; top:8px; right:8px; width:32px; height:32px; border-radius:50%; background:white; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.15); }
+.l-card-pin.saved { background:var(--tx1); }
+.l-card-pin.saved svg { stroke:white; }
+.l-expert-badge { position:absolute; top:8px; left:8px; background:var(--accent); color:white; font-size:9px; font-weight:700; padding:3px 7px; border-radius:6px; text-transform:uppercase; letter-spacing:0.5px; }
 
-/* Card */
-.card{background:var(--card);border-radius:12px;overflow:hidden;cursor:pointer;position:relative;transition:transform 0.1s ease;}
-.card:active{transform:scale(0.97);}
+/* INPUT BAR */
+.l-input-bar { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px)); background:var(--bg); border-top:1px solid var(--border); display:flex; align-items:center; gap:8px; z-index:10; }
+.l-input { flex:1; padding:10px 16px; border-radius:24px; border:1.5px solid var(--border); background:var(--card); font-size:15px; font-family:var(--font); color:var(--tx1); outline:none; }
+.l-input:focus { border-color:var(--tx1); }
+.l-send-btn { width:40px; height:40px; border-radius:50%; background:var(--tx1); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.l-icon-btn { width:40px; height:40px; border-radius:50%; background:var(--card); border:1.5px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 
-/* Tutorial ring */
-@keyframes tutPulse{
-  0%  {box-shadow:0 0 0 3px rgba(232,73,15,0.9);}
-  16% {box-shadow:0 0 0 9px rgba(232,73,15,0);}
-  33% {box-shadow:0 0 0 3px rgba(232,73,15,0.7);}
-  49% {box-shadow:0 0 0 9px rgba(232,73,15,0);}
-  66% {box-shadow:0 0 0 3px rgba(232,73,15,0.45);}
-  82% {box-shadow:0 0 0 9px rgba(232,73,15,0);}
-  100%{box-shadow:none;}
-}
-.tut-ring{animation:tutPulse 3s ease-out forwards;}
+/* PROFILE SHEET */
+.l-profile-sheet { position:fixed; bottom:0; left:50%; transform:translateX(-50%) translateY(100%); width:100%; max-width:480px; background:var(--bg); border-radius:20px 20px 0 0; border-top:1px solid var(--border); padding:20px 20px calc(20px + env(safe-area-inset-bottom,0px)); transition:transform 0.35s cubic-bezier(0.32,0.72,0,1); z-index:100; }
+.l-profile-sheet.open { transform:translateX(-50%) translateY(0); }
 
-/* Card photo */
-.c-photo{width:100%;height:180px;background:#F0EEEC !important;display:flex;align-items:center;justify-content:center;padding:16px;position:relative;overflow:hidden;}
-.c-photo img{width:100%;height:100%;object-fit:contain;object-position:center;}
+/* DEEP DIVE */
+.l-deep-dive { position:fixed; bottom:0; left:50%; transform:translateX(-50%) translateY(100%); width:100%; max-width:480px; height:85vh; background:var(--bg); border-radius:20px 20px 0 0; overflow-y:auto; transition:transform 0.35s cubic-bezier(0.32,0.72,0,1); z-index:200; }
+.l-deep-dive::-webkit-scrollbar { display:none; }
+.l-deep-dive.open { transform:translateX(-50%) translateY(0); }
 
-/* Pin btn */
-.pin-btn{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3;color:#999;transition:background 0.15s,color 0.15s,transform 0.1s;flex-shrink:0;}
-.pin-btn:active{transform:scale(0.88);}
-.pin-btn.on{background:#111;color:#fff;}
-
-/* Badge */
-.badge{position:absolute;top:8px;left:8px;z-index:3;padding:3px 8px;border-radius:20px;font-size:9px;font-weight:700;letter-spacing:0.2px;}
-.b-expert{background:#FFF0E8;color:var(--accent);}
-.b-value {background:#F0FDF4;color:#16A34A;}
-.b-seller{background:rgba(0,0,0,0.07);color:#111;}
-
-/* Card body */
-.c-body{padding:9px 11px 13px;}
-.c-brand{font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:1px;}
-.c-model{font-size:13px;font-weight:600;color:var(--tx1);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:2px;}
-.c-cat{font-size:10px;color:var(--tx3);margin-bottom:7px;}
-.price-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
-.c-price{font-size:18px;font-weight:700;color:var(--tx1);}
-.ppill{font-size:9px;font-weight:700;padding:2px 6px;border-radius:20px;}
-.pp-deal{background:#F0FDF4;color:#16A34A;}
-.pp-typ {background:#FEFCE8;color:#CA8A04;}
-.pp-high{background:#FEF2F2;color:#DC2626;}
-.c-store{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--tx2);margin-bottom:2px;}
-.s-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.c-rating{font-size:10px;color:var(--tx3);}
-.stars{color:#F59E0B;}
-
-/* Chips */
-.chips-wrap{padding:10px 16px 2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
-.chips-wrap::-webkit-scrollbar{display:none;}
-.chips-inner{display:inline-flex;gap:7px;}
-.chip{display:inline-flex;align-items:center;padding:8px 13px;border:1px solid var(--border);border-radius:20px;font-size:13px;color:var(--tx1);background:#fff;cursor:pointer;white-space:nowrap;font-family:var(--font);transition:all 0.1s;}
-.chip.hit{background:var(--tx1);color:#fff;border-color:var(--tx1);}
-
-/* Inline action chips (inside AI bubbles) */
-.msg-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;}
-.msg-chip{display:inline-flex;align-items:center;padding:5px 10px;border:1px solid var(--border);border-radius:14px;font-size:12px;color:var(--tx1);background:#fff;cursor:pointer;white-space:nowrap;font-family:var(--font);transition:background 0.12s,color 0.12s,border-color 0.12s;}
-.msg-chip:active,.msg-chip.hit{background:var(--tx1);color:#fff;border-color:var(--tx1);}
+/* OVERLAY */
+.l-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:99; opacity:0; pointer-events:none; transition:opacity 0.3s; }
+.l-overlay.show { opacity:1; pointer-events:all; }
 
 /* Style quiz cards */
-.style-card{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:10px;border:1.5px solid var(--border);margin-bottom:8px;cursor:pointer;transition:all 0.15s;background:#fff;}
-.style-card.selected{border-color:var(--tx1);background:var(--card);}
-.style-card-emoji{font-size:20px;flex-shrink:0;line-height:1.3;}
-.style-card-label{font-size:13px;font-weight:600;color:var(--tx1);}
-.style-card-desc{font-size:11px;color:var(--tx2);margin-top:2px;line-height:1.4;}
+.sq-card { display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:10px; border:1.5px solid var(--border); margin-bottom:8px; cursor:pointer; background:#fff; transition:all 0.15s; }
+.sq-card.sel { border-color:var(--tx1); background:var(--card); }
 
-/* Enrich loading animation */
-.enrich-progress{height:2px;background:var(--border);border-radius:1px;margin:10px 0 4px;overflow:hidden;}
-.enrich-progress-fill{height:100%;width:35%;background:var(--tx3);border-radius:1px;animation:enrichSlide 1.4s ease-in-out infinite;}
-@keyframes enrichSlide{0%{transform:translateX(-200%);}100%{transform:translateX(500%);}}
+/* Enrich loading */
+.enrich-progress { height:2px; background:var(--border); border-radius:1px; margin:10px 0 4px; overflow:hidden; }
+.enrich-progress-fill { height:100%; width:35%; background:var(--tx3); border-radius:1px; animation:enrichSlide 1.4s ease-in-out infinite; }
+@keyframes enrichSlide { 0%{transform:translateX(-200%);} 100%{transform:translateX(500%);} }
 
-/* Input */
-.input-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);padding:10px 16px calc(22px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:8px;z-index:20;}
-.inp{flex:1;height:44px;background:#F0F0F0;border-radius:22px;border:none;padding:0 18px;font-size:15px;font-family:var(--font);color:var(--tx1);outline:none;-webkit-appearance:none;}
-.inp::placeholder{color:var(--tx3);}
-.send{width:36px;height:36px;border-radius:50%;background:var(--tx1);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
-.send svg{width:15px;height:15px;}
-.photo-btn{width:36px;height:36px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:16px;line-height:1;}
-
-/* ── DEEP DIVE ── */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;opacity:0;pointer-events:none;transition:opacity 0.3s ease;}
-.overlay.on{opacity:1;pointer-events:all;}
-
-.dd-panel{position:fixed;bottom:0;left:0;right:0;max-height:92dvh;background:#fff;border-radius:24px 24px 0 0;z-index:101;transform:translateY(100%);display:flex;flex-direction:column;will-change:transform;user-select:none;}
-.dd-handle{width:40px;height:4px;background:#CCC;border-radius:2px;margin:12px auto 0;flex-shrink:0;}
-.dd-dots{display:flex;justify-content:center;gap:6px;padding:10px 0 4px;flex-shrink:0;}
-.dot{width:6px;height:6px;border-radius:50%;border:1.5px solid var(--tx1);background:transparent;transition:background 0.2s;}
-.dot.on{background:var(--tx1);}
-.dd-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
-.dd-scroll::-webkit-scrollbar{display:none;}
-.dd-content{padding:2px 16px 48px;transition:opacity 0.2s ease,transform 0.2s ease;}
-
-/* Deep dive internals */
-.dd-photo{width:100%;height:280px;background:#F0EEEC !important;border-radius:16px;display:flex;align-items:center;justify-content:center;padding:16px;margin-bottom:16px;overflow:hidden;}
-.dd-photo img{width:100%;height:100%;object-fit:contain;object-position:center;}
-.dd-brand{font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;}
-.dd-model{font-size:26px;font-weight:700;color:var(--tx1);letter-spacing:-0.5px;line-height:1.15;margin:3px 0 4px;}
-.dd-cat{font-size:14px;color:var(--tx2);margin-bottom:16px;}
-.dd-div{height:1px;background:var(--border);margin:16px 0;}
-.dd-stitle{font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:11px;}
-
-.store-row{display:flex;align-items:center;padding:10px 12px;border-radius:10px;margin-bottom:6px;}
-.store-row.best{background:#FFF0E8;}
-.si{flex:1;}
-.sname{font-size:14px;font-weight:600;color:var(--tx1);}
-.store-row.best .sname{color:var(--accent);}
-.sdel{font-size:11px;color:var(--tx2);margin-top:1px;}
-.sprice{font-size:17px;font-weight:700;color:var(--tx1);}
-.store-row.best .sprice{color:var(--accent);}
-.deal-note{font-size:12px;color:#16A34A;font-weight:500;margin-top:6px;}
-
-.expert-text{font-size:15px;line-height:1.65;color:var(--tx1);}
-
-.score-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-.score-lbl{width:76px;font-size:12px;color:var(--tx2);flex-shrink:0;}
-.score-track{flex:1;height:4px;background:#EFEFEF;border-radius:2px;overflow:hidden;}
-.score-fill{height:100%;background:var(--tx1);border-radius:2px;width:0;transition:width 0.6s cubic-bezier(0.4,0,0.2,1);}
-.score-val{font-size:12px;font-weight:600;color:var(--tx1);width:26px;text-align:right;flex-shrink:0;}
-
-.tech-tags{display:flex;flex-wrap:wrap;gap:6px;}
-.tag{padding:5px 11px;background:var(--card);border-radius:20px;font-size:12px;color:var(--tx1);}
-
-.rev{display:flex;align-items:flex-start;gap:7px;margin-bottom:6px;font-size:13px;line-height:1.45;}
-.rev.pro{color:#16A34A;}
-.rev.con{color:#B45309;}
-
-.fun-fact{font-size:13px;color:var(--tx2);font-style:italic;line-height:1.55;}
-
-.cta-btn{width:100%;height:54px;background:var(--tx1);color:#fff;border:none;border-radius:27px;font-size:16px;font-weight:700;font-family:var(--font);cursor:pointer;margin-top:22px;letter-spacing:-0.2px;}
-.cta-sub{text-align:center;font-size:11px;color:var(--tx3);margin-top:6px;}
-
-/* ── DESKTOP ── */
-.d-app{display:none;}
-@media(min-width:768px){
-  .m-app{display:none;}
-  .d-app{display:flex;height:100dvh;overflow:hidden;}
-
-  .d-sidebar{width:260px;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;background:#fff;}
-  .d-logo{height:60px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid var(--border);}
-  .d-logo .logo{font-size:20px;}
-  .d-profile{padding:16px 20px;border-bottom:1px solid var(--border);}
-  .d-av{width:40px;height:40px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:8px;}
-  .d-name{font-size:14px;font-weight:600;color:var(--tx1);margin-bottom:6px;}
-  .d-profile-row{font-size:12px;color:var(--tx2);margin-top:2px;}
-  .d-pins-sec{padding:16px 20px;}
-  .d-pins-lbl{font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
-  .d-pins-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
-  .d-pt{aspect-ratio:1;border-radius:8px;background:var(--photo);overflow:hidden;}
-  .d-pt img{width:100%;height:100%;object-fit:cover;}
-  .d-pt-empty{aspect-ratio:1;border-radius:8px;border:1.5px dashed var(--border);display:flex;align-items:center;justify-content:center;color:var(--tx3);font-size:14px;}
-
-  .d-chat{width:380px;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
-  .d-chat-head{flex-shrink:0;}
-  .d-tab-bar{display:flex;border-bottom:1px solid var(--border);background:#fff;}
-  .d-msgs{flex:1;overflow-y:auto;padding:16px 16px 100px;display:flex;flex-direction:column;gap:10px;}
-  .d-msgs::-webkit-scrollbar{display:none;}
-  .d-inp-wrap{padding:12px 16px 16px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-shrink:0;}
-
-  .d-products{flex:1;overflow:hidden;display:flex;flex-direction:column;}
-  .d-prod-head{height:60px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid var(--border);flex-shrink:0;}
-  .d-prod-count{font-size:14px;font-weight:600;color:var(--tx1);}
-  .d-prod-scroll{flex:1;overflow-y:auto;padding:16px;}
-  .d-prod-scroll::-webkit-scrollbar{display:none;}
-  .d-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;}
-  .d-grid .card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.07);}
-  .d-grid .card{transition:transform 0.18s ease,box-shadow 0.18s ease;}
+/* DESKTOP */
+@media (min-width:768px) {
+  .lumen-app { max-width:100%; flex-direction:row; }
+  .l-sidebar { width:280px; border-right:1px solid var(--border); padding:24px 20px; flex-shrink:0; overflow-y:auto; display:flex; flex-direction:column; gap:12px; }
+  .l-main { flex:1; display:flex; flex-direction:column; height:100vh; max-width:520px; }
+  .l-input-bar { position:sticky; bottom:0; transform:none; left:auto; max-width:none; }
+  .l-profile-sheet, .l-deep-dive { max-width:560px; }
 }
 </style>
 </head>
 <body>
 
-<!-- ════════ MOBILE ════════ -->
-<div class="m-app">
-  <div class="header">
-    <div class="logo">Lumen<span class="logo-glow"></span></div>
-    <button class="profile-btn" aria-label="Profile">👤</button>
+<div class="lumen-app">
+
+  <!-- HEADER -->
+  <div class="l-header">
+    <div class="l-logo">Lumen <span class="l-dot"></span></div>
+    <div class="l-profile-btn" id="profileBtn" onclick="openProfile()">👤</div>
   </div>
 
-  <!-- Tab bar -->
-  <div class="tab-bar">
-    <div class="tab active" data-tab="style" onclick="switchTab('style')">Style Guide</div>
-    <div class="tab" data-tab="discover" onclick="switchTab('discover')">Discover</div>
-    <div class="tab" data-tab="wardrobe" onclick="switchTab('wardrobe')">Wardrobe</div>
-  </div>
-
-  <!-- Profile bar (FIX 7) -->
-  <div id="m-profile-bar" class="m-profile-bar">
-    <div id="m-profile-palette" style="display:flex;gap:4px;align-items:center"></div>
-    <span id="m-profile-season" style="font-size:11px;font-weight:600;color:var(--tx2)"></span>
-  </div>
-
-  <div class="m-scroll" id="mScroll">
-  </div>
-
-  <!-- Input -->
-  <div class="input-bar">
-    <div style="display:flex;gap:6px;align-items:center">
-      <label for="cameraInput" title="Take a photo" style="cursor:pointer;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:var(--card);flex-shrink:0;border:1.5px solid var(--border)">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoUpload(event)">
-      </label>
-      <label for="galleryInput" title="Upload from gallery" style="cursor:pointer;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:var(--card);flex-shrink:0;border:1.5px solid var(--border)">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-        <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
-      </label>
+  <!-- Desktop sidebar (visible ≥768px) -->
+  <div class="l-sidebar" id="lSidebar" style="display:none">
+    <div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:12px">Your Profile</div>
+      <div id="sidebarPalette" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px"></div>
+      <div id="sidebarSeason" style="font-size:13px;color:var(--tx2);margin-bottom:4px"></div>
+      <div id="sidebarEmail" style="font-size:12px;color:var(--tx3)"></div>
     </div>
-    <input class="inp" id="mInput" type="text" placeholder="Ask anything about style…" />
-    <button class="send" id="mSend" aria-label="Send">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-      </svg>
-    </button>
-  </div>
-</div>
-
-<!-- ════════ DESKTOP ════════ -->
-<div class="d-app">
-  <!-- Sidebar -->
-  <div class="d-sidebar">
-    <div class="d-logo"><div class="logo">Lumen<span class="logo-glow"></span></div></div>
-    <div class="d-profile">
-      <div class="d-av">✨</div>
-      <div class="d-name" id="dProfileName">Your Style Profile</div>
-      <div class="d-profile-row" id="dProfileColors">Colors: not yet analyzed</div>
-      <div class="d-profile-row" id="dProfileSeason">Season: unknown</div>
-      <div class="d-profile-row" id="dProfileStyle">Style: unknown</div>
-      <div class="d-profile-row" id="dProfileSize">Size: unknown</div>
-    </div>
-    <div class="d-pins-sec">
-      <div class="d-pins-lbl">★ Shortlist</div>
-      <div class="d-pins-grid" id="dPinsGrid">
-        <div class="d-pt-empty">+</div>
-        <div class="d-pt-empty">+</div>
-        <div class="d-pt-empty">+</div>
-        <div class="d-pt-empty">+</div>
-      </div>
+    <div id="sidebarSaved" style="margin-top:8px">
+      <div style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">★ Saved</div>
+      <div id="sidebarSavedGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px"></div>
     </div>
   </div>
 
-  <!-- Chat panel -->
-  <div class="d-chat">
-    <div class="d-chat-head">
-      <div class="d-tab-bar">
-        <div class="tab active" data-tab="style" onclick="switchTab('style')">Style Guide</div>
-        <div class="tab" data-tab="discover" onclick="switchTab('discover')">Discover</div>
-        <div class="tab" data-tab="wardrobe" onclick="switchTab('wardrobe')">Wardrobe</div>
-      </div>
-    </div>
-    <div class="d-msgs" id="dMsgs"></div>
-    <div class="d-inp-wrap">
+  <!-- MAIN chat area -->
+  <div class="l-main" id="lMain">
+    <!-- CHAT THREAD -->
+    <div class="l-chat" id="lumenChat"></div>
+
+    <!-- INPUT BAR -->
+    <div class="l-input-bar">
       <div style="display:flex;gap:6px;align-items:center">
-        <label for="cameraInputD" title="Take a photo" style="cursor:pointer;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:var(--card);flex-shrink:0;border:1.5px solid var(--border)">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          <input type="file" id="cameraInputD" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoUpload(event)">
+        <label for="cameraInput" title="Take a photo" class="l-icon-btn">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+          <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoUpload(event)">
         </label>
-        <label for="galleryInputD" title="Upload from gallery" style="cursor:pointer;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:var(--card);flex-shrink:0;border:1.5px solid var(--border)">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-          <input type="file" id="galleryInputD" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
+        <label for="galleryInput" title="Upload from gallery" class="l-icon-btn">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+          <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
         </label>
       </div>
-      <input class="inp" id="dInput" type="text" placeholder="Ask anything about style…" />
-      <button class="send" id="dSend">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <input class="l-input" id="lumenInput" type="text" placeholder="Ask Lumen anything about style…">
+      <button class="l-send-btn" id="lumenSend">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
         </svg>
       </button>
     </div>
   </div>
 
-  <!-- Products panel -->
-  <div class="d-products">
-    <div class="d-prod-head"><span class="d-prod-count" id="dProdCount">Ready to search</span></div>
-    <div class="d-prod-scroll"><div class="d-grid" id="dGrid"></div></div>
+  <!-- PROFILE SHEET -->
+  <div class="l-profile-sheet" id="profileSheet">
+    <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px"></div>
+    <div id="profileContent"></div>
   </div>
-</div>
 
-<!-- ════════ DEEP DIVE ════════ -->
-<div class="overlay" id="overlay" onclick="overlayClick(event)"></div>
-<div class="dd-panel" id="ddPanel">
-  <div class="dd-handle"></div>
-  <div class="dd-dots" id="ddDots"></div>
-  <div class="dd-scroll" id="ddScroll">
-    <div class="dd-content" id="ddContent"></div>
-  </div>
+  <!-- DEEP DIVE PANEL -->
+  <div class="l-deep-dive" id="deepDive"></div>
+
+  <!-- OVERLAY -->
+  <div class="l-overlay" id="overlay" onclick="handleOverlayClick()"></div>
+
 </div>
 
 <script>
@@ -354,41 +186,28 @@ const SUPABASE_URL      = 'https://mipdomxenbsmgrsitote.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pcGRvbXhlbmJzbWdyc2l0b3RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MjM0MzUsImV4cCI6MjA5NTQ5OTQzNX0.5BOsjNK60UMz8woU-tHyNloPACX6lIKOrBF4BgdLdKw';
 
 // ── State ─────────────────────────────────────────────────────────────────
-let products          = [];
-let pins              = [];
-let pinnedProducts    = [];
-let hasSentPinMessage = false;
-let curIdx            = 0;
-let panelOpen         = false;
-let messages          = [];
-let userProfile       = {};
-let enrichCache       = {};
-let isLoading         = false;
-let enrichLoadTimer   = null;
-let activeTab         = 'style';
+let products        = [];
+let savedItems      = [];   // saved product ids
+let savedProducts   = [];   // saved product objects
+let messages        = [];
+let userProfile     = {};
+let enrichCache     = {};
+let isLoading       = false;
+let enrichLoadTimer = null;
+let deepDiveOpen    = false;
+let profileOpen     = false;
 
-// Onboarding state
-let onboardingStep   = 0;   // 0=welcome, 1=colors, 2=quiz, 3=done
+// Onboarding
+let onboardingStep   = 0;
 let onboardingActive = true;
-let styleProfile = {
-  undertone: null,
-  season: null,
-  palette: [],
-  aesthetic: null,
-  occasions: [],
-  lifeContext: null
-};
+let styleProfile = { undertone:null, season:null, palette:[], aesthetic:null };
 
-// Onboarding profile chips state (FIX 8)
+// User context chips
 let userGender        = null;
 let userAge           = null;
 let userCurrentSeason = null;
 
-// Per-tab message history (FIX 6)
-let styleMessages   = [];
-let discoverMessages = [];
-
-// Photo upload state
+// Photo upload
 let photoBase64   = null;
 let photoMimeType = null;
 
@@ -397,40 +216,15 @@ let currentUser    = null;
 let currentSession = null;
 let currentAuthTab = 'login';
 
+// API mode (auto-detected from message content, invisible to user)
+let currentMode = 'style';
+
 const ENRICH_LABELS = [
   'Scanning expert reviews…',
   'Analyzing value for money…',
   'Checking buyer feedback…',
   'Building your expert report…'
 ];
-
-function startEnrichAnim() {
-  stopEnrichAnim();
-  let i = 0;
-  enrichLoadTimer = setInterval(() => {
-    i = (i + 1) % ENRICH_LABELS.length;
-    const el = document.querySelector('.enrich-loading-label');
-    if (el) el.textContent = ENRICH_LABELS[i];
-  }, 2000);
-}
-
-function stopEnrichAnim() {
-  clearInterval(enrichLoadTimer);
-  enrichLoadTimer = null;
-}
-
-// ── Maps ──────────────────────────────────────────────────────────────────
-const INDS = {
-  LOW:   { cls:'pp-deal', lbl:'🟢 Low'   },
-  USUAL: { cls:'pp-typ',  lbl:'🟡 Usual' },
-  HIGH:  { cls:'pp-high', lbl:'🔴 High'  }
-};
-
-const STORE_COLORS = {
-  'Amazon':'#FF9900','Zappos':'#005DAA','Nike.com':'#111','Hoka.com':'#009BDE',
-  'NB.com':'#CC0000','On.com':'#111','Adidas.com':'#111','REI':'#4CAF50',
-  'ASICS.com':'#1B4D8E','Walmart':'#0071CE'
-};
 
 // ── Utilities ─────────────────────────────────────────────────────────────
 function stars(r) {
@@ -448,7 +242,7 @@ function parseMarkdown(t) {
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/^---+$/gm, '<hr style="border:none;border-top:1px solid var(--border);margin:10px 0">')
-    .replace(/^\|\s*(.*?)\s*\|$/gm, (row) => {
+    .replace(/^\|\s*(.*?)\s*\|$/gm, row => {
       if (/^[\s|:-]+$/.test(row)) return '';
       const cells = row.split('|').filter(c => c.trim()).map(c => '<td style="padding:4px 8px;border:1px solid var(--border);font-size:12px">' + c.trim() + '</td>').join('');
       return '<tr>' + cells + '</tr>';
@@ -459,7 +253,13 @@ function parseMarkdown(t) {
     .replace(/\n/g, '<br>');
 }
 
-function storeColor(src) { return STORE_COLORS[src] || '#999'; }
+function shortName(p) {
+  let n = p.name || '';
+  const b = (p.brand || '').toLowerCase();
+  if (n.toLowerCase().startsWith(b + ' ' + b)) n = n.slice(p.brand.length + 1);
+  if (n.toLowerCase().startsWith(b)) n = p.brand + n.slice(p.brand.length);
+  return n.length > 40 ? n.slice(0, 38) + '…' : n;
+}
 
 function extractProfile(msgs) {
   const t = msgs.map(m => typeof m.content === 'string' ? m.content : '').join(' ').toLowerCase();
@@ -470,240 +270,131 @@ function extractProfile(msgs) {
   if (bud) p.budget   = parseInt(bud[1]);
   if (t.includes('wide'))   p.width = 'wide';
   if (t.includes('narrow')) p.width = 'narrow';
-  ['running','hiking','basketball','tennis','casual','walking'].forEach(u => {
-    if (t.includes(u)) p.useCase = u;
-  });
+  ['running','hiking','basketball','tennis','casual','walking'].forEach(u => { if (t.includes(u)) p.useCase = u; });
   return p;
 }
 
-function updateProfileDisplay() {
-  const colorsEl = document.getElementById('dProfileColors');
-  const seasonEl = document.getElementById('dProfileSeason');
-  const styleEl  = document.getElementById('dProfileStyle');
-  const sizeEl   = document.getElementById('dProfileSize');
-
-  if (seasonEl && (userProfile.season || styleProfile.season)) {
-    seasonEl.textContent = 'Season: ' + (userProfile.season || styleProfile.season);
-  }
-  if (styleEl && userProfile.style) {
-    styleEl.textContent = 'Style: ' + userProfile.style;
-  }
-  if (sizeEl && userProfile.shoeSize) {
-    sizeEl.textContent = 'Size: ' + userProfile.shoeSize;
-  }
-
-  // Palette dots
-  if (colorsEl) {
-    const palette = styleProfile.palette || userProfile.palette || [];
-    if (palette.length > 0) {
-      const label = userProfile.colors || (styleProfile.season ? styleProfile.season + ' palette' : 'analyzed');
-      const dots = palette.map(hex =>
-        '<div style="width:14px;height:14px;border-radius:50%;background:' + hex + ';border:1px solid rgba(0,0,0,0.1);flex-shrink:0"></div>'
-      ).join('');
-      colorsEl.innerHTML = 'Colors: ' + label + '<div style="display:flex;gap:4px;margin-top:4px">' + dots + '</div>';
-    } else if (userProfile.colors) {
-      colorsEl.textContent = 'Colors: ' + userProfile.colors;
-    }
-  }
+function detectApiMode(text) {
+  return /\b(find|shop|buy|search|where (to )?(buy|get|find)|price|store|purchase|sneaker|boot|sandal|shoe|clothing|outfit pieces|pieces for)\b/i.test(text) ? 'discover' : 'style';
 }
 
-// ── Palette in chat (FIX 3) ───────────────────────────────────────────────
-function renderPaletteInChat(palette, season) {
-  if (!palette || !palette.length) return;
-  const dots = palette.map(hex =>
-    '<div style="width:30px;height:30px;border-radius:50%;background:' + hex +
-    ';border:1px solid rgba(0,0,0,0.08);flex-shrink:0" title="' + hex + '"></div>'
-  ).join('');
-  const html =
-    '<div class="msg">' +
-      '<div class="av ai">✨</div>' +
-      '<div class="bbl ai">' +
-        '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:2px 0">' +
-          dots +
-          (season ? '<span style="font-size:11px;font-weight:600;color:var(--tx3);margin-left:4px">' + season + '</span>' : '') +
-        '</div>' +
-      '</div>' +
-    '</div>';
-  [document.getElementById('lumen-chat'), document.getElementById('dMsgs')].forEach(el => {
-    if (el) el.insertAdjacentHTML('beforeend', html);
-  });
-  scrollToLatest();
+function startEnrichAnim() {
+  stopEnrichAnim();
+  let i = 0;
+  enrichLoadTimer = setInterval(() => {
+    i = (i + 1) % ENRICH_LABELS.length;
+    const el = document.querySelector('.enrich-loading-label');
+    if (el) el.textContent = ENRICH_LABELS[i];
+  }, 2000);
 }
 
-// ── Chip group helper (FIX 8) ─────────────────────────────────────────────
-function renderChipGroup(chips, onSelect) {
-  [document.getElementById('lumen-chat'), document.getElementById('dMsgs')].forEach(container => {
-    if (!container) return;
-    const row = document.createElement('div');
-    row.className = 'chip-group';
-    row.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;padding:8px 0 4px;';
-    chips.forEach(c => {
-      const btn = document.createElement('button');
-      btn.className = 'chip';
-      btn.textContent = c.label;
-      btn.onclick = () => {
-        document.querySelectorAll('.chip-group').forEach(el => el.remove());
-        if (onSelect) onSelect(c.msg, c.action);
-      };
-      row.appendChild(btn);
-    });
-    container.appendChild(row);
-  });
-  scrollToLatest();
+function stopEnrichAnim() {
+  clearInterval(enrichLoadTimer);
+  enrichLoadTimer = null;
 }
 
-// ── Tab history helpers (FIX 6) ───────────────────────────────────────────
-function renderLastMessages(n) {
-  const toRender = messages.slice(-n);
-  const mc = document.getElementById('lumen-chat');
-  const dc = document.getElementById('dMsgs');
-  toRender.forEach(m => {
-    const isAI = m.role === 'assistant';
-    const text = typeof m.content === 'string' ? m.content : '';
-    const clean = text.replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '').replace(/SEARCH_MODELS:\{[\s\S]*?\}/g, '').trim();
-    if (!clean) return;
-    const html = `<div class="msg${isAI ? '' : ' u'}"><div class="av ${isAI ? 'ai' : 'u'}">${isAI ? '✨' : '😊'}</div><div class="bbl ${isAI ? 'ai' : 'u'}">${isAI ? parseMarkdown(clean) : clean}</div></div>`;
-    if (mc) mc.insertAdjacentHTML('beforeend', html);
-    if (dc) dc.insertAdjacentHTML('beforeend', html);
-  });
-}
+// ── Chat helpers ──────────────────────────────────────────────────────────
+function chat() { return document.getElementById('lumenChat'); }
 
-function addSeparator(label) {
-  const html = `<div style="text-align:center;font-size:10px;color:var(--tx3);padding:10px 0 4px;letter-spacing:0.5px;text-transform:uppercase">— ${label} —</div>`;
-  [document.getElementById('lumen-chat'), document.getElementById('dMsgs')].forEach(el => {
-    if (el) el.insertAdjacentHTML('beforeend', html);
-  });
-}
-
-// ── Tabs ──────────────────────────────────────────────────────────────────
-function clearChatDOM() {
-  const mc = document.getElementById('lumen-chat');
-  const dc = document.getElementById('dMsgs');
-  if (mc) mc.innerHTML = '';
-  if (dc) dc.innerHTML = '';
-}
-
-function clearProductsDOM() {
-  products = [];
-  const mg = document.getElementById('mGrid'); if (mg) mg.innerHTML = '';
-  const dg = document.getElementById('dGrid'); if (dg) dg.innerHTML = '';
-  const sl = document.getElementById('lumen-sec-label'); if (sl) sl.style.display = 'none';
-  const pc = document.getElementById('dProdCount'); if (pc) pc.textContent = 'Ready to search';
-}
-
-function switchTab(tab) {
-  const prev = activeTab;
-  if (prev === tab) return;
-
-  // Save current messages before switching (FIX 6)
-  if (prev === 'style') styleMessages = [...messages];
-  else if (prev === 'discover') discoverMessages = [...messages];
-
-  activeTab = tab;
-  document.querySelectorAll('.tab').forEach(el => {
-    el.classList.toggle('active', el.dataset.tab === tab);
-  });
-
-  clearChatDOM();
-
-  if (tab === 'discover') {
-    clearProductsDOM();
-    messages = [...discoverMessages];
-    if (messages.length > 0) {
-      renderLastMessages(6);
-      addSeparator('continuing search');
-    }
-
-    // FIX 5: if coming from an active style session, send context automatically
-    if (styleMessages.length > 0 && discoverMessages.length === 0) {
-      const profileParts = [
-        userGender || null,
-        userAge    || null,
-        userCurrentSeason ? userCurrentSeason + ' season' : null,
-        styleProfile.season && styleProfile.season !== userCurrentSeason
-          ? 'color season: ' + styleProfile.season : null,
-      ].filter(Boolean);
-      setTimeout(() => {
-        sendMessage(
-          'I just finished my style guide session. My profile: ' +
-          (profileParts.join(', ') || 'style session done') +
-          '. Based on this, what should I shop for first? ' +
-          'Give me 3 specific suggestions and then ask what I want to search.'
-        );
-      }, 100);
-    } else {
-      addMessage('ai',
-        'What are you shopping for? Tell me the type of shoe or clothing, ' +
-        'and I\'ll find the best options across every store — personalized to your style.'
-      );
-      setTimeout(() => {
-        renderChipGroup([
-          { label: '👟 Shoes',        msg: 'I\'m looking for shoes' },
-          { label: '👗 Clothing',     msg: 'I\'m looking for clothing' },
-          { label: '⌚ Accessories',  msg: 'I\'m looking for accessories' },
-          { label: '🔥 Trending now', msg: 'Show me what\'s trending right now' },
-        ], (msg) => sendMessage(msg));
-      }, 50);
-    }
-
-  } else if (tab === 'wardrobe') {
-    messages = [];
-    addMessage('ai',
-      '👗 Your wardrobe is where the magic happens.<br><br>' +
-      'Soon you\'ll be able to:<br>' +
-      '• Photo your clothes and I\'ll catalog them<br>' +
-      '• Sync purchases from Zara, Amazon, H&amp;M<br>' +
-      '• Ask me to build outfits from what you own<br>' +
-      '• Scan receipts to auto-add new purchases<br><br>' +
-      'For now, just describe what you have and I\'ll work with it. ' +
-      'Try: <em>"I have a lot of basics — white tees, dark jeans, black boots. Help me make more outfits from these."</em>'
-    );
-
-  } else if (tab === 'style') {
-    messages = [...styleMessages];
-    if (messages.length > 0) {
-      renderLastMessages(6);
-      addSeparator('continuing your style session');
-    } else {
-      if (onboardingStep < 3) showOnboardingWelcome();
-      else addMessage('ai', 'Welcome back! What can I help you with for your style today?');
-    }
-  }
-}
-
-// ── Chat UI ───────────────────────────────────────────────────────────────
 function scrollToLatest() {
-  [document.getElementById('lumen-chat'), document.getElementById('dMsgs')].forEach(el => {
-    if (!el) return;
-    const last = el.lastElementChild;
-    if (last) last.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
+  const el = chat();
+  if (!el) return;
+  const last = el.lastElementChild;
+  if (last) last.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
 function addMessage(role, text, id) {
-  const isAI   = role === 'ai';
+  const isAI  = role === 'ai';
   const idAttr = id ? ` id="${id}"` : '';
-  const html  = `<div class="msg${isAI ? '' : ' u'}"${idAttr}><div class="av ${isAI ? 'ai' : 'u'}">${isAI ? '✨' : '😊'}</div><div class="bbl ${isAI ? 'ai' : 'u'}">${isAI ? parseMarkdown(text) : text}</div></div>`;
-  const mc = document.getElementById('lumen-chat');
-  const dc = document.getElementById('dMsgs');
-  if (mc) mc.insertAdjacentHTML('beforeend', html);
-  if (dc) dc.insertAdjacentHTML('beforeend', html);
-  scrollToLatest();
+  const html = `<div class="l-msg ${isAI ? 'ai' : 'user'}"${idAttr}>` +
+    `<div class="l-av ${isAI ? '' : 'user'}">${isAI ? '✨' : '😊'}</div>` +
+    `<div class="l-bbl ${isAI ? 'ai' : 'user'}">${isAI ? parseMarkdown(text) : text}</div>` +
+    `</div>`;
+  const c = chat();
+  if (c) { c.insertAdjacentHTML('beforeend', html); scrollToLatest(); }
 }
 
 function showTyping() {
   const id   = 'typ' + Date.now();
-  const html = `<div class="msg" id="${id}"><div class="av ai">✨</div><div class="bbl ai" style="color:var(--tx3);font-style:italic">Lumen is thinking…</div></div>`;
-  const mc = document.getElementById('lumen-chat');
-  const dc = document.getElementById('dMsgs');
-  if (mc) mc.insertAdjacentHTML('beforeend', html);
-  if (dc) dc.insertAdjacentHTML('beforeend', html);
-  scrollToLatest();
+  const html = `<div class="l-msg ai" id="${id}"><div class="l-av">✨</div><div class="l-bbl ai" style="color:var(--tx3);font-style:italic">Lumen is thinking…</div></div>`;
+  const c = chat();
+  if (c) { c.insertAdjacentHTML('beforeend', html); scrollToLatest(); }
   return id;
 }
 
 function removeTyping(id) {
   document.querySelectorAll('#' + id).forEach(el => el.remove());
+}
+
+function addSeparator(label) {
+  const c = chat();
+  if (c) c.insertAdjacentHTML('beforeend',
+    `<div style="text-align:center;font-size:10px;color:var(--tx3);padding:10px 0 4px;letter-spacing:0.5px;text-transform:uppercase">— ${label} —</div>`);
+}
+
+// ── Chip groups ───────────────────────────────────────────────────────────
+function renderChipGroup(chips, onSelect) {
+  const c = chat();
+  if (!c) return;
+  const row = document.createElement('div');
+  row.className = 'l-chips';
+  chips.forEach(chip => {
+    const btn = document.createElement('button');
+    btn.className = 'l-chip';
+    btn.textContent = chip.label;
+    btn.onclick = () => {
+      document.querySelectorAll('.chip-group').forEach(el => el.remove());
+      row.remove();
+      if (onSelect) onSelect(chip.msg, chip.action);
+    };
+    row.appendChild(btn);
+  });
+  row.classList.add('chip-group');
+  c.appendChild(row);
+  scrollToLatest();
+}
+
+// ── Profile display ───────────────────────────────────────────────────────
+function renderPaletteInChat(palette, season) {
+  if (!palette || !palette.length) return;
+  const dots = palette.map(hex =>
+    `<div style="width:30px;height:30px;border-radius:50%;background:${hex};border:1px solid rgba(0,0,0,0.08);flex-shrink:0" title="${hex}"></div>`
+  ).join('');
+  const c = chat();
+  if (c) {
+    c.insertAdjacentHTML('beforeend',
+      `<div class="l-msg ai"><div class="l-av">✨</div><div class="l-bbl ai"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:2px 0">${dots}${season ? `<span style="font-size:11px;font-weight:600;color:var(--tx3);margin-left:4px">${season}</span>` : ''}</div></div></div>`
+    );
+    scrollToLatest();
+  }
+}
+
+function updateProfileDisplay() {
+  // Sidebar (desktop)
+  const sp = document.getElementById('sidebarPalette');
+  const ss = document.getElementById('sidebarSeason');
+  const se = document.getElementById('sidebarEmail');
+  const palette = styleProfile.palette || userProfile.palette || [];
+  if (sp && palette.length) {
+    sp.innerHTML = palette.map(h => `<div style="width:18px;height:18px;border-radius:50%;background:${h};border:1px solid rgba(0,0,0,0.1)"></div>`).join('');
+  }
+  if (ss) ss.textContent = styleProfile.season ? styleProfile.season + ' Season' : '';
+  if (se && currentUser) se.textContent = currentUser.email || '';
+  // Profile button initials
+  const pb = document.getElementById('profileBtn');
+  if (pb && currentUser?.email) pb.textContent = currentUser.email[0].toUpperCase();
+  updateSidebarSaved();
+}
+
+function updateSidebarSaved() {
+  const grid = document.getElementById('sidebarSavedGrid');
+  if (!grid) return;
+  const saved = savedProducts.filter(p => savedItems.includes(p.id));
+  if (!saved.length) { grid.innerHTML = '<div style="font-size:12px;color:var(--tx3)">Nothing saved yet</div>'; return; }
+  grid.innerHTML = saved.map(p => p.img
+    ? `<div style="aspect-ratio:1;border-radius:8px;overflow:hidden;cursor:pointer" onclick="openDeepDive(savedProducts.find(x=>x.id==${p.id}))"><img src="${p.img}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div>`
+    : `<div style="aspect-ratio:1;border-radius:8px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:18px">👟</div>`
+  ).join('');
 }
 
 // ── API ───────────────────────────────────────────────────────────────────
@@ -712,10 +403,7 @@ async function apiFetch(path, body) {
   const token   = session?.access_token || '';
   const res = await fetch(path, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + token
-    },
+    headers: { 'Content-Type':'application/json', 'Authorization':'Bearer ' + token },
     body: JSON.stringify(body)
   });
   if (!res.ok) throw new Error(path + ' ' + res.status);
@@ -724,694 +412,306 @@ async function apiFetch(path, body) {
 
 async function enrichProduct(p) {
   if (enrichCache[p.id]) return enrichCache[p.id];
-  const data = await apiFetch('/api/enrich', { product: p, userProfile });
+  const data = await apiFetch('/api/enrich', { product:p, userProfile });
   enrichCache[p.id] = data;
   return data;
 }
 
-// ── Utilities ─────────────────────────────────────────────────────────────
-function shortName(p) {
-  let n = p.name || '';
-  const b = (p.brand || '').toLowerCase();
-  if (n.toLowerCase().startsWith(b + ' ' + b)) n = n.slice(p.brand.length + 1);
-  if (n.toLowerCase().startsWith(b)) n = p.brand + n.slice(p.brand.length);
-  return n.length > 40 ? n.slice(0, 38) + '…' : n;
-}
+// ── Product cards (inline in chat) ────────────────────────────────────────
+function renderProductsInline(prods, label) {
+  const c = chat();
+  if (!c) return;
 
-// ── Cards ─────────────────────────────────────────────────────────────────
-function makeCard(p, isFirst) {
-  const ind   = INDS[p.priceIndicator] || INDS.USUAL;
-  const isPin = pins.includes(p.id);
-  const topBadge = isPin
-    ? '<div class="badge b-expert">★ Saved</div>'
-    : (p.why ? '<div class="badge b-expert">Expert Pick</div>' : '');
-  return `
-<div class="card${isFirst ? ' tut-ring' : ''}" data-id="${p.id}" onclick="openDD(${p.id})">
-  <div class="c-photo">
-    <img src="${p.img || ''}" alt="${p.brand} ${p.name || ''}" loading="lazy" onerror="this.style.display='none'">
-    ${topBadge}
-    <button class="pin-btn${isPin ? ' on' : ''}" onclick="event.stopPropagation(); togglePin(event,${p.id})" aria-label="${isPin ? 'Unpin' : 'Pin'}"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
-  </div>
-  <div class="c-body">
-    <div class="c-brand">${p.brand || ''}</div>
-    <div class="c-model">${p.name || ''}</div>
-    <div class="c-cat">${p.category || ''}</div>
-    <div class="price-row">
-      <span class="c-price">$${p.price || ''}</span>
-      <span class="ppill ${ind.cls}">${ind.lbl}</span>
-    </div>
-    <div class="c-store"><span class="s-dot" style="background:${storeColor(p.source)}"></span>${p.source || ''}</div>
-    <div class="c-rating"><span class="stars">${stars(p.rating)}</span> ${p.rating || ''} (${(p.reviews || 0).toLocaleString()})</div>
-  </div>
-</div>`;
-}
-
-function renderProducts() {
-  const pinned = pinnedProducts.filter(p => pins.includes(p.id));
-  const rest   = products.filter(p => !pins.includes(p.id));
-
-  ['mGrid', 'dGrid'].forEach(gridId => {
-    const grid = document.getElementById(gridId);
-    if (!grid) return;
-    grid.innerHTML = '';
-
-    pinned.forEach((p, i) => {
-      const tmp = document.createElement('div');
-      tmp.innerHTML = makeCard(p, i === 0);
-      grid.appendChild(tmp.firstElementChild);
-    });
-
-    if (pinned.length > 0 && rest.length > 0) {
-      const div = document.createElement('div');
-      div.style.cssText = 'grid-column:1/-1;padding:8px 0 2px;font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px';
-      div.textContent = 'More recommendations';
-      grid.appendChild(div);
-    }
-
-    rest.forEach((p, i) => {
-      const tmp = document.createElement('div');
-      tmp.innerHTML = makeCard(p, pinned.length === 0 && i === 0);
-      grid.appendChild(tmp.firstElementChild);
-    });
-  });
-
-  setTimeout(() => document.querySelectorAll('.tut-ring').forEach(el => el.classList.remove('tut-ring')), 3200);
-
-  const total = pinned.length + rest.length;
-  const label = total + ' picks for you';
-  const sl = document.getElementById('lumen-sec-label');
-  const dl = document.getElementById('dProdCount');
-  if (sl) { sl.textContent = label; sl.style.display = ''; }
-  if (dl) dl.textContent = label;
-
-  updatePinTray();
-}
-
-function togglePin(e, id) {
-  e.stopPropagation();
-  const p = products.find(x => x.id === id) || pinnedProducts.find(x => x.id === id);
-  if (!p) return;
-
-  if (pins.includes(id)) {
-    pins = pins.filter(x => x !== id);
-    pinnedProducts = pinnedProducts.filter(x => x.id !== id);
-  } else {
-    if (pins.length >= 2) return;
-    pins.push(id);
-    if (!pinnedProducts.find(x => x.id === id)) pinnedProducts.push(p);
+  if (label) {
+    const lbl = document.createElement('div');
+    lbl.style.cssText = 'padding:8px 16px 4px;font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px';
+    lbl.textContent = label;
+    c.appendChild(lbl);
   }
 
-  renderProducts();
-  updatePinTray();
+  const row = document.createElement('div');
+  row.className = 'l-card-row';
 
-  if (pins.includes(id)) {
-    if (!hasSentPinMessage) {
-      hasSentPinMessage = true;
-      showPinOnboarding(p);
-    }
-  } else {
-    addMessage('ai', shortName(p) + ' removed from shortlist.');
-  }
-}
-
-function showPinOnboarding(p) {
-  const chatEl = document.getElementById('lumen-chat') ||
-                 document.getElementById('dMsgs') ||
-                 document.querySelector('.chat');
-  if (!chatEl) return;
-
-  const name = ((p.brand || '') + ' ' + shortName(p)).trim();
-
-  const msgDiv = document.createElement('div');
-  msgDiv.className = 'msg';
-  msgDiv.innerHTML =
-    '<div class="av ai" style="font-size:15px">✨</div>' +
-    '<div class="bbl ai" style="max-width:88%">' +
-      '★ <strong>' + name + '</strong> saved!<br><br>' +
-      'Great pick — I\'ll keep that in mind. Pin one more if you want, or tell me what you\'d like to do next.' +
-    '</div>';
-  chatEl.appendChild(msgDiv);
-
-  const chipRow = document.createElement('div');
-  chipRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;padding:6px 0 12px;margin-left:36px;';
-
-  const pinnedNames = pins
-    .map(id => { const x = products.find(q => q.id === id) || pinnedProducts.find(q => q.id === id); return x ? (x.brand + ' ' + shortName(x)) : null; })
-    .filter(Boolean);
-
-  [
-    { label: '🔍 Find more like this', msg: 'Find more like my pinned ones: ' + pinnedNames.join(', ') },
-    { label: '🎨 Explore colors',      msg: 'Show different colors for ' + name },
-    { label: '💰 Lower price',         msg: 'Find similar to ' + name + ' at a lower price' },
-    { label: '⚡ Compare pinned',      msg: pinnedNames.length > 1 ? 'Compare these for me: ' + pinnedNames.join(' vs ') : 'Tell me more about ' + name },
-    { label: '💬 Tell me what I liked', action: 'focus' }
-  ].forEach(c => {
-    const btn = document.createElement('button');
-    btn.className = 'chip';
-    btn.textContent = c.label;
-    btn.onclick = () => {
-      chipRow.remove();
-      if (c.action === 'focus') {
-        const inp = document.getElementById('mInput') || document.getElementById('dInput');
-        if (inp) { inp.placeholder = 'What do you like about it? (style, color, brand, feel...)'; inp.focus(); }
-      } else {
-        sendMessage(c.msg);
-      }
-    };
-    chipRow.appendChild(btn);
-  });
-
-  chatEl.appendChild(chipRow);
-  scrollToLatest();
-}
-
-function updatePinTray() {
-  const pinnedList = pinnedProducts.filter(p => pins.includes(p.id));
-  const row  = document.getElementById('lumen-pin-row');
-  const tray = document.getElementById('lumen-pin-tray');
-  const dg   = document.getElementById('dPinsGrid');
-
-  if (row) {
-    let h = '';
-    for (let i = 0; i < 5; i++) {
-      const p = pinnedList[i];
-      h += p
-        ? '<div class="pin-th"><img src="' + (p.img||'') + '" alt="' + p.brand + '" onerror="this.style.display=\'none\'"></div>'
-        : '<div class="pin-th-empty">+</div>';
-    }
-    h += '<span class="pin-action" onclick="findSimilar()">Find similar →</span>';
-    row.innerHTML = h;
-    if (tray) tray.style.display = pinnedList.length ? '' : 'none';
-  }
-
-  if (dg) {
-    let h = '';
-    for (let i = 0; i < 4; i++) {
-      const p = pinnedList[i];
-      h += p
-        ? '<div class="d-pt"><img src="' + (p.img||'') + '" alt="' + p.brand + '" onerror="this.style.display=\'none\'"></div>'
-        : '<div class="d-pt-empty">+</div>';
-    }
-    dg.innerHTML = h;
-  }
-}
-
-function findSimilar() {
-  const names = pins.map(id => pinnedProducts.find(p => p.id === id)?.name).filter(Boolean);
-  if (!names.length) return;
-  sendMessage('Find similar to my pinned items: ' + names.join(', '));
-}
-
-// ── Chips ─────────────────────────────────────────────────────────────────
-function renderChips(container) {
-  const chipDefs = [
-    { label: '🔍 Compare these',   msg: 'Compare the items shown' },
-    { label: '💰 Lower budget',    msg: 'Show me lower budget options' },
-    { label: '🏆 More premium',    msg: 'Show me more premium options' },
-    { label: '🎨 Specific color',  msg: 'I want a specific color' },
-    { label: '👗 Different style', msg: 'Show a different style' }
-  ];
-  const wrap = document.createElement('div');
-  wrap.className = 'chips-wrap';
-  wrap.style.padding = '4px 0 8px';
-  wrap.innerHTML = '<div class="chips-inner">' +
-    chipDefs.map(c => '<button class="chip" onclick="sendMessage(\'' + c.msg + '\')">' + c.label + '</button>').join('') +
-    '</div>';
-  container.appendChild(wrap);
-}
-
-function chipTap(el) {
-  el.classList.add('hit');
-  setTimeout(() => el.classList.remove('hit'), 280);
-  if (el.textContent.trim()) sendMessage(el.textContent.trim());
-}
-
-// ── Style Quiz ────────────────────────────────────────────────────────────
-function renderStyleQuiz() {
-  const chatEl = document.getElementById('lumen-chat') ||
-                 document.getElementById('dMsgs') ||
-                 document.querySelector('.chat');
-  if (!chatEl) { console.error('[quiz] no chat container'); return; }
-  console.log('[quiz] rendering in', chatEl.id);
-
-  const styles = [
-    { id: 'minimalist', emoji: '⬜', label: 'Clean & minimal',
-      desc: 'White tee, straight trousers, leather sneakers. Nothing extra.' },
-    { id: 'classic',    emoji: '🤎', label: 'Timeless classic',
-      desc: 'Blazer, tailored jeans, loafers. Polished, never trendy.' },
-    { id: 'street',     emoji: '🖤', label: 'Street & relaxed',
-      desc: 'Oversized hoodie, cargo pants, chunky sneakers. Cool without trying.' },
-    { id: 'bohemian',   emoji: '🌿', label: 'Boho & flowy',
-      desc: 'Linen dress, woven bag, sandals. Effortless and earthy.' },
-    { id: 'elevated',   emoji: '✨', label: 'Elevated everyday',
-      desc: 'Silk shirt, wide leg pants, mules. Looks expensive, isn\'t.' },
-  ];
-
-  const selected = new Set();
-
-  const quizWrap = document.createElement('div');
-  quizWrap.className = 'style-quiz-instance';
-  quizWrap.style.cssText = 'padding:4px 0 8px;';
-
-  const hint = document.createElement('div');
-  hint.style.cssText = 'font-size:11px;color:var(--tx3);margin-bottom:8px;';
-  hint.textContent = 'Select all that feel like you';
-  quizWrap.appendChild(hint);
-
-  const confirmBtn = document.createElement('button');
-  confirmBtn.style.cssText = 'display:none;width:100%;border-radius:10px;height:44px;margin-top:4px;' +
-    'font-size:14px;font-weight:600;font-family:var(--font);cursor:pointer;' +
-    'background:var(--tx1);color:#fff;border:none;';
-  confirmBtn.textContent = 'This is me →';
-
-  styles.forEach(s => {
+  prods.forEach((p, i) => {
     const card = document.createElement('div');
-    card.style.cssText = 'display:flex;align-items:flex-start;gap:10px;padding:12px 14px;' +
-      'border-radius:10px;border:1.5px solid var(--border);margin-bottom:8px;' +
-      'cursor:pointer;background:#fff;transition:all 0.15s;';
+    card.className = 'l-card';
+    card.onclick = () => openDeepDive(p);
+    const isPinned = savedItems.includes(p.id);
+    const ind = p.priceIndicator || 'USUAL';
     card.innerHTML =
-      '<div style="font-size:20px;flex-shrink:0;line-height:1.3">' + s.emoji + '</div>' +
-      '<div><div style="font-size:13px;font-weight:600;color:var(--tx1)">' + s.label + '</div>' +
-      '<div style="font-size:11px;color:var(--tx2);margin-top:2px;line-height:1.4">' + s.desc + '</div></div>';
-    card.onclick = () => {
-      if (selected.has(s.id)) {
-        selected.delete(s.id);
-        card.style.border = '1.5px solid var(--border)';
-        card.style.background = '#fff';
-      } else {
-        selected.add(s.id);
-        card.style.border = '1.5px solid var(--tx1)';
-        card.style.background = 'var(--card)';
-      }
-      confirmBtn.style.display = selected.size > 0 ? 'block' : 'none';
-    };
-    quizWrap.appendChild(card);
+      (i === 0 ? '<div class="l-expert-badge">Expert Pick</div>' : '') +
+      `<div class="l-card-img">${p.img ? `<img src="${p.img}" onerror="this.style.display='none'">` : '<div style="font-size:32px;color:var(--tx3)">👟</div>'}</div>` +
+      `<button class="l-card-pin${isPinned ? ' saved' : ''}" id="pin-${p.id}" onclick="event.stopPropagation();toggleSave(${p.id})">` +
+        `<svg viewBox="0 0 24 24" width="14" height="14" fill="${isPinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>` +
+      `</button>` +
+      `<div class="l-card-body">` +
+        `<div class="l-card-brand">${p.brand || ''}</div>` +
+        `<div class="l-card-name">${p.name || ''}</div>` +
+        `<div class="l-card-price-row"><div class="l-card-price">$${p.price || '—'}</div><div class="l-card-indicator ${ind}">${ind}</div></div>` +
+        `<div class="l-card-source">${p.source || ''}</div>` +
+        `<div class="l-card-stars">${stars(p.rating)} ${p.rating || ''} (${(p.reviews || 0).toLocaleString()})</div>` +
+      `</div>`;
+    row.appendChild(card);
   });
 
-  confirmBtn.onclick = () => {
-    const labels = styles.filter(s => selected.has(s.id)).map(s => s.label);
-    if (labels.length === 0) return;
-    styleProfile.aesthetic = styles.filter(s => selected.has(s.id)).map(s => s.id);
-    document.querySelectorAll('.style-quiz-instance').forEach(el => el.remove());
-    onboardingStep = 3;
-    const seasonText = styleProfile.season ? ' and my ' + styleProfile.season + ' palette' : '';
-    sendMessage('My style is: ' + labels.join(', ') + '. Based on my colors' + seasonText + ' and this taste, give me 3 specific outfit formulas I can wear this week.');
-  };
-
-  quizWrap.appendChild(confirmBtn);
-  chatEl.appendChild(quizWrap);
-
-  // Also add to dMsgs if chatEl was lumen-chat
-  if (chatEl.id === 'lumen-chat') {
-    const dc = document.getElementById('dMsgs');
-    if (dc) {
-      const clone = quizWrap.cloneNode(true);
-      clone.querySelectorAll('div[style*="cursor:pointer"]').forEach((card, i) => {
-        const s = styles[i];
-        card.onclick = () => {
-          if (selected.has(s.id)) {
-            selected.delete(s.id);
-            card.style.border = '1.5px solid var(--border)';
-            card.style.background = '#fff';
-          } else {
-            selected.add(s.id);
-            card.style.border = '1.5px solid var(--tx1)';
-            card.style.background = 'var(--card)';
-          }
-          confirmBtn.style.display = selected.size > 0 ? 'block' : 'none';
-        };
-      });
-      const cloneBtn = clone.querySelector('button');
-      if (cloneBtn) cloneBtn.onclick = confirmBtn.onclick;
-      dc.appendChild(clone);
-    }
-  }
-
+  c.appendChild(row);
   scrollToLatest();
 }
 
-// ── Photo Upload ──────────────────────────────────────────────────────────
-async function handlePhotoUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  e.target.value = '';
-
-  const reader = new FileReader();
-  reader.onload = async function(ev) {
-    const dataUrl  = ev.target.result;
-    const base64   = dataUrl.split(',')[1];
-    const mimeType = file.type;
-
-    const chatEls = [
-      document.getElementById('lumen-chat'),
-      document.getElementById('dMsgs')
-    ].filter(Boolean);
-
-    // Show photo preview in chat
-    chatEls.forEach(chatEl => {
-      const preview = document.createElement('div');
-      preview.className = 'msg u';
-      preview.innerHTML =
-        '<div class="av u">😊</div>' +
-        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">' +
-        '<img src="' + dataUrl + '" style="width:120px;height:120px;object-fit:cover;border-radius:12px;border:1.5px solid var(--border)">' +
-        '<div class="bbl u" style="font-size:12px">Analyzing your photo...</div></div>';
-      chatEl.appendChild(preview);
-    });
-    scrollToLatest();
-
-    const loadingId = 'vision-loading-' + Date.now();
-    addMessage('ai', '🔍 Let me take a look at this...', loadingId);
-
-    try {
-      const result = await fetch('/api/vision', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + (currentSession?.access_token || '')
-        },
-        body: JSON.stringify({ imageBase64: base64, mimeType, mode: 'identify' })
-      }).then(r => r.json());
-
-      document.querySelectorAll('#' + loadingId).forEach(el => el.remove());
-
-      if (result.error) {
-        addMessage('ai', 'I had trouble analyzing that photo. Try a clearer image or describe what you see.');
-        return;
-      }
-
-      renderVisionResults(result, dataUrl);
-
-    } catch(err) {
-      document.querySelectorAll('#' + loadingId).forEach(el => el.remove());
-      addMessage('ai', 'Something went wrong. Please try again.');
-    }
-  };
-  reader.readAsDataURL(file);
+function toggleSave(id) {
+  const p = products.find(x => x.id === id) || savedProducts.find(x => x.id === id);
+  if (!p) return;
+  if (savedItems.includes(id)) {
+    savedItems = savedItems.filter(x => x !== id);
+    savedProducts = savedProducts.filter(x => x.id !== id);
+  } else {
+    savedItems.push(id);
+    if (!savedProducts.find(x => x.id === id)) savedProducts.push(p);
+  }
+  const btn = document.getElementById('pin-' + id);
+  if (btn) {
+    btn.classList.toggle('saved', savedItems.includes(id));
+    const svg = btn.querySelector('svg');
+    if (svg) svg.setAttribute('fill', savedItems.includes(id) ? 'currentColor' : 'none');
+  }
+  updateSidebarSaved();
 }
 
-function renderVisionResults(analysis, originalImage) {
-  const chatEls = [
-    document.getElementById('lumen-chat'),
-    document.getElementById('dMsgs')
-  ].filter(Boolean);
-  if (!chatEls.length) return;
-
-  const items    = analysis.items || [];
-  const keyPiece = analysis.key_piece || (items[0]?.description) || '';
-
-  const verdictText = items.length > 0
-    ? 'I can see ' + items.length + ' item' + (items.length > 1 ? 's' : '') + ' in this photo. ' +
-      (analysis.scene_context ? analysis.scene_context + '. ' : '') +
-      (items[0]?.style_match
-        ? '✨ This works beautifully with your palette.'
-        : "This might not be your usual style — but if you love it, let's find it.")
-    : "Here's what I found in your photo.";
-
-  addMessage('ai', verdictText);
-
-  items.slice(0, 3).forEach(item => {
-    const makeCard = () => {
-      const card = document.createElement('div');
-      card.style.cssText = 'margin:4px 0;border-radius:12px;border:1.5px solid var(--border);overflow:hidden;background:#fff;';
-      card.innerHTML =
-        '<div style="padding:12px 14px">' +
-          '<div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px">' + (item.type || 'Item') + '</div>' +
-          '<div style="font-size:14px;font-weight:600;color:var(--tx1);margin:2px 0">' + item.description + '</div>' +
-          '<div style="font-size:12px;color:var(--tx2)">' + item.color +
-            (item.brand_guess ? ' · ' + item.brand_guess : '') +
-            ' · ' + (item.price_range || 'mid') + ' range</div>' +
-        '</div>' +
-        '<div style="padding:0 14px 12px;display:flex;gap:6px;flex-wrap:wrap">' +
-          '<button class="chip" style="font-size:11px;padding:5px 10px" onclick="searchVisionItem(' + JSON.stringify(item.search_query) + ')">🛍️ Find this</button>' +
-          '<button class="chip" style="font-size:11px;padding:5px 10px" onclick="searchVisionItem(' + JSON.stringify('similar to ' + item.search_query) + ')">🔍 Find similar</button>' +
-        '</div>';
-      return card;
-    };
-    chatEls.forEach(el => el.appendChild(makeCard()));
-  });
-
-  setTimeout(() => {
-    renderChipGroup([
-      { label: '🛍️ Find the key piece',   msg: 'Find this for me: ' + keyPiece },
-      { label: '💰 Find cheaper similar',  msg: 'Find something similar but more affordable: ' + keyPiece },
-      { label: '✨ Does this suit me?',    msg: 'Does this outfit work for my style and palette?' }
-    ], (msg) => sendMessage(msg));
-    scrollToLatest();
-  }, 300);
-}
-
-function searchVisionItem(query) {
-  switchTab('discover');
-  setTimeout(() => sendMessage('Find me this: ' + query), 300);
+// ── Score bars ────────────────────────────────────────────────────────────
+function renderScoreBars(scores) {
+  if (!scores) return '';
+  const items = [
+    { label:'Comfort',  key:'comfort'  },
+    { label:'Value',    key:'value'    },
+    { label:'Style',    key:'style'    },
+    { label:'Fit',      key:'fitMatch' }
+  ];
+  return '<div style="margin:12px 0">' +
+    items.map(item => `
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <div style="font-size:12px;color:var(--tx2)">${item.label}</div>
+          <div style="font-size:12px;font-weight:600;color:var(--tx1)">${scores[item.key] || 0}</div>
+        </div>
+        <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+          <div style="height:100%;width:${scores[item.key] || 0}%;background:var(--tx1);border-radius:2px;transition:width 0.6s ease"></div>
+        </div>
+      </div>`
+    ).join('') + '</div>';
 }
 
 // ── Deep Dive ─────────────────────────────────────────────────────────────
-const ddPanel   = document.getElementById('ddPanel');
-const ddContent = document.getElementById('ddContent');
-const ddScroll  = document.getElementById('ddScroll');
-const overlay   = document.getElementById('overlay');
+function openDeepDive(p) {
+  const dd      = document.getElementById('deepDive');
+  const overlay = document.getElementById('overlay');
 
-function buildDots() {
-  document.getElementById('ddDots').innerHTML =
-    products.map((_, i) => '<div class="dot' + (i === curIdx ? ' on' : '') + '"></div>').join('');
-}
+  dd.innerHTML =
+    `<div style="padding:12px 16px 0;display:flex;justify-content:center">` +
+      `<div style="width:36px;height:4px;border-radius:2px;background:var(--border)"></div>` +
+    `</div>` +
+    `<div style="width:100%;height:240px;background:var(--photo);overflow:hidden">` +
+      (p.img ? `<img src="${p.img}" style="width:100%;height:100%;object-fit:cover">` : `<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:48px">👟</div>`) +
+    `</div>` +
+    `<div style="padding:16px">` +
+      `<div style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px">${p.brand || ''}</div>` +
+      `<div style="font-size:18px;font-weight:700;color:var(--tx1);margin:4px 0 8px;line-height:1.3">${p.name || ''}</div>` +
+      `<div style="font-size:22px;font-weight:700;color:var(--tx1);margin-bottom:12px">$${p.price || '—'}</div>` +
+      `<a href="${p.link || '#'}" target="_blank" style="display:block;text-align:center;padding:14px;background:var(--tx1);color:#fff;border-radius:12px;font-size:15px;font-weight:600;text-decoration:none;margin-bottom:16px">` +
+        `Buy at ${p.source || 'Store'} →` +
+      `</a>` +
+      `<div id="dd-enrich-${p.id}">` +
+        `<div style="text-align:center;color:var(--tx3);font-size:13px;padding:20px 0">` +
+          `<div class="enrich-loading-label" style="margin-bottom:8px">Loading expert analysis…</div>` +
+          `<div class="enrich-progress"><div class="enrich-progress-fill"></div></div>` +
+        `</div>` +
+      `</div>` +
+    `</div>`;
 
-function syncDots() {
-  document.querySelectorAll('#ddDots .dot').forEach((d, i) => d.classList.toggle('on', i === curIdx));
-}
-
-function animateBars() {
-  requestAnimationFrame(() => {
-    document.querySelectorAll('.score-fill').forEach(el => {
-      el.style.width = (el.dataset.w || 0) + '%';
-    });
-  });
-}
-
-function populateDeepDiveBasic(p) {
-  const ind = INDS[p.priceIndicator] || INDS.USUAL;
-  ddContent.innerHTML = `
-<div class="dd-photo"><img src="${p.img || ''}" alt="${p.brand} ${p.name || ''}" onerror="this.style.display='none'"></div>
-<div class="dd-brand">${p.brand || ''}</div>
-<div class="dd-model">${p.name || ''}</div>
-<div class="dd-cat">${p.category || ''}</div>
-<div class="dd-div"></div>
-<div class="dd-stitle">💰 Best price right now</div>
-<div class="store-row best">
-  <div class="si">
-    <div class="sname">${p.source || ''}</div>
-    <div class="sdel">${p.delivery || ''}</div>
-  </div>
-  <div class="sprice">$${p.price || ''}</div>
-</div>
-<div style="margin-top:6px"><span class="ppill ${ind.cls}">${ind.lbl} price</span></div>
-<div id="enrich-section">
-  <div class="dd-div"></div>
-  <div class="dd-stitle enrich-loading-label" style="color:var(--tx3)">Scanning expert reviews…</div>
-  <div class="enrich-progress"><div class="enrich-progress-fill"></div></div>
-</div>
-<a class="cta-btn" href="${p.link || '#'}" target="_blank" rel="noopener noreferrer" style="display:block;text-decoration:none;text-align:center;line-height:54px;margin-top:22px">Buy on ${p.source || ''} — $${p.price || ''}</a>
-<p class="cta-sub">Best price · ${p.delivery || ''}</p>`;
+  dd.scrollTop = 0;
+  dd.classList.add('open');
+  overlay.classList.add('show');
+  deepDiveOpen = true;
   startEnrichAnim();
+
+  enrichProduct(p).then(data => {
+    stopEnrichAnim();
+    const el = document.getElementById('dd-enrich-' + p.id);
+    if (!el || !data) return;
+    el.innerHTML =
+      `<div style="font-size:13px;font-weight:700;color:var(--tx1);margin-bottom:8px">Expert take</div>` +
+      `<div style="font-size:14px;color:var(--tx2);line-height:1.6;margin-bottom:16px">${data.expertTake || ''}</div>` +
+      `<div style="display:flex;gap:8px;margin-bottom:16px">` +
+        `<div style="flex:1;padding:12px;background:#E8F5E9;border-radius:12px">` +
+          `<div style="font-size:10px;font-weight:700;color:#2E7D32;margin-bottom:4px">PROS</div>` +
+          `<div style="font-size:13px;color:var(--tx1)">${data.prosSummary || ''}</div>` +
+        `</div>` +
+        `<div style="flex:1;padding:12px;background:#FFF8E1;border-radius:12px">` +
+          `<div style="font-size:10px;font-weight:700;color:#F57F17;margin-bottom:4px">CONS</div>` +
+          `<div style="font-size:13px;color:var(--tx1)">${data.consSummary || ''}</div>` +
+        `</div>` +
+      `</div>` +
+      renderScoreBars(data.scores) +
+      `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">` +
+        (data.technology || []).map(t => `<span style="padding:4px 10px;background:var(--card);border-radius:20px;font-size:11px;color:var(--tx2)">${t}</span>`).join('') +
+      `</div>` +
+      (data.funFact ? `<div style="margin-top:16px;font-size:13px;color:var(--tx3);font-style:italic;line-height:1.55">${data.funFact}</div>` : '');
+  }).catch(() => stopEnrichAnim());
 }
 
-function populateDeepDiveEnriched(data) {
+function closeDeepDive() {
+  const dd = document.getElementById('deepDive');
+  const overlay = document.getElementById('overlay');
+  dd.classList.remove('open');
+  if (!profileOpen) overlay.classList.remove('show');
+  deepDiveOpen = false;
   stopEnrichAnim();
-  const el = document.getElementById('enrich-section');
-  if (!el) return;
-  const scores   = data.scores || {};
-  const tech     = Array.isArray(data.technology) ? data.technology : [data.technology || ''];
-  const techHtml = tech.filter(Boolean).map(t => '<span class="tag">' + t + '</span>').join('');
-  const scoreRows = Object.entries(scores).map(function(entry) {
-    const lbl = entry[0], val = entry[1];
-    return '<div class="score-row"><span class="score-lbl">' + lbl + '</span><div class="score-track"><div class="score-fill" data-w="' + val + '" style="width:0%"></div></div><span class="score-val">' + ((val || 0) / 10).toFixed(1) + '</span></div>';
-  }).join('');
-  el.outerHTML = `
-<div class="dd-div"></div>
-<div class="dd-stitle">🏆 Expert take</div>
-<p class="expert-text">${data.expertTake || ''}</p>
-<div class="dd-div"></div>
-<div class="dd-stitle">📊 Match score</div>
-${scoreRows}
-<div class="dd-div"></div>
-<div class="dd-stitle">⚡ Technology</div>
-<div class="tech-tags">${techHtml}</div>
-<div class="dd-div"></div>
-<div class="dd-stitle">⭐ Reviews</div>
-${data.prosSummary ? '<div class="rev pro">✓ ' + data.prosSummary + '</div>' : ''}
-${data.consSummary ? '<div class="rev con">💡 ' + data.consSummary + '</div>' : ''}
-${data.funFact ? '<div class="dd-div"></div><div class="dd-stitle">🏅 Did you know</div><p class="fun-fact">' + data.funFact + '</p>' : ''}`;
-  requestAnimationFrame(animateBars);
 }
 
-function openDD(id) {
-  const p = products.find(x => x.id === id) || pinnedProducts.find(x => x.id === id);
-  if (!p) return;
-  curIdx = products.indexOf(p);
-  buildDots();
-  populateDeepDiveBasic(p);
-  ddScroll.scrollTop = 0;
-  overlay.classList.add('on');
-  ddPanel.style.transition = 'none';
-  ddPanel.style.transform  = 'translateY(100%)';
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    ddPanel.style.transition = 'transform 0.35s cubic-bezier(0.32,0.72,0,1)';
-    ddPanel.style.transform  = 'translateY(0)';
-    panelOpen = true;
-  }));
-  enrichProduct(p).then(function(data) {
-    if (panelOpen && products[curIdx] && products[curIdx].id === id) {
-      populateDeepDiveEnriched(data);
+// ── Profile sheet ─────────────────────────────────────────────────────────
+function openProfile() {
+  const sheet   = document.getElementById('profileSheet');
+  const overlay = document.getElementById('overlay');
+  const content = document.getElementById('profileContent');
+  const palette = styleProfile.palette || userProfile.palette || [];
+
+  const paletteHtml = palette.map(h =>
+    `<div style="width:28px;height:28px;border-radius:50%;background:${h};border:1px solid rgba(0,0,0,0.1)"></div>`
+  ).join('');
+
+  content.innerHTML =
+    `<div style="font-size:18px;font-weight:700;margin-bottom:4px">Your Style Profile</div>` +
+    `<div style="font-size:13px;color:var(--tx3);margin-bottom:20px">${currentUser?.email || ''}</div>` +
+    (paletteHtml
+      ? `<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">${paletteHtml}</div>` +
+        `<div style="font-size:14px;font-weight:600;margin-bottom:2px">${styleProfile.season || ''} Season</div>` +
+        `<div style="font-size:12px;color:var(--tx3);margin-bottom:16px">Undertone: ${styleProfile.undertone || 'not analyzed'}</div>`
+      : `<div style="font-size:13px;color:var(--tx3);margin-bottom:16px">Complete color analysis to see your palette</div>`) +
+    (userGender ? `<div style="font-size:13px;color:var(--tx2);margin-bottom:6px">👤 ${userGender}</div>` : '') +
+    (userAge    ? `<div style="font-size:13px;color:var(--tx2);margin-bottom:16px">📅 ${userAge}</div>` : '') +
+    `<div style="border-top:1px solid var(--border);padding-top:16px">` +
+      `<button onclick="signOut()" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;background:transparent;font-size:14px;color:var(--tx2);font-family:var(--font);cursor:pointer">Sign out</button>` +
+    `</div>`;
+
+  sheet.classList.add('open');
+  overlay.classList.add('show');
+  profileOpen = true;
+}
+
+function closeProfile() {
+  const sheet   = document.getElementById('profileSheet');
+  const overlay = document.getElementById('overlay');
+  sheet.classList.remove('open');
+  if (!deepDiveOpen) overlay.classList.remove('show');
+  profileOpen = false;
+}
+
+function handleOverlayClick() {
+  closeDeepDive();
+  closeProfile();
+}
+
+async function signOut() {
+  localStorage.removeItem('lumen_session');
+  localStorage.removeItem('lumen_user');
+  currentUser    = null;
+  currentSession = null;
+  closeProfile();
+  showAuthScreen();
+}
+
+// ── Deep dive touch (swipe down to close) ────────────────────────────────
+(function() {
+  let tx0 = 0, ty0 = 0, tt0 = 0, dragging = false;
+  const el = () => document.getElementById('deepDive');
+
+  document.addEventListener('touchstart', e => {
+    const dd = el();
+    if (!dd || !deepDiveOpen) return;
+    if (!dd.contains(e.target)) return;
+    tx0 = e.touches[0].clientX; ty0 = e.touches[0].clientY; tt0 = Date.now();
+    dragging = true;
+    dd.style.transition = 'none';
+  }, { passive:true });
+
+  document.addEventListener('touchmove', e => {
+    const dd = el();
+    if (!dragging || !dd) return;
+    const dy = e.touches[0].clientY - ty0;
+    if (dy > 0 && dd.scrollTop <= 0) {
+      dd.style.transform = `translateX(-50%) translateY(${dy * 0.4}px)`;
+      e.preventDefault();
     }
-  }).catch(function() { stopEnrichAnim(); });
-}
+  }, { passive:false });
 
-function closeDD() {
-  stopEnrichAnim();
-  ddPanel.style.transition = 'transform 0.3s cubic-bezier(0.32,0.72,0,1)';
-  ddPanel.style.transform  = 'translateY(100%)';
-  overlay.classList.remove('on');
-  panelOpen = false;
-}
+  document.addEventListener('touchend', e => {
+    const dd = el();
+    if (!dragging || !dd) return;
+    dragging = false;
+    const dy  = e.changedTouches[0].clientY - ty0;
+    const vel = dy / (Date.now() - tt0);
+    dd.style.transition = '';
+    if (dy > 80 && vel > 0.2) { closeDeepDive(); return; }
+    dd.style.transform = '';
+  }, { passive:true });
+})();
 
-function overlayClick(e) { if (e.target === overlay) closeDD(); }
-
-function navigate(dir) {
-  const next = curIdx + dir;
-  if (next < 0 || next >= products.length) return;
-  const slideOut = dir > 0 ? -22 : 22;
-  const slideIn  = dir > 0 ?  22 : -22;
-  ddContent.style.transition = 'opacity 0.15s ease,transform 0.15s ease';
-  ddContent.style.opacity    = '0';
-  ddContent.style.transform  = 'translateX(' + slideOut + 'px)';
-  const nextP = products[next];
-  setTimeout(function() {
-    curIdx = next;
-    populateDeepDiveBasic(nextP);
-    syncDots();
-    ddScroll.scrollTop = 0;
-    ddContent.style.transition = 'none';
-    ddContent.style.transform  = 'translateX(' + slideIn + 'px)';
-    ddContent.style.opacity    = '0';
-    requestAnimationFrame(function() { requestAnimationFrame(function() {
-      ddContent.style.transition = 'opacity 0.22s ease,transform 0.22s ease';
-      ddContent.style.opacity    = '1';
-      ddContent.style.transform  = 'translateX(0)';
-    }); });
-    enrichProduct(nextP).then(function(data) {
-      if (panelOpen && curIdx === next) populateDeepDiveEnriched(data);
-    }).catch(function() { stopEnrichAnim(); });
-  }, 150);
-}
-
-// ── Touch ─────────────────────────────────────────────────────────────────
-var tx0 = 0, ty0 = 0, tt0 = 0, dragging = false;
-
-ddPanel.addEventListener('touchstart', function(e) {
-  tx0 = e.touches[0].clientX; ty0 = e.touches[0].clientY; tt0 = Date.now();
-  dragging = true;
-  ddPanel.style.transition = 'none';
-}, { passive: true });
-
-ddPanel.addEventListener('touchmove', function(e) {
-  if (!dragging) return;
-  var dx = e.touches[0].clientX - tx0, dy = e.touches[0].clientY - ty0;
-  if (dy > 0 && ddScroll.scrollTop <= 0 && Math.abs(dy) > Math.abs(dx)) {
-    ddPanel.style.transform = 'translateY(' + (dy * 0.36) + 'px)';
-    e.preventDefault();
-  }
-}, { passive: false });
-
-ddPanel.addEventListener('touchend', function(e) {
-  if (!dragging) return;
-  dragging = false;
-  var dx  = e.changedTouches[0].clientX - tx0;
-  var dy  = e.changedTouches[0].clientY - ty0;
-  var vel = dy / (Date.now() - tt0);
-  if (dy > 80 && vel > 0.22 && ddScroll.scrollTop <= 0) { closeDD(); return; }
-  ddPanel.style.transition = 'transform 0.3s cubic-bezier(0.32,0.72,0,1)';
-  ddPanel.style.transform  = 'translateY(0)';
-  if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.4) {
-    dx < 0 ? navigate(1) : navigate(-1);
-  }
-}, { passive: true });
-
-document.addEventListener('keydown', function(e) {
-  if (!panelOpen) return;
-  if (e.key === 'Escape')     closeDD();
-  if (e.key === 'ArrowRight') navigate(1);
-  if (e.key === 'ArrowLeft')  navigate(-1);
-});
-
-// ── Outfit formula cards (FIX 2) ─────────────────────────────────────────
+// ── Outfit formula cards ──────────────────────────────────────────────────
 function renderOutfitCards(text) {
   if (!text || (!/Outfit\s+\d+/i.test(text) && !/\*\*Outfit/i.test(text))) return false;
+  const c = chat();
+  if (!c) return false;
 
   const outfitBlocks = [];
   const regex = /\*?\*?Outfit\s+(\d+)[^*\n]*[-—]([^\n]+)\*?\*?\n([\s\S]*?)(?=\*?\*?Outfit\s+\d+|$)/gi;
   let match;
   while ((match = regex.exec(text)) !== null) {
-    outfitBlocks.push({
-      number:   match[1],
-      occasion: match[2].trim(),
-      content:  match[3].trim()
-    });
+    outfitBlocks.push({ number:match[1], occasion:match[2].trim(), content:match[3].trim() });
   }
-  if (outfitBlocks.length === 0) return false;
-
-  const containers = [document.getElementById('lumen-chat'), document.getElementById('dMsgs')].filter(Boolean);
-  if (!containers.length) return false;
+  if (!outfitBlocks.length) return false;
 
   outfitBlocks.forEach(outfit => {
-    const makeCard = () => {
-      const card = document.createElement('div');
-      card.style.cssText = 'margin:6px 0;border-radius:14px;border:1.5px solid var(--border);overflow:hidden;background:#fff;';
+    const card = document.createElement('div');
+    card.style.cssText = 'margin:6px 16px;border-radius:14px;border:1.5px solid var(--border);overflow:hidden;background:#fff;';
 
-      const header = document.createElement('div');
-      header.style.cssText = 'padding:12px 14px 8px;border-bottom:1px solid var(--border);';
-      header.innerHTML =
-        '<div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px">Outfit ' + outfit.number + '</div>' +
-        '<div style="font-size:14px;font-weight:600;color:var(--tx1);margin-top:2px">' + outfit.occasion + '</div>';
+    const header = document.createElement('div');
+    header.style.cssText = 'padding:12px 14px 8px;border-bottom:1px solid var(--border);';
+    header.innerHTML =
+      `<div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px">Outfit ${outfit.number}</div>` +
+      `<div style="font-size:14px;font-weight:600;color:var(--tx1);margin-top:2px">${outfit.occasion}</div>`;
 
-      const body = document.createElement('div');
-      body.style.cssText = 'padding:10px 14px 12px;font-size:13px;color:var(--tx2);line-height:1.5;white-space:pre-wrap;';
-      body.textContent = outfit.content;
+    const body = document.createElement('div');
+    body.style.cssText = 'padding:10px 14px 12px;font-size:13px;color:var(--tx2);line-height:1.5;white-space:pre-wrap;';
+    body.textContent = outfit.content;
 
-      const actions = document.createElement('div');
-      actions.style.cssText = 'padding:8px 14px 12px;display:flex;gap:6px;flex-wrap:wrap;';
-      ['🛍️ Shop this look', '📌 Save outfit'].forEach(label => {
-        const btn = document.createElement('button');
-        btn.className = 'chip';
-        btn.style.cssText = 'font-size:11px;padding:5px 10px;';
-        btn.textContent = label;
-        btn.onclick = () => {
-          if (label.includes('Shop')) {
-            sendMessage('Find me the pieces for the ' + outfit.occasion + ' outfit: ' + outfit.content);
-          } else {
-            addMessage('ai', '📌 Outfit ' + outfit.number + ' saved!');
-          }
-        };
-        actions.appendChild(btn);
-      });
+    const actions = document.createElement('div');
+    actions.style.cssText = 'padding:8px 14px 12px;display:flex;gap:6px;flex-wrap:wrap;';
+    ['🛍️ Shop this look', '📌 Save outfit'].forEach(label => {
+      const btn = document.createElement('button');
+      btn.className = 'l-chip';
+      btn.style.cssText = 'font-size:11px;padding:5px 10px;';
+      btn.textContent = label;
+      btn.onclick = () => {
+        if (label.includes('Shop')) sendMessage('Find me the pieces for the ' + outfit.occasion + ' outfit: ' + outfit.content);
+        else addMessage('ai', '📌 Outfit ' + outfit.number + ' saved!');
+      };
+      actions.appendChild(btn);
+    });
 
-      card.appendChild(header);
-      card.appendChild(body);
-      card.appendChild(actions);
-      return card;
-    };
-    containers.forEach(el => el.appendChild(makeCard()));
+    card.appendChild(header);
+    card.appendChild(body);
+    card.appendChild(actions);
+    c.appendChild(card);
   });
 
   setTimeout(() => {
     addMessage('ai', 'Want to find actual pieces for any of these looks?');
     renderChipGroup([
-      { label: '🛍️ Shop these looks', msg: 'Find clothes for my outfit formulas in Discover' },
-      { label: '✨ Refine my style',   msg: 'Tell me more about my style and give me more outfits' },
-      { label: '📷 Visual search',     action: 'photo' },
+      { label:'🛍️ Shop these looks',  msg:'Find clothes for my outfit formulas' },
+      { label:'✨ Refine my style',    msg:'Tell me more about my style and give me more outfits' },
+      { label:'📷 Visual search',      action:'photo' },
     ], (msg, action) => {
       if (action === 'photo') {
-        const inp = document.getElementById('cameraInput') || document.getElementById('cameraInputD');
+        const inp = document.getElementById('cameraInput');
         if (inp) inp.click();
       } else {
         sendMessage(msg);
@@ -1423,219 +723,273 @@ function renderOutfitCards(text) {
   return true;
 }
 
+// ── Photo Upload & Vision ─────────────────────────────────────────────────
+async function handlePhotoUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+
+  const reader = new FileReader();
+  reader.onload = async function(ev) {
+    const dataUrl  = ev.target.result;
+    const base64   = dataUrl.split(',')[1];
+    const mimeType = file.type;
+    const c = chat();
+
+    if (c) {
+      const preview = document.createElement('div');
+      preview.className = 'l-msg user';
+      preview.innerHTML =
+        '<div class="l-av user">😊</div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">' +
+        `<img src="${dataUrl}" style="width:120px;height:120px;object-fit:cover;border-radius:12px;border:1.5px solid var(--border)">` +
+        '<div class="l-bbl user" style="font-size:12px">Analyzing your photo...</div></div>';
+      c.appendChild(preview);
+      scrollToLatest();
+    }
+
+    const loadingId = 'vision-loading-' + Date.now();
+    addMessage('ai', '🔍 Let me take a look at this...', loadingId);
+
+    try {
+      const result = await fetch('/api/vision', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization':'Bearer ' + (currentSession?.access_token || '') },
+        body: JSON.stringify({ imageBase64:base64, mimeType, mode:'identify' })
+      }).then(r => r.json());
+
+      document.querySelectorAll('#' + loadingId).forEach(el => el.remove());
+
+      if (result.error) { addMessage('ai', 'I had trouble analyzing that photo. Try a clearer image or describe what you see.'); return; }
+      renderVisionResults(result, dataUrl);
+
+    } catch(err) {
+      document.querySelectorAll('#' + loadingId).forEach(el => el.remove());
+      addMessage('ai', 'Something went wrong. Please try again.');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderVisionResults(analysis, originalImage) {
+  const c = chat();
+  if (!c) return;
+
+  const items    = analysis.items || [];
+  const keyPiece = analysis.key_piece || (items[0]?.description) || '';
+
+  addMessage('ai', items.length > 0
+    ? 'I can see ' + items.length + ' item' + (items.length > 1 ? 's' : '') + ' in this photo. ' +
+      (analysis.scene_context ? analysis.scene_context + '. ' : '') +
+      (items[0]?.style_match ? '✨ This works beautifully with your palette.' : "This might not be your usual style — but if you love it, let's find it.")
+    : "Here's what I found in your photo.");
+
+  items.slice(0, 3).forEach(item => {
+    const card = document.createElement('div');
+    card.style.cssText = 'margin:4px 16px;border-radius:12px;border:1.5px solid var(--border);overflow:hidden;background:#fff;';
+    card.innerHTML =
+      `<div style="padding:12px 14px">` +
+        `<div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px">${item.type || 'Item'}</div>` +
+        `<div style="font-size:14px;font-weight:600;color:var(--tx1);margin:2px 0">${item.description}</div>` +
+        `<div style="font-size:12px;color:var(--tx2)">${item.color}${item.brand_guess ? ' · ' + item.brand_guess : ''} · ${item.price_range || 'mid'} range</div>` +
+      `</div>` +
+      `<div style="padding:0 14px 12px;display:flex;gap:6px;flex-wrap:wrap">` +
+        `<button class="l-chip" style="font-size:11px;padding:5px 10px" onclick="searchVisionItem(${JSON.stringify(item.search_query)})">🛍️ Find this</button>` +
+        `<button class="l-chip" style="font-size:11px;padding:5px 10px" onclick="searchVisionItem(${JSON.stringify('similar to ' + item.search_query)})">🔍 Find similar</button>` +
+      `</div>`;
+    c.appendChild(card);
+  });
+
+  setTimeout(() => {
+    renderChipGroup([
+      { label:'🛍️ Find the key piece',  msg:'Find this for me: ' + keyPiece },
+      { label:'💰 Find cheaper similar', msg:'Find something similar but more affordable: ' + keyPiece },
+      { label:'✨ Does this suit me?',   msg:'Does this outfit work for my style and palette?' }
+    ], msg => sendMessage(msg));
+    scrollToLatest();
+  }, 300);
+}
+
+function searchVisionItem(query) {
+  currentMode = 'discover';
+  sendMessage('Find me this: ' + query);
+}
+
+// ── Style Quiz ────────────────────────────────────────────────────────────
+function renderStyleQuiz() {
+  const c = chat();
+  if (!c) return;
+
+  const styles = [
+    { id:'minimalist', emoji:'⬜', label:'Clean & minimal',   desc:'White tee, straight trousers, leather sneakers.' },
+    { id:'classic',    emoji:'🤎', label:'Timeless classic',  desc:'Blazer, tailored jeans, loafers. Polished, never trendy.' },
+    { id:'street',     emoji:'🖤', label:'Street & relaxed',  desc:'Oversized hoodie, cargo pants, chunky sneakers.' },
+    { id:'bohemian',   emoji:'🌿', label:'Boho & flowy',      desc:'Linen dress, woven bag, sandals. Effortless and earthy.' },
+    { id:'elevated',   emoji:'✨', label:'Elevated everyday', desc:'Silk shirt, wide leg pants, mules. Looks expensive, isn\'t.' },
+  ];
+
+  const selected = new Set();
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'padding:4px 16px 8px;';
+
+  const hint = document.createElement('div');
+  hint.style.cssText = 'font-size:11px;color:var(--tx3);margin-bottom:8px;';
+  hint.textContent = 'Select all that feel like you';
+  wrap.appendChild(hint);
+
+  const confirmBtn = document.createElement('button');
+  confirmBtn.className = 'l-chip';
+  confirmBtn.style.cssText = 'display:none;width:100%;border-radius:10px;height:44px;margin-top:4px;font-size:14px;font-weight:600;background:var(--tx1);color:#fff;border:none;font-family:var(--font);cursor:pointer;';
+  confirmBtn.textContent = 'This is me →';
+
+  styles.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'sq-card';
+    card.innerHTML =
+      `<div style="font-size:20px;flex-shrink:0;line-height:1.3">${s.emoji}</div>` +
+      `<div><div style="font-size:13px;font-weight:600">${s.label}</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">${s.desc}</div></div>`;
+    card.onclick = () => {
+      if (selected.has(s.id)) { selected.delete(s.id); card.classList.remove('sel'); }
+      else { selected.add(s.id); card.classList.add('sel'); }
+      confirmBtn.style.display = selected.size > 0 ? 'block' : 'none';
+    };
+    wrap.appendChild(card);
+  });
+
+  confirmBtn.onclick = () => {
+    const labels = styles.filter(s => selected.has(s.id)).map(s => s.label);
+    if (!labels.length) return;
+    styleProfile.aesthetic = styles.filter(s => selected.has(s.id)).map(s => s.id);
+    wrap.remove();
+    onboardingStep = 3;
+    const seasonText = styleProfile.season ? ' and my ' + styleProfile.season + ' palette' : '';
+    sendMessage('My style is: ' + labels.join(', ') + '. Based on my colors' + seasonText + ' and this taste, give me 3 specific outfit formulas I can wear this week.');
+  };
+
+  wrap.appendChild(confirmBtn);
+  c.appendChild(wrap);
+  scrollToLatest();
+}
+
 // ── Send Message ──────────────────────────────────────────────────────────
 async function sendMessage(text) {
   if (!text.trim() || isLoading) return;
   isLoading = true;
 
-  // Advance onboarding step when user first responds in Style Guide tab
-  if (onboardingActive && onboardingStep === 0 && activeTab === 'style') {
-    onboardingStep = 1;
-  }
+  if (onboardingActive && onboardingStep === 0) onboardingStep = 1;
 
   addMessage('user', text);
-  messages.push({ role: 'user', content: text });
+  messages.push({ role:'user', content:text });
   const typId = showTyping();
 
   try {
-    const chatMessages = pinnedProducts.length > 0
+    const chatMessages = savedProducts.length > 0
       ? [...messages.slice(0, -1), {
-          role: 'user',
+          role:'user',
           content: messages[messages.length - 1].content +
             '\n\n[Context: User has saved these items: ' +
-            pinnedProducts.map(p => p.brand + ' ' + shortName(p)).join(', ') + ']'
+            savedProducts.filter(p => savedItems.includes(p.id)).map(p => p.brand + ' ' + shortName(p)).join(', ') + ']'
         }]
       : messages;
 
-    // Attach photo to last user message if one was uploaded
     let apiMessages = chatMessages;
     const hadPhoto = !!photoBase64;
     if (photoBase64) {
       const last = apiMessages[apiMessages.length - 1];
       apiMessages = [
         ...apiMessages.slice(0, -1),
-        {
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: photoMimeType, data: photoBase64 } },
-            { type: 'text', text: typeof last.content === 'string' ? last.content : text }
-          ]
-        }
+        { role:'user', content:[
+            { type:'image', source:{ type:'base64', media_type:photoMimeType, data:photoBase64 } },
+            { type:'text', text:typeof last.content === 'string' ? last.content : text }
+        ]}
       ];
-      photoBase64   = null;
-      photoMimeType = null;
+      photoBase64 = null; photoMimeType = null;
     }
 
+    const tab = currentMode = detectApiMode(text);
     const userContext = [
-      userGender        ? 'Gender: ' + userGender              : null,
-      userAge           ? 'Age: ' + userAge                    : null,
+      userGender        ? 'Gender: ' + userGender : null,
+      userAge           ? 'Age: '    + userAge    : null,
       userCurrentSeason ? 'Color season: ' + userCurrentSeason : null,
     ].filter(Boolean).join(', ') || undefined;
 
-    const data    = await apiFetch('/api/chat', { messages: apiMessages, tab: activeTab, userContext });
+    const data    = await apiFetch('/api/chat', { messages:apiMessages, tab, userContext });
     removeTyping(typId);
-    const content  = data.content || '';
+    const content = data.content || '';
 
-    // Parse PROFILE_UPDATE token — lenient parser handles single quotes
+    // Parse PROFILE_UPDATE
     const profMatch = content.match(/PROFILE_UPDATE:\s*(\{[\s\S]*?\})/);
-    console.log('[profile] raw match:', profMatch ? profMatch[1] : 'none');
     if (profMatch) {
       try {
-        const cleaned = profMatch[1]
-          .replace(/'/g, '"')
-          .replace(/(\w+):/g, '"$1":')
-          .replace(/"(\w+)":\s*"([^"]*)"/g, '"$1":"$2"');
+        const cleaned = profMatch[1].replace(/'/g, '"').replace(/(\w+):/g, '"$1":').replace(/"(\w+)":\s*"([^"]*)"/g, '"$1":"$2"');
         const prof = JSON.parse(cleaned);
-
-        if (prof.season) {
-          const el = document.getElementById('dProfileSeason');
-          if (el) el.textContent = 'Season: ' + prof.season;
-          styleProfile.season = prof.season;
-          userProfile.season  = prof.season;
-        }
-        if (prof.undertone) {
-          styleProfile.undertone = prof.undertone;
-          userProfile.undertone  = prof.undertone;
-        }
+        if (prof.season)  { styleProfile.season    = prof.season;    userProfile.season    = prof.season; }
+        if (prof.undertone){ styleProfile.undertone = prof.undertone; userProfile.undertone = prof.undertone; }
         if (prof.palette && Array.isArray(prof.palette)) {
           styleProfile.palette = prof.palette;
           userProfile.palette  = prof.palette;
-          // Desktop sidebar dots
-          const dotsEl = document.getElementById('dProfileColors');
-          if (dotsEl) {
-            dotsEl.innerHTML =
-              prof.palette.map(hex =>
-                '<span style="display:inline-block;width:14px;height:14px;border-radius:50%;' +
-                'background:' + hex + ';margin-right:3px;vertical-align:middle;' +
-                'border:1px solid rgba(0,0,0,0.1)"></span>'
-              ).join('') +
-              ' <span style="font-size:10px;color:var(--tx3)">' + (prof.season || '') + '</span>';
-          }
-          // Mobile profile bar (FIX 7)
-          const bar = document.getElementById('m-profile-bar');
-          const barPalette = document.getElementById('m-profile-palette');
-          const barSeason  = document.getElementById('m-profile-season');
-          if (bar) {
-            bar.style.display = 'flex';
-            if (barPalette) {
-              barPalette.innerHTML = prof.palette.map(hex =>
-                '<div style="width:14px;height:14px;border-radius:50%;background:' + hex +
-                ';border:1px solid rgba(0,0,0,0.1);flex-shrink:0"></div>'
-              ).join('');
-            }
-            if (barSeason && prof.season) barSeason.textContent = prof.season;
-          }
-          // Render palette swatches in chat (FIX 3)
           renderPaletteInChat(prof.palette, prof.season);
         }
-        if (prof.style) {
-          const el = document.getElementById('dProfileStyle');
-          if (el) el.textContent = 'Style: ' + prof.style;
-          userProfile.style = prof.style;
-        }
-
-        // Advance onboarding when color analysis completes (palette received)
-        if (onboardingStep === 1 && prof.palette && prof.palette.length > 0) {
-          onboardingStep = 2;
-          setTimeout(() => renderStyleQuiz(), 600);
-        }
-
-        // Post-photo chips after palette analysis
-        if (hadPhoto && prof.palette && prof.palette.length > 0) {
+        if (prof.style) userProfile.style = prof.style;
+        updateProfileDisplay();
+        if (onboardingStep === 1 && prof.palette?.length > 0) { onboardingStep = 2; setTimeout(() => renderStyleQuiz(), 600); }
+        if (hadPhoto && prof.palette?.length > 0) {
           setTimeout(() => {
-            const postPhotoChips = [
-              { label: '👗 Build outfits for me', msg: 'Based on my colors, give me 3 outfit formulas' },
-              { label: '🛍️ Shop my palette',     msg: 'Find clothes in my color palette on Discover' },
-              { label: '✨ See my style quiz',    msg: null, action: 'quiz' },
-            ];
-            const chatContainers = [document.getElementById('lumen-chat'), document.getElementById('dMsgs')];
-            chatContainers.forEach(container => {
-              if (!container) return;
-              const row = document.createElement('div');
-              row.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;padding:6px 0 10px;';
-              postPhotoChips.forEach(c => {
-                const btn = document.createElement('button');
-                btn.className = 'chip';
-                btn.textContent = c.label;
-                btn.onclick = () => {
-                  row.remove();
-                  if (c.action === 'quiz') renderStyleQuiz();
-                  else sendMessage(c.msg);
-                };
-                row.appendChild(btn);
-              });
-              container.appendChild(row);
-            });
+            renderChipGroup([
+              { label:'👗 Build outfits for me', msg:'Based on my colors, give me 3 outfit formulas' },
+              { label:'🛍️ Shop my palette',     msg:'Find clothes in my color palette' },
+              { label:'✨ See my style quiz',    msg:null, action:'quiz' },
+            ], (msg, action) => { if (action === 'quiz') renderStyleQuiz(); else sendMessage(msg); });
             scrollToLatest();
           }, 400);
         }
-      } catch(e) { console.error('[profile] parse error:', e.message, profMatch[1]); }
+      } catch(e) { console.error('[profile] parse error:', e.message); }
     }
 
+    // Parse SEARCH_MODELS
     const tokMatch = content.match(/SEARCH_MODELS:\s*(\{[\s\S]*\})/);
-
     if (tokMatch) {
-      const displayText = content
-        .slice(0, content.indexOf('SEARCH_MODELS:'))
-        .replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '')
-        .replace(/\s*```[a-z]*\s*$/g, '')
-        .trim();
+      const displayText = content.slice(0, content.indexOf('SEARCH_MODELS:')).replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '').replace(/\s*```[a-z]*\s*$/g, '').trim();
       if (displayText) addMessage('ai', displayText);
-      messages.push({ role: 'assistant', content });
+      messages.push({ role:'assistant', content });
       userProfile = { ...userProfile, ...extractProfile(messages) };
       updateProfileDisplay();
 
       let modelData;
       try { modelData = JSON.parse(tokMatch[1]); }
-      catch (e) { addMessage('ai', 'Let me search for the best options for you…'); isLoading = false; return; }
+      catch(e) { addMessage('ai', 'Let me search for the best options for you…'); isLoading = false; return; }
 
       const srchTypId = showTyping();
       try {
-        const found = await apiFetch('/api/search', { models: modelData.models || [], userProfile });
+        const found = await apiFetch('/api/search', { models:modelData.models || [], userProfile });
         removeTyping(srchTypId);
-
-        if (!found.length) {
-          addMessage('ai', "I couldn't find exact matches right now. Could you try rephrasing your search?");
-          isLoading = false; return;
-        }
-
+        if (!found.length) { addMessage('ai', "I couldn't find exact matches right now. Could you try rephrasing?"); isLoading = false; return; }
         products = found;
-        const hasWhy  = !!products[0].why;
-        const useCase = (products[0] && products[0].category) || 'your needs';
-        addMessage('ai', hasWhy
-          ? 'Here are my picks for you — each selected specifically for ' + useCase + '. I\'ve found real prices across retailers.'
-          : 'I found ' + products.length + ' options for you — here are your top picks:');
-
-        renderProducts();
-        const mc = document.getElementById('lumen-chat');
-        const dc = document.getElementById('dMsgs');
-        if (mc) renderChips(mc);
-        if (dc) renderChips(dc);
-
-        const cw = document.getElementById('lumen-chips');
-        if (cw) cw.style.display = '';
-        const ms = document.getElementById('mScroll');
-        const mg = document.getElementById('mGrid');
-        if (mg) setTimeout(function() { mg.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
-
-      } catch (e) {
+        const useCase = (products[0]?.category) || 'your needs';
+        addMessage('ai', products[0]?.why
+          ? 'Here are my picks for you — each selected for ' + useCase + '. Real prices across retailers.'
+          : 'I found ' + products.length + ' options — here are your top picks:');
+        renderProductsInline(products, 'Expert picks for you');
+        renderChipGroup([
+          { label:'🔍 Compare these',    msg:'Compare the items shown' },
+          { label:'💰 Lower budget',     msg:'Show me lower budget options' },
+          { label:'🏆 More premium',     msg:'Show me more premium options' },
+          { label:'🎨 Specific color',   msg:'I want a specific color' },
+        ], msg => sendMessage(msg));
+      } catch(e) {
         removeTyping(srchTypId);
         addMessage('ai', 'I had trouble searching right now. Please try again in a moment.');
       }
 
     } else {
       const displayContent = content.replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '').trim();
-      messages.push({ role: 'assistant', content });
+      messages.push({ role:'assistant', content });
       addMessage('ai', displayContent);
       renderOutfitCards(displayContent);
-
-      // Mark onboarding complete after outfit reveal (step 3 AI response)
-      if (onboardingActive && onboardingStep === 3 && activeTab === 'style') {
-        onboardingActive = false;
-      }
+      if (onboardingActive && onboardingStep === 3) onboardingActive = false;
     }
 
-  } catch (e) {
+  } catch(e) {
     removeTyping(typId);
     addMessage('ai', "I'm having trouble connecting. Please check your connection and try again.");
   }
@@ -1646,19 +1000,19 @@ async function sendMessage(text) {
 // ── Input wiring ──────────────────────────────────────────────────────────
 function wireInput(inp, btn) {
   if (!inp) return;
-  inp.addEventListener('keydown', function(e) {
+  inp.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); go(); }
   });
   if (btn) btn.addEventListener('click', go);
   function go() {
-    var v = inp.value.trim();
+    const v = inp.value.trim();
     if (!v) return;
     inp.value = '';
     sendMessage(v);
   }
 }
 
-// ── Onboarding welcome — sequential chip flow ────────────────────────────
+// ── Onboarding ────────────────────────────────────────────────────────────
 function showOnboardingWelcome() {
   onboardingStep = 0;
   addMessage('ai',
@@ -1668,64 +1022,51 @@ function showOnboardingWelcome() {
     '• Discover what colors and styles work for YOU\n' +
     '• Build outfits from what you already own\n' +
     '• Shop smarter across every store\n\n' +
-    'The more I know about you, the better I get. ' +
-    'Let\'s start with 3 quick questions so I can personalize everything.'
+    'The more I know about you, the better I get. Let\'s start with 3 quick questions so I can personalize everything.'
   );
 
   setTimeout(() => {
-    addMessage('ai',
-      'First — who are we styling? ' +
-      'This helps me show you the right cuts, fits and trends.');
+    addMessage('ai', 'First — who are we styling? This helps me show you the right cuts, fits and trends.');
     renderChipGroup([
-      { label: '👨 Man',        msg: '👨 Man' },
-      { label: '👩 Woman',      msg: '👩 Woman' },
-      { label: '🧑 Non-binary', msg: '🧑 Non-binary' },
-    ], (msg) => {
+      { label:'👨 Man',        msg:'👨 Man' },
+      { label:'👩 Woman',      msg:'👩 Woman' },
+      { label:'🧑 Non-binary', msg:'🧑 Non-binary' },
+    ], msg => {
       userGender = msg.replace(/\p{Emoji}/gu, '').trim().toLowerCase();
       addMessage('user', msg);
-
       setTimeout(() => {
-        addMessage('ai',
-          'What\'s your age range? ' +
-          'Trends and recommendations vary a lot — ' +
-          'I want to show you what\'s actually relevant.');
+        addMessage('ai', 'What\'s your age range? Trends and recommendations vary a lot — I want to show you what\'s actually relevant.');
         renderChipGroup([
-          { label: '18–24', msg: '18–24' },
-          { label: '25–34', msg: '25–34' },
-          { label: '35–44', msg: '35–44' },
-          { label: '45+',   msg: '45+' },
-        ], (msg) => {
+          { label:'18–24', msg:'18–24' },
+          { label:'25–34', msg:'25–34' },
+          { label:'35–44', msg:'35–44' },
+          { label:'45+',   msg:'45+' },
+        ], msg => {
           userAge = msg;
           addMessage('user', msg);
-
           setTimeout(() => {
-            addMessage('ai',
-              'Do you know your color season? ' +
-              'This tells me which colors make you glow. ' +
-              'Don\'t worry if you\'re not sure — I\'ll figure it out for you.');
+            addMessage('ai', 'Do you know your color season? This tells me which colors make you glow. Don\'t worry if you\'re not sure — I\'ll figure it out for you.');
             renderChipGroup([
-              { label: '🌸 Spring',    msg: '🌸 Spring' },
-              { label: '☀️ Summer',   msg: '☀️ Summer' },
-              { label: '🍂 Autumn',   msg: '🍂 Autumn' },
-              { label: '❄️ Winter',   msg: '❄️ Winter' },
-              { label: 'Not sure yet', msg: 'Not sure yet' },
-            ], (msg) => {
+              { label:'🌸 Spring',     msg:'🌸 Spring' },
+              { label:'☀️ Summer',    msg:'☀️ Summer' },
+              { label:'🍂 Autumn',    msg:'🍂 Autumn' },
+              { label:'❄️ Winter',    msg:'❄️ Winter' },
+              { label:'Not sure yet', msg:'Not sure yet' },
+            ], msg => {
               userCurrentSeason = msg === 'Not sure yet' ? null : msg.replace(/\p{Emoji}/gu, '').trim();
               addMessage('user', msg);
-
               setTimeout(() => {
                 addMessage('ai',
                   'Last thing — and this is optional but powerful. ' +
-                  'If you share a selfie, I can analyze your exact skin tone ' +
-                  'and tell you which colors are made for you. ' +
+                  'If you share a selfie, I can analyze your exact skin tone and tell you which colors are made for you. ' +
                   'Your photo is never stored. Want to try it?');
                 renderChipGroup([
-                  { label: '📷 Share a photo',    action: 'photo' },
-                  { label: '💬 Ask me questions', msg: 'Ask me questions to find my colors' },
+                  { label:'📷 Share a photo',    action:'photo' },
+                  { label:'💬 Ask me questions', msg:'Ask me questions to find my colors' },
                 ], (msg, action) => {
                   onboardingStep = 1;
                   if (action === 'photo') {
-                    const inp = document.getElementById('cameraInput') || document.getElementById('cameraInputD');
+                    const inp = document.getElementById('cameraInput');
                     if (inp) inp.click();
                   } else {
                     sendMessage(msg);
@@ -1740,48 +1081,11 @@ function showOnboardingWelcome() {
   }, 500);
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────
-function init() {
-  var mScrollEl = document.getElementById('mScroll');
-  if (mScrollEl) {
-    mScrollEl.innerHTML = [
-      '<div class="chat" id="lumen-chat"></div>',
-      '<div class="pin-tray" id="lumen-pin-tray" style="display:none">',
-      '  <div class="pin-tray-lbl">★ Your shortlist</div>',
-      '  <div class="pin-row" id="lumen-pin-row"></div>',
-      '</div>',
-      '<div class="sec-label" id="lumen-sec-label" style="display:none"></div>',
-      '<div class="m-grid" id="mGrid"></div>',
-      '<div class="chips-wrap" id="lumen-chips" style="display:none;margin-top:12px">',
-      '  <div class="chips-inner">',
-      '    <button class="chip" onclick="chipTap(this)">✨ Find my colors</button>',
-      '    <button class="chip" onclick="chipTap(this)">👗 Style an outfit</button>',
-      '    <button class="chip" onclick="chipTap(this)">💰 Lower price</button>',
-      '    <button class="chip" onclick="chipTap(this)">🎨 Other colors</button>',
-      '    <button class="chip" onclick="chipTap(this)">🏆 Premium picks</button>',
-      '  </div>',
-      '</div>'
-    ].join('');
-  }
-
-  try {
-    var saved = localStorage.getItem('lumen_profile');
-    if (saved) userProfile = JSON.parse(saved);
-  } catch (e) {}
-
-  wireInput(document.getElementById('mInput'), document.getElementById('mSend'));
-  wireInput(document.getElementById('dInput'), document.getElementById('dSend'));
-
-  messages = styleMessages;
-  loadUserGreeting();
-}
-
 // ── Auth UI ───────────────────────────────────────────────────────────────
 function showAuthScreen() {
   const el = document.createElement('div');
   el.id = 'auth-screen';
-  el.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;' +
-    'align-items:center;justify-content:center;padding:32px;background:#fff;box-sizing:border-box;';
+  el.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;background:#fff;box-sizing:border-box;';
   el.innerHTML =
     '<div style="width:100%;max-width:380px">' +
       '<div style="font-size:28px;font-weight:700;margin-bottom:4px;text-align:center">Lumen</div>' +
@@ -1799,21 +1103,13 @@ function showAuthScreen() {
         '<div style="flex:1;height:1px;background:var(--border)"></div>' +
       '</div>' +
       '<button onclick="signInWithGoogle()" style="width:100%;padding:14px;background:#fff;color:var(--tx1);border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:10px">' +
-        '<svg width="18" height="18" viewBox="0 0 24 24">' +
-          '<path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>' +
-          '<path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>' +
-          '<path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>' +
-          '<path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>' +
-        '</svg>' +
+        '<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>' +
         'Continue with Google' +
       '</button>' +
       '<div id="auth-error" style="color:#E8490F;font-size:12px;margin-top:12px;text-align:center"></div>' +
     '</div>';
   document.body.appendChild(el);
-  // Wire Enter key on password field
-  el.querySelector('#auth-password').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') submitAuth();
-  });
+  el.querySelector('#auth-password').addEventListener('keydown', e => { if (e.key === 'Enter') submitAuth(); });
 }
 
 function showAuthTab(tab) {
@@ -1829,37 +1125,22 @@ async function submitAuth() {
   const password = document.getElementById('auth-password').value;
   const errEl    = document.getElementById('auth-error');
   errEl.textContent = '';
-
   if (!email || !password) { errEl.textContent = 'Please enter email and password'; return; }
 
   try {
-    // Signup flow
     if (currentAuthTab === 'signup') {
-      const signupRes = await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'signup', email, password })
-      });
+      const signupRes  = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ action:'signup', email, password }) });
       const signupData = await signupRes.json();
       if (!signupRes.ok) { errEl.textContent = signupData.error || 'Signup failed'; return; }
     }
-
-    // Login (always, covers both login tab and post-signup auto-login)
-    const res  = await fetch('/api/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'login', email, password })
-    });
+    const res  = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ action:'login', email, password }) });
     const data = await res.json();
     if (!res.ok) { errEl.textContent = data.error || 'Something went wrong'; return; }
-
     localStorage.setItem('lumen_session', JSON.stringify(data.session));
     localStorage.setItem('lumen_user',    JSON.stringify(data.user));
     document.getElementById('auth-screen').remove();
-    currentUser    = data.user;
-    currentSession = data.session;
+    currentUser = data.user; currentSession = data.session;
     init();
-
   } catch(e) {
     errEl.textContent = 'Connection error. Try again.';
   }
@@ -1869,35 +1150,27 @@ async function signInWithGoogle() {
   try {
     const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin }
-    });
-    if (error) {
-      const errEl = document.getElementById('auth-error');
-      if (errEl) errEl.textContent = 'Google sign-in failed. Try email instead.';
-    }
+    const { error } = await supabase.auth.signInWithOAuth({ provider:'google', options:{ redirectTo:window.location.origin } });
+    if (error) { const e = document.getElementById('auth-error'); if (e) e.textContent = 'Google sign-in failed. Try email instead.'; }
   } catch(e) {
     const errEl = document.getElementById('auth-error');
     if (errEl) errEl.textContent = 'Google sign-in unavailable. Try email instead.';
   }
 }
 
+// ── Session management ────────────────────────────────────────────────────
 async function checkSession() {
-  // Check if returning from a Google OAuth redirect
   try {
     const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data:{ session } } = await supabase.auth.getSession();
     if (session) {
       localStorage.setItem('lumen_session', JSON.stringify(session));
       localStorage.setItem('lumen_user',    JSON.stringify(session.user));
-      currentUser    = session.user;
-      currentSession = session;
-      init();
-      return;
+      currentUser = session.user; currentSession = session;
+      init(); return;
     }
-  } catch(e) { /* fall through to stored-session check */ }
+  } catch(e) { /* fall through */ }
 
   const stored = localStorage.getItem('lumen_session');
   if (!stored) { showAuthScreen(); return; }
@@ -1905,51 +1178,61 @@ async function checkSession() {
   try {
     const session = JSON.parse(stored);
     const res = await fetch('/api/auth', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + (session.access_token || '')
-      },
-      body: JSON.stringify({ action: 'verify' })
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + (session.access_token || '') },
+      body:JSON.stringify({ action:'verify' })
     });
-
     if (res.ok) {
-      const data  = await res.json();
-      currentUser    = data.user;
-      currentSession = session;
+      const data = await res.json();
+      currentUser = data.user; currentSession = session;
       init();
     } else {
       localStorage.removeItem('lumen_session');
       showAuthScreen();
     }
-  } catch(e) {
-    showAuthScreen();
-  }
+  } catch(e) { showAuthScreen(); }
 }
 
 async function loadUserGreeting() {
   if (!currentUser) { showOnboardingWelcome(); return; }
-
   try {
     const context = await apiFetch('/api/profile', {});
-    if (context.profile && context.profile.color_season) {
+    if (context.profile?.color_season) {
       addMessage('ai',
-        'Welcome back! 👋\n\nI remember you — ' +
-        context.profile.color_season + ' palette' +
+        'Welcome back! 👋\n\nI remember you — ' + context.profile.color_season + ' palette' +
         (context.profile.gender ? ', ' + context.profile.gender : '') +
-        '. Ready to continue where we left off?\n\nWhat are we working on today?'
-      );
+        '. Ready to continue where we left off?\n\nWhat are we working on today?');
       renderChipGroup([
-        { label: '📸 Find something I saw', msg: 'I saw something I love and want to find it' },
-        { label: '👗 What do I wear today',  msg: 'Help me put together an outfit' },
-        { label: '🛍️ Shop for something',   msg: 'I want to shop for something specific' }
-      ], (msg) => sendMessage(msg));
+        { label:'📸 Find something I saw', msg:'I saw something I love and want to find it' },
+        { label:'👗 What do I wear today',  msg:'Help me put together an outfit' },
+        { label:'🛍️ Shop for something',   msg:'I want to shop for something specific' }
+      ], msg => sendMessage(msg));
     } else {
       showOnboardingWelcome();
     }
-  } catch(e) {
-    showOnboardingWelcome();
-  }
+  } catch(e) { showOnboardingWelcome(); }
+}
+
+// ── Desktop layout ────────────────────────────────────────────────────────
+function setupDesktopLayout() {
+  if (window.innerWidth < 768) return;
+  const sidebar = document.getElementById('lSidebar');
+  const main    = document.getElementById('lMain');
+  if (sidebar) sidebar.style.display = 'flex';
+  if (main) main.style.flex = '1';
+  updateProfileDisplay();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+function init() {
+  try {
+    const saved = localStorage.getItem('lumen_profile');
+    if (saved) userProfile = JSON.parse(saved);
+  } catch(e) {}
+
+  wireInput(document.getElementById('lumenInput'), document.getElementById('lumenSend'));
+  setupDesktopLayout();
+  loadUserGreeting();
 }
 
 checkSession();
