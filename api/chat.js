@@ -1,4 +1,5 @@
-const https = require('https');
+import https from 'https';
+import { verifyUser, getLumenContext, saveMessage, updateProfile } from './_lib/getLumenContext.js';
 
 const DISCOVER_SYSTEM_PROMPT = `You are Lumen — the world's best personal shoe advisor.
 You have deep expertise in every shoe category, brand, technology and trend as of 2026.
@@ -115,14 +116,44 @@ RULES:
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
 
-  const { messages, system, tab, userContext } = req.body;
+  // 1. Verify user identity
+  const { user } = await verifyUser(req);
+  const userId = user?.id || null;
 
-  const basePrompt = system || (tab === 'style' ? STYLE_SYSTEM_PROMPT : DISCOVER_SYSTEM_PROMPT);
-  const selectedPrompt = userContext ? basePrompt + '\n\n[User profile: ' + userContext + ']' : basePrompt;
+  // 2. Load Lumen context if user is authenticated
+  let lumenContext = { profile: {}, recentHistory: [], wardrobe: [] };
+  if (userId) {
+    lumenContext = await getLumenContext(userId);
+  }
 
+  // 3. Build context string
+  const contextString = userId ? `
+CURRENT USER CONTEXT:
+Gender: ${lumenContext.profile.gender || 'not set'}
+Age range: ${lumenContext.profile.age_range || 'not set'}
+Color season: ${lumenContext.profile.color_season || 'not set'}
+Undertone: ${lumenContext.profile.undertone || 'not set'}
+Palette: ${JSON.stringify(lumenContext.profile.palette || [])}
+Aesthetic: ${JSON.stringify(lumenContext.profile.aesthetic || [])}
+Wardrobe items: ${lumenContext.wardrobe.length} items saved
+Style notes: ${lumenContext.profile.style_notes || 'none'}
+
+RECENT CONVERSATION:
+${lumenContext.recentHistory.map(m => m.role + ': ' + m.content).join('\n')}
+` : '';
+
+  // 4. Get request body
+  const { messages, tab } = req.body;
+
+  // 5. Select system prompt
+  const basePrompt = tab === 'discover' ? DISCOVER_SYSTEM_PROMPT : STYLE_SYSTEM_PROMPT;
+  const systemPrompt = basePrompt + (contextString ? '\n\n' + contextString : '');
+
+  // 6. Claude API call
   const useWebSearch = tab === 'discover';
   const tools = useWebSearch
     ? [{ type: 'web_search_20250305', name: 'web_search' }]
@@ -131,7 +162,7 @@ export default async function handler(req, res) {
   const payload = JSON.stringify({
     model: 'claude-sonnet-4-6',
     max_tokens: 2048,
-    system: selectedPrompt,
+    system: systemPrompt,
     ...(tools ? { tools, tool_choice: { type: 'auto' } } : {}),
     messages: messages || []
   });
@@ -154,7 +185,7 @@ export default async function handler(req, res) {
     }, apiRes => {
       let d = '';
       apiRes.on('data', c => d += c);
-      apiRes.on('end', () => {
+      apiRes.on('end', async () => {
         try {
           const body = JSON.parse(d);
           if (!body.content || !body.content.length) {
@@ -165,14 +196,40 @@ export default async function handler(req, res) {
               .filter(block => block.type === 'text')
               .map(block => block.text)
               .join('\n');
-            const textBlocks = raw
+            const responseText = raw
               .replace(/```(?:json)?\s*\n?(SEARCH_MODELS:)/gi, '$1')
               .replace(/(SEARCH_MODELS:\{[^`]*\})\s*\n?```/g, '$1');
-            if (!textBlocks) {
+
+            if (!responseText) {
               console.error('[chat] No text blocks in response:', JSON.stringify(body.content).slice(0, 300));
               res.status(502).json({ error: 'Invalid response from AI' });
             } else {
-              res.status(200).json({ content: textBlocks });
+              // 7. Save messages to history
+              if (userId) {
+                const lastUserMessage = messages[messages.length - 1];
+                await Promise.all([
+                  saveMessage(userId, 'user', lastUserMessage.content, tab),
+                  saveMessage(userId, 'assistant', responseText, tab)
+                ]);
+
+                // 8. Parse and save PROFILE_UPDATE
+                const profMatch = responseText.match(/PROFILE_UPDATE:\s*(\{[\s\S]*?\})/);
+                if (profMatch) {
+                  try {
+                    const cleaned = profMatch[1].replace(/'/g, '"');
+                    const prof = JSON.parse(cleaned);
+                    await updateProfile(userId, {
+                      color_season: prof.season,
+                      undertone: prof.undertone,
+                      palette: prof.palette
+                    });
+                  } catch (e) {
+                    console.error('[profile] save error:', e.message);
+                  }
+                }
+              }
+
+              res.status(200).json({ content: responseText });
             }
           }
         } catch (e) {
