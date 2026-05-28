@@ -411,13 +411,14 @@ function updateSidebarSaved() {
 }
 
 // ── API ───────────────────────────────────────────────────────────────────
-async function apiFetch(path, body) {
+async function apiFetch(path, body, signal) {
   const session = JSON.parse(localStorage.getItem('lumen_session') || '{}');
   const token   = session?.access_token || '';
   const res = await fetch(path, {
     method: 'POST',
     headers: { 'Content-Type':'application/json', 'Authorization':'Bearer ' + token },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
+    ...(signal ? { signal } : {})
   });
   if (!res.ok) throw new Error(path + ' ' + res.status);
   return res.json();
@@ -816,9 +817,10 @@ function renderVisionResults(analysis, originalImage) {
   }, 300);
 }
 
-function searchVisionItem(query) {
+window.searchVisionItem = function(query) {
+  console.log('[vision] Triggering search for:', query);
   sendMessage('Find me this: ' + query);
-}
+};
 
 // ── Style Quiz ────────────────────────────────────────────────────────────
 function renderStyleQuiz() {
@@ -887,6 +889,9 @@ async function sendMessage(text) {
   messages.push({ role:'user', content:text });
   const typId = showTyping();
 
+  const controller = new AbortController();
+  const timeoutId  = setTimeout(() => controller.abort(), 25000);
+
   try {
     const chatMessages = savedProducts.length > 0
       ? [...messages.slice(0, -1), {
@@ -918,7 +923,8 @@ async function sendMessage(text) {
       userCurrentSeason ? 'Color season: ' + userCurrentSeason : null,
     ].filter(Boolean).join(', ') || undefined;
 
-    const data    = await apiFetch('/api/chat', { messages:apiMessages, tab, userContext });
+    const data = await apiFetch('/api/chat', { messages:apiMessages, tab, userContext }, controller.signal);
+    clearTimeout(timeoutId);
     removeTyping(typId);
     const content = data.content || '';
 
@@ -995,8 +1001,10 @@ async function sendMessage(text) {
     }
 
   } catch(e) {
+    clearTimeout(timeoutId);
     removeTyping(typId);
-    addMessage('ai', "I'm having trouble connecting. Please check your connection and try again.");
+    console.error('[chat] error:', e.message);
+    addMessage('ai', 'Sorry, I hit a snag. Could you try that again?');
   }
 
   isLoading = false;
