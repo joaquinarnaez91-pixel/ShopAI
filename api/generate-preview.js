@@ -29,25 +29,36 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'dall-e-3',
-        prompt,
+        model: 'gpt-image-1',
+        prompt: prompt,
         size: '1024x1024',
         quality: 'standard',
-        n: 1
+        n: 1,
+        response_format: 'url'
       })
     });
 
-    const data = await response.json();
+    const responseText = await response.text();
+    const data = JSON.parse(responseText);
     console.log('[preview] status:', response.status);
+    console.log('[preview] data keys:', Object.keys(data));
 
-    if (data.error) {
-      console.error('[preview] error:', data.error.message);
-      return res.status(400).json({ error: data.error.message });
+    if (!response.ok) {
+      console.error('[preview] error:', data.error?.message);
+      return res.status(400).json({ error: data.error?.message });
     }
 
-    const url = data.data?.[0]?.url;
-    console.log('[preview] url received:', !!url);
+    // gpt-image-1 may return url or b64_json
+    const item = data.data?.[0];
+    let url = item?.url;
 
+    if (!url && item?.b64_json) {
+      // Convert base64 to data URL
+      url = 'data:image/png;base64,' + item.b64_json;
+      console.log('[preview] using base64 response');
+    }
+
+    console.log('[preview] url received:', !!url);
     return res.status(200).json({ url });
 
   } catch(e) {
