@@ -1053,27 +1053,46 @@ async function handleOutfitCheck(file) {
       'most relevant feedback.'
     );
 
+    window._pendingBase64 = base64;
+    window._pendingMime = mimeType;
+    window._pendingUrl = dataUrl;
+
     setTimeout(() => {
-      renderChipGroup([
-        { label: '☕ Casual day out',    occasion: 'casual day out' },
-        { label: '💼 Work / office',     occasion: 'work or office' },
-        { label: '🌙 Evening / dinner',  occasion: 'evening or dinner out' },
-        { label: '🏃 Running errands',   occasion: 'running errands' },
-        { label: '⚡ Just tell me now',  occasion: 'general' }
-      ], async (msg, action, occasion) => {
-        await runOutfitCheck(base64, mimeType, dataUrl, occasion || 'general');
+      const chatEl2 = document.getElementById('lumenChat');
+      const chipRow = document.createElement('div');
+      chipRow.className = 'l-chips chip-group';
+      const occasions = [
+        { label: '☕ Casual day out',   occasion: 'casual day out' },
+        { label: '💼 Work / office',    occasion: 'work or office' },
+        { label: '🌙 Evening / dinner', occasion: 'evening or dinner out' },
+        { label: '🏃 Running errands',  occasion: 'running errands' },
+        { label: '⚡ Just tell me now', occasion: 'general' }
+      ];
+      occasions.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className = 'l-chip';
+        btn.textContent = c.label;
+        btn.onclick = () => {
+          document.querySelectorAll('.chip-group').forEach(el => el.remove());
+          console.log('[occasion] selected:', c.occasion);
+          runOutfitCheck(
+            window._pendingBase64,
+            window._pendingMime,
+            window._pendingUrl,
+            c.occasion
+          );
+        };
+        chipRow.appendChild(btn);
       });
+      chatEl2.appendChild(chipRow);
       scrollToLatest();
     }, 400);
-
-    window._pendingOutfitBase64 = base64;
-    window._pendingOutfitMime = mimeType;
-    window._pendingOutfitUrl = dataUrl;
   };
   reader.readAsDataURL(file);
 }
 
 async function runOutfitCheck(base64, mimeType, dataUrl, occasion) {
+  console.log('[runOutfitCheck] called with occasion:', occasion);
   const loadingId = 'outfit-loading-' + Date.now();
   addMessage('ai', '✨ Analyzing your outfit...', loadingId);
   scrollToLatest();
@@ -1099,7 +1118,11 @@ async function runOutfitCheck(base64, mimeType, dataUrl, occasion) {
       return;
     }
 
-    renderOutfitCheckResult(result, dataUrl);
+    console.log('[outfit] verdict:', result.verdict);
+    console.log('[outfit] previewUrl:', result.previewUrl);
+    console.log('[outfit] calling render...');
+    renderOutfitCheckResult(result, window._pendingUrl || '');
+    console.log('[outfit] render complete');
 
   } catch(e) {
     document.getElementById(loadingId)?.remove();

@@ -119,6 +119,11 @@ async function generateSuggestionPreview(outfitDescription, changeDescription, s
 
 export default async function handler(req, res) {
   console.log('[outfit-check] request received');
+  console.log('[outfit-check] env check:', {
+    anthropicKey: !!process.env.ANTHROPIC_API_KEY,
+    openaiKey: !!process.env.OPENAI_API_KEY,
+    supabaseUrl: !!process.env.SUPABASE_URL
+  });
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -146,15 +151,20 @@ export default async function handler(req, res) {
 
     let previewUrl = null;
     if (analysis.one_change && analysis.outfit_description) {
-      console.log('[outfit-check] generating preview...');
-      previewUrl = await generateSuggestionPreview(
-        analysis.outfit_description,
-        analysis.change_description,
-        profile.aesthetic?.[0]
-      ).catch(e => {
-        console.error('[outfit-check] preview failed:', e.message);
-        return null;
-      });
+      if (!process.env.OPENAI_API_KEY) {
+        console.error('[outfit-check] OPENAI_API_KEY not set — skipping image generation');
+        previewUrl = null;
+      } else {
+        console.log('[outfit-check] generating preview...');
+        previewUrl = await generateSuggestionPreview(
+          analysis.outfit_description,
+          analysis.change_description,
+          profile.aesthetic?.[0]
+        ).catch(e => {
+          console.error('[outfit-check] DALL-E:', e.message);
+          return null;
+        });
+      }
     }
 
     if (userId) {
