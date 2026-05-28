@@ -258,10 +258,16 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
 
   <!-- Input -->
   <div class="input-bar">
-    <label for="photoInput" title="Find something you saw" style="cursor:pointer;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:var(--card);flex-shrink:0;border:1.5px solid var(--border)">
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoUpload(event)">
-    </label>
+    <div style="display:flex;gap:6px;align-items:center">
+      <label for="cameraInput" title="Take a photo" style="cursor:pointer;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:var(--card);flex-shrink:0;border:1.5px solid var(--border)">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoUpload(event)">
+      </label>
+      <label for="galleryInput" title="Upload from gallery" style="cursor:pointer;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:var(--card);flex-shrink:0;border:1.5px solid var(--border)">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
+      </label>
+    </div>
     <input class="inp" id="mInput" type="text" placeholder="Ask anything about style…" />
     <button class="send" id="mSend" aria-label="Send">
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -306,10 +312,16 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx1);font
     </div>
     <div class="d-msgs" id="dMsgs"></div>
     <div class="d-inp-wrap">
-      <label for="photoInputD" title="Find something you saw" style="cursor:pointer;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:var(--card);flex-shrink:0;border:1.5px solid var(--border)">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-        <input type="file" id="photoInputD" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoUpload(event)">
-      </label>
+      <div style="display:flex;gap:6px;align-items:center">
+        <label for="cameraInputD" title="Take a photo" style="cursor:pointer;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:var(--card);flex-shrink:0;border:1.5px solid var(--border)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <input type="file" id="cameraInputD" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoUpload(event)">
+        </label>
+        <label for="galleryInputD" title="Upload from gallery" style="cursor:pointer;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:var(--card);flex-shrink:0;border:1.5px solid var(--border)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <input type="file" id="galleryInputD" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
+        </label>
+      </div>
       <input class="inp" id="dInput" type="text" placeholder="Ask anything about style…" />
       <button class="send" id="dSend">
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -1399,7 +1411,7 @@ function renderOutfitCards(text) {
       { label: '📷 Visual search',     action: 'photo' },
     ], (msg, action) => {
       if (action === 'photo') {
-        const inp = document.getElementById('photoInput') || document.getElementById('photoInputD');
+        const inp = document.getElementById('cameraInput') || document.getElementById('cameraInputD');
         if (inp) inp.click();
       } else {
         sendMessage(msg);
@@ -1649,10 +1661,21 @@ function wireInput(inp, btn) {
 // ── Onboarding welcome — sequential chip flow ────────────────────────────
 function showOnboardingWelcome() {
   onboardingStep = 0;
-  addMessage('ai', 'Hi! I\'m Lumen ✨<br>Quick setup — just 3 taps and I\'ll personalize everything for you.');
+  addMessage('ai',
+    'Hi! I\'m Lumen ✨ — your personal style companion.\n\n' +
+    'I\'m here to help you:\n' +
+    '• Find anything you see on Instagram or in stores\n' +
+    '• Discover what colors and styles work for YOU\n' +
+    '• Build outfits from what you already own\n' +
+    '• Shop smarter across every store\n\n' +
+    'The more I know about you, the better I get. ' +
+    'Let\'s start with 3 quick questions so I can personalize everything.'
+  );
 
   setTimeout(() => {
-    addMessage('ai', 'How do you identify?');
+    addMessage('ai',
+      'First — who are we styling? ' +
+      'This helps me show you the right cuts, fits and trends.');
     renderChipGroup([
       { label: '👨 Man',        msg: '👨 Man' },
       { label: '👩 Woman',      msg: '👩 Woman' },
@@ -1662,7 +1685,10 @@ function showOnboardingWelcome() {
       addMessage('user', msg);
 
       setTimeout(() => {
-        addMessage('ai', 'Age range?');
+        addMessage('ai',
+          'What\'s your age range? ' +
+          'Trends and recommendations vary a lot — ' +
+          'I want to show you what\'s actually relevant.');
         renderChipGroup([
           { label: '18–24', msg: '18–24' },
           { label: '25–34', msg: '25–34' },
@@ -1673,7 +1699,10 @@ function showOnboardingWelcome() {
           addMessage('user', msg);
 
           setTimeout(() => {
-            addMessage('ai', 'Know your color season?');
+            addMessage('ai',
+              'Do you know your color season? ' +
+              'This tells me which colors make you glow. ' +
+              'Don\'t worry if you\'re not sure — I\'ll figure it out for you.');
             renderChipGroup([
               { label: '🌸 Spring',    msg: '🌸 Spring' },
               { label: '☀️ Summer',   msg: '☀️ Summer' },
@@ -1684,19 +1713,19 @@ function showOnboardingWelcome() {
               userCurrentSeason = msg === 'Not sure yet' ? null : msg.replace(/\p{Emoji}/gu, '').trim();
               addMessage('user', msg);
 
-              // FIX 1: Ask about photo before intent chips
               setTimeout(() => {
                 addMessage('ai',
-                  'One more thing — for the most accurate color analysis, ' +
-                  'a photo works best. Want to share one now, or I can ' +
-                  'figure it out from a few quick questions?');
+                  'Last thing — and this is optional but powerful. ' +
+                  'If you share a selfie, I can analyze your exact skin tone ' +
+                  'and tell you which colors are made for you. ' +
+                  'Your photo is never stored. Want to try it?');
                 renderChipGroup([
-                  { label: '📷 Share a photo',      action: 'photo' },
-                  { label: '💬 Ask me questions',   msg: 'Ask me questions to find my colors' },
+                  { label: '📷 Share a photo',    action: 'photo' },
+                  { label: '💬 Ask me questions', msg: 'Ask me questions to find my colors' },
                 ], (msg, action) => {
                   onboardingStep = 1;
                   if (action === 'photo') {
-                    const inp = document.getElementById('photoInput') || document.getElementById('photoInputD');
+                    const inp = document.getElementById('cameraInput') || document.getElementById('cameraInputD');
                     if (inp) inp.click();
                   } else {
                     sendMessage(msg);
