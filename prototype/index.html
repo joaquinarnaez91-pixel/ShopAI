@@ -290,6 +290,7 @@ let deepDiveOpen    = false;
 let profileOpen     = false;
 let currentDiveProduct = null;
 let tryOnPersonDataUri = null;
+let _outfitCheckMode = false;
 
 // Onboarding
 let onboardingStep   = 0;
@@ -963,6 +964,7 @@ function renderOutfitCards(text) {
 
 // ── Photo Upload & Vision ─────────────────────────────────────────────────
 async function handlePhotoUpload(e) {
+  console.log('[photo] outfitCheckMode:', _outfitCheckMode, 'file:', e.target.files[0]?.name);
   const file = e.target.files[0];
   if (!file) return;
   e.target.value = '';
@@ -975,7 +977,7 @@ async function handlePhotoUpload(e) {
     lastAiMsg.includes('Show me what you\'re wearing') ||
     lastAiMsg.includes('honest take') ||
     lastAiMsg.includes('what I\'m wearing') ||
-    window._outfitCheckMode === true;
+    _outfitCheckMode === true;
 
   if (isOutfitCheck) {
     handleOutfitCheck(file);
@@ -1026,6 +1028,7 @@ async function handlePhotoUpload(e) {
 
 // ── Outfit Check ──────────────────────────────────────────────────────────
 async function handleOutfitCheck(file) {
+  _outfitCheckMode = false; // consumed — reset so next upload goes to vision
   const reader = new FileReader();
   reader.onload = async function(ev) {
     const dataUrl = ev.target.result;
@@ -1076,14 +1079,18 @@ async function runOutfitCheck(base64, mimeType, dataUrl, occasion) {
   scrollToLatest();
 
   try {
-    const result = await fetch('/api/outfit-check', {
+    console.log('[outfit-check] calling API...');
+    const response = await fetch('/api/outfit-check', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + (currentSession?.access_token || '')
       },
       body: JSON.stringify({ imageBase64: base64, mimeType, occasion })
-    }).then(r => r.json());
+    });
+    console.log('[outfit-check] response status:', response.status);
+    const result = await response.json();
+    console.log('[outfit-check] result keys:', Object.keys(result));
 
     document.getElementById(loadingId)?.remove();
 
@@ -1431,7 +1438,8 @@ function showOnboardingWelcome() {
       }
     ], (msg) => {
       if (msg === 'I want honest feedback on my outfit') {
-        // Outfit check flow — ask for photo
+        _outfitCheckMode = true;
+        console.log('[outfit] mode set to true');
         addMessage('ai',
           'Love it. Show me what you\'re wearing ' +
           'and I\'ll give you my honest take — ' +
@@ -1602,7 +1610,25 @@ async function loadUserGreeting() {
             label: '✨ Show me trends',
             msg: 'Show me what\'s trending right now'
           }
-        ], (msg) => sendMessage(msg));
+        ], (msg) => {
+          if (msg === 'I want feedback on what I\'m wearing today') {
+            _outfitCheckMode = true;
+            console.log('[outfit] mode set to true (returning user)');
+            addMessage('ai',
+              'Show me what you\'re wearing and I\'ll give you my honest take — ' +
+              'what works, what doesn\'t, and one specific thing to make it better.'
+            );
+            setTimeout(() => {
+              renderChipGroup([
+                { label: '📷 Take photo now', action: 'camera' },
+                { label: '🖼️ Upload from gallery', action: 'gallery' }
+              ], () => {});
+              scrollToLatest();
+            }, 400);
+          } else {
+            sendMessage(msg);
+          }
+        });
         scrollToLatest();
       }, 400);
     } else {
