@@ -2,6 +2,7 @@
   "name": "shopsense",
   "version": "1.0.0",
   "dependencies": {
-    "@supabase/supabase-js": "^2.50.0"
+    "@supabase/supabase-js": "^2.50.0",
+    "replicate": "^1.4.0"
   }
 }
