@@ -1125,8 +1125,12 @@ async function runOutfitCheck(base64, mimeType, dataUrl, occasion) {
     console.log('[outfit] render complete');
 
     // Fetch DALL-E preview asynchronously — non-blocking
-    if (result.previewPending && result.outfit_description && result.change_description) {
-      fetchOutfitPreview(result.outfit_description, result.change_description);
+    if (result.previewPending) {
+      fetchOutfitPreview(
+        result.previewPrompt,
+        result.outfit_description,
+        result.change_description
+      );
     }
 
   } catch(e) {
@@ -1135,7 +1139,7 @@ async function runOutfitCheck(base64, mimeType, dataUrl, occasion) {
   }
 }
 
-async function fetchOutfitPreview(outfitDesc, changeDesc) {
+async function fetchOutfitPreview(previewPrompt, outfitDesc, changeDesc) {
   // Placeholder already created by renderOutfitCheckResult — just populate it
   try {
     const result = await fetch('/api/generate-preview', {

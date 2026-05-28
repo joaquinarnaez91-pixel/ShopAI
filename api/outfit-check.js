@@ -162,7 +162,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       ...analysis,
       previewUrl: null,
-      previewPending: !!(analysis.outfit_description && analysis.change_description),
+      previewPending: true,
       previewPrompt: (analysis.outfit_description || '') + ' with ' + (analysis.change_description || '')
     });
 
