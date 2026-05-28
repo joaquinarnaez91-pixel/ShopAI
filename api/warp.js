@@ -9,25 +9,27 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { maskUrl, productUrl } = req.body;
-  if (!maskUrl || !productUrl) {
-    return res.status(400).json({ error: 'maskUrl and productUrl are required' });
+  const { personUrl, productUrl, part = 'upper_body' } = req.body;
+  if (!personUrl || !productUrl) {
+    return res.status(400).json({ error: 'personUrl and productUrl are required' });
+  }
+  const validParts = ['upper_body', 'lower_body', 'lower_half', 'dresses'];
+  if (!validParts.includes(part)) {
+    return res.status(400).json({ error: 'part must be one of: ' + validParts.join(', ') });
   }
 
   try {
-    // Virtual try-on via FLUX-VTON.
-    // Get the exact version hash at:
-    //   https://replicate.com/subhash25rawat/flux-vton
-    // image  = the product/garment image
-    // mask   = the body silhouette from Step 1
+    // FLUX-VTON — handles body detection internally, no external mask needed.
+    // image   = person photo
+    // garment = product/clothing image
+    // part    = body region enum
     const output = await replicate.run(
       "subhash25rawat/flux-vton:a02643ce418c0e12bad371c4adbfaec0dd1cb34b034ef37650ef205f92ad6199",
       {
         input: {
-          part: maskUrl,
+          image: personUrl,
           garment: productUrl,
-          prompt: "professional photo of a person wearing the garment, high quality, realistic fashion photography",
-          strength: 0.85
+          part
         }
       }
     );
