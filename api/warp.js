@@ -24,8 +24,8 @@ export default async function handler(req, res) {
       "subhash25rawat/flux-vton:a02643ce418c0e12bad371c4adbfaec0dd1cb34b034ef37650ef205f92ad6199",
       {
         input: {
-          image: productUrl,
-          mask: maskUrl,
+          part: maskUrl,
+          garment: productUrl,
           prompt: "professional photo of a person wearing the garment, high quality, realistic fashion photography",
           strength: 0.85
         }
