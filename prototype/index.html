@@ -376,6 +376,11 @@ let discoverMessages = [];
 let photoBase64   = null;
 let photoMimeType = null;
 
+// Auth state
+let currentUser    = null;
+let currentSession = null;
+let currentAuthTab = 'login';
+
 const ENRICH_LABELS = [
   'Scanning expert reviews…',
   'Analyzing value for money…',
@@ -686,9 +691,14 @@ function removeTyping(id) {
 
 // ── API ───────────────────────────────────────────────────────────────────
 async function apiFetch(path, body) {
+  const session = JSON.parse(localStorage.getItem('lumen_session') || '{}');
+  const token   = session?.access_token || '';
   const res = await fetch(path, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
     body: JSON.stringify(body)
   });
   if (!res.ok) throw new Error(path + ' ' + res.status);
@@ -1603,7 +1613,7 @@ function showOnboardingWelcome() {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────
-(function init() {
+function init() {
   var mScrollEl = document.getElementById('mScroll');
   if (mScrollEl) {
     mScrollEl.innerHTML = [
@@ -1634,10 +1644,140 @@ function showOnboardingWelcome() {
   wireInput(document.getElementById('mInput'), document.getElementById('mSend'));
   wireInput(document.getElementById('dInput'), document.getElementById('dSend'));
 
-  // messages starts as styleMessages reference
   messages = styleMessages;
-  showOnboardingWelcome();
-})();
+  loadUserGreeting();
+}
+
+// ── Auth UI ───────────────────────────────────────────────────────────────
+function showAuthScreen() {
+  const el = document.createElement('div');
+  el.id = 'auth-screen';
+  el.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;' +
+    'align-items:center;justify-content:center;padding:32px;background:#fff;box-sizing:border-box;';
+  el.innerHTML =
+    '<div style="width:100%;max-width:380px">' +
+      '<div style="font-size:28px;font-weight:700;margin-bottom:4px;text-align:center">Lumen</div>' +
+      '<div style="font-size:13px;color:var(--tx3);margin-bottom:40px;text-align:center">Your personal style guide</div>' +
+      '<div id="auth-tabs" style="display:flex;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px">' +
+        '<button id="tab-login" onclick="showAuthTab(\'login\')" style="flex:1;padding:10px;border:none;background:var(--tx1);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">Sign in</button>' +
+        '<button id="tab-signup" onclick="showAuthTab(\'signup\')" style="flex:1;padding:10px;border:none;background:#fff;color:var(--tx2);font-size:13px;cursor:pointer;font-family:var(--font)">Create account</button>' +
+      '</div>' +
+      '<input id="auth-email" type="email" placeholder="Email address" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;margin-bottom:12px;box-sizing:border-box;font-family:var(--font);outline:none">' +
+      '<input id="auth-password" type="password" placeholder="Password" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;margin-bottom:20px;box-sizing:border-box;font-family:var(--font);outline:none">' +
+      '<button onclick="submitAuth()" style="width:100%;padding:14px;background:var(--tx1);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font)">Continue</button>' +
+      '<div id="auth-error" style="color:#E8490F;font-size:12px;margin-top:12px;text-align:center"></div>' +
+    '</div>';
+  document.body.appendChild(el);
+  // Wire Enter key on password field
+  el.querySelector('#auth-password').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') submitAuth();
+  });
+}
+
+function showAuthTab(tab) {
+  currentAuthTab = tab;
+  const tl = document.getElementById('tab-login');
+  const ts = document.getElementById('tab-signup');
+  if (tl) { tl.style.background = tab === 'login'  ? 'var(--tx1)' : '#fff'; tl.style.color = tab === 'login'  ? '#fff' : 'var(--tx2)'; }
+  if (ts) { ts.style.background = tab === 'signup' ? 'var(--tx1)' : '#fff'; ts.style.color = tab === 'signup' ? '#fff' : 'var(--tx2)'; }
+}
+
+async function submitAuth() {
+  const email    = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errEl    = document.getElementById('auth-error');
+  errEl.textContent = '';
+
+  if (!email || !password) { errEl.textContent = 'Please enter email and password'; return; }
+
+  try {
+    // Signup flow
+    if (currentAuthTab === 'signup') {
+      const signupRes = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'signup', email, password })
+      });
+      const signupData = await signupRes.json();
+      if (!signupRes.ok) { errEl.textContent = signupData.error || 'Signup failed'; return; }
+    }
+
+    // Login (always, covers both login tab and post-signup auto-login)
+    const res  = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'login', email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error || 'Something went wrong'; return; }
+
+    localStorage.setItem('lumen_session', JSON.stringify(data.session));
+    localStorage.setItem('lumen_user',    JSON.stringify(data.user));
+    document.getElementById('auth-screen').remove();
+    currentUser    = data.user;
+    currentSession = data.session;
+    init();
+
+  } catch(e) {
+    errEl.textContent = 'Connection error. Try again.';
+  }
+}
+
+async function checkSession() {
+  const stored = localStorage.getItem('lumen_session');
+  if (!stored) { showAuthScreen(); return; }
+
+  try {
+    const session = JSON.parse(stored);
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + (session.access_token || '')
+      },
+      body: JSON.stringify({ action: 'verify' })
+    });
+
+    if (res.ok) {
+      const data  = await res.json();
+      currentUser    = data.user;
+      currentSession = session;
+      init();
+    } else {
+      localStorage.removeItem('lumen_session');
+      showAuthScreen();
+    }
+  } catch(e) {
+    showAuthScreen();
+  }
+}
+
+async function loadUserGreeting() {
+  if (!currentUser) { showOnboardingWelcome(); return; }
+
+  try {
+    const context = await apiFetch('/api/profile', {});
+    if (context.profile && context.profile.color_season) {
+      addMessage('ai',
+        'Welcome back! 👋\n\nI remember you — ' +
+        context.profile.color_season + ' palette' +
+        (context.profile.gender ? ', ' + context.profile.gender : '') +
+        '. Ready to continue where we left off?\n\nWhat are we working on today?'
+      );
+      renderChipGroup([
+        { label: '📸 Find something I saw', msg: 'I saw something I love and want to find it' },
+        { label: '👗 What do I wear today',  msg: 'Help me put together an outfit' },
+        { label: '🛍️ Shop for something',   msg: 'I want to shop for something specific' }
+      ], (msg) => sendMessage(msg));
+    } else {
+      showOnboardingWelcome();
+    }
+  } catch(e) {
+    showOnboardingWelcome();
+  }
+}
+
+checkSession();
 </script>
 </body>
 </html>

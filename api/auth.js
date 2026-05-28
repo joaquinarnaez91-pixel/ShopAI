@@ -1,7 +1,7 @@
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     res.status(200).end(); return;
@@ -9,6 +9,13 @@ export default async function handler(req, res) {
 
   const { action, email, password } = req.body;
   const { supabaseAdmin } = await import('./_lib/supabase.js');
+
+  if (action === 'verify') {
+    const { verifyUser } = await import('./_lib/getLumenContext.js');
+    const { user, error } = await verifyUser(req);
+    if (error) return res.status(401).json({ error });
+    return res.status(200).json({ user });
+  }
 
   if (action === 'signup') {
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
