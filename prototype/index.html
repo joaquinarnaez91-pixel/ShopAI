@@ -1124,9 +1124,63 @@ async function runOutfitCheck(base64, mimeType, dataUrl, occasion) {
     renderOutfitCheckResult(result, window._pendingUrl || '');
     console.log('[outfit] render complete');
 
+    // Fetch DALL-E preview asynchronously — non-blocking
+    if (result.previewPending && result.outfit_description && result.change_description) {
+      fetchOutfitPreview(result.outfit_description, result.change_description);
+    }
+
   } catch(e) {
     document.getElementById(loadingId)?.remove();
     addMessage('ai', 'Something went wrong. Try again.');
+  }
+}
+
+async function fetchOutfitPreview(outfitDesc, changeDesc) {
+  const chatEl = document.getElementById('lumenChat');
+  const previewWrap = document.createElement('div');
+  previewWrap.id = 'outfit-preview-wrap';
+  previewWrap.style.cssText =
+    'margin:4px 16px;border-radius:12px;background:var(--card);padding:16px;' +
+    'text-align:center;color:var(--tx3);font-size:13px;border:1.5px solid var(--border)';
+  previewWrap.innerHTML = '✨ Generating style preview...';
+  chatEl.appendChild(previewWrap);
+  scrollToLatest();
+
+  try {
+    const result = await fetch('/api/generate-preview', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + (currentSession?.access_token || '')
+      },
+      body: JSON.stringify({
+        outfitDescription: outfitDesc,
+        changeDescription: changeDesc,
+        style: 'modern fashion editorial'
+      })
+    }).then(r => r.json());
+
+    const wrap = document.getElementById('outfit-preview-wrap');
+    if (!wrap) return;
+
+    if (result.url) {
+      wrap.innerHTML =
+        '<div style="font-size:10px;font-weight:700;color:var(--tx3);' +
+        'text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">' +
+        'HERE\'S WHAT I MEAN →</div>' +
+        '<img src="' + result.url + '" ' +
+        'style="width:100%;border-radius:10px;object-fit:cover" ' +
+        'onload="scrollToLatest()">' +
+        '<div style="font-size:11px;color:var(--tx3);margin-top:8px">' +
+        'AI-generated style suggestion</div>';
+    } else {
+      wrap.remove();
+    }
+
+  } catch(e) {
+    console.error('[preview] fetch failed:', e.message);
+    const wrap = document.getElementById('outfit-preview-wrap');
+    if (wrap) wrap.remove();
   }
 }
 

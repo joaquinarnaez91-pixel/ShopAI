@@ -149,32 +149,22 @@ export default async function handler(req, res) {
     const analysis = await analyzeOutfit(imageBase64, mimeType, profile, occasion);
     console.log('[outfit-check] verdict:', analysis.verdict);
 
-    let previewUrl = null;
-    if (analysis.one_change && analysis.outfit_description) {
-      if (!process.env.OPENAI_API_KEY) {
-        console.error('[outfit-check] OPENAI_API_KEY not set — skipping image generation');
-        previewUrl = null;
-      } else {
-        console.log('[outfit-check] generating preview...');
-        previewUrl = await generateSuggestionPreview(
-          analysis.outfit_description,
-          analysis.change_description,
-          profile.aesthetic?.[0]
-        ).catch(e => {
-          console.error('[outfit-check] DALL-E:', e.message);
-          return null;
-        });
-      }
-    }
+    // Image generated separately via /api/generate-preview — not blocking
+    const previewUrl = null;
 
     if (userId) {
       await saveMessage(userId, 'user', '[Outfit photo uploaded]', 'style_guide',
         { type: 'outfit_check', occasion });
       await saveMessage(userId, 'assistant', analysis.verdict, 'style_guide',
-        { type: 'outfit_verdict', analysis, previewUrl });
+        { type: 'outfit_verdict', analysis, previewUrl: null });
     }
 
-    return res.status(200).json({ ...analysis, previewUrl });
+    return res.status(200).json({
+      ...analysis,
+      previewUrl: null,
+      previewPending: !!(analysis.outfit_description && analysis.change_description),
+      previewPrompt: (analysis.outfit_description || '') + ' with ' + (analysis.change_description || '')
+    });
 
   } catch(e) {
     console.error('[outfit-check] error:', e.message);
