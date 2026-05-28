@@ -10,13 +10,12 @@ export default async function handler(req, res) {
   const { imageUrl } = req.body;
 
   try {
-    // Modelo SAM 2 (Segment Anything 2)
+    // rembg — removes background, returns clean person silhouette used as mask
     const output = await replicate.run(
-      "lucataco/sam2:c0f4d306b6539151529a65681944510b64d732890696956636731304917a151b",
+      "cjwbw/rembg:fb8af171cfa1616ddcf1242c093f9c46bcada5ad4cf6f2fbe8b81b330ec5c003",
       { input: { image: imageUrl } }
     );
-    
-    // Devolvemos la URL de la máscara generada
+
     res.status(200).json({ success: true, maskUrl: output });
   } catch (error) {
     res.status(500).json({ error: error.message });
