@@ -1173,28 +1173,60 @@ function wireInput(inp, btn) {
 // ── Onboarding ────────────────────────────────────────────────────────────
 function showOnboardingWelcome() {
   const chatEl = document.getElementById('lumenChat');
-  if (!chatEl) { console.error('[scroll] lumenChat not found'); return; }
-
+  if (!chatEl) return;
   chatEl.innerHTML = '';
 
+  // Welcome message
   addMessage('ai',
     'Hi, I\'m Lumen ✨\n\n' +
-    'Your personal style companion — ' +
+    'Your personal style companion.\n\n' +
     'I help you decide what to wear, ' +
-    'find things you love, and build ' +
-    'a style that\'s completely yours.\n\n' +
+    'find things you love, and discover ' +
+    'the style that\'s completely yours.\n\n' +
     'What\'s on your mind?'
   );
 
+  // 4 entry chips after short delay
   setTimeout(() => {
     renderChipGroup([
-      { label:'📷 Share a photo',            action:'gallery' },
-      { label:'🛍️ Find something I saw',    msg:'I saw something I love and want to find it' },
-      { label:'👗 Help me plan what to wear', msg:'Help me plan what to wear' },
-      { label:'✨ Just browsing',            msg:'I\'m just browsing, show me what\'s trending' },
-    ], (msg) => sendMessage(msg));
+      {
+        label: '📷 Rate my outfit',
+        msg: 'I want honest feedback on my outfit'
+      },
+      {
+        label: '🛍️ Find something I saw',
+        msg: 'I saw something I love and want to find it'
+      },
+      {
+        label: '👗 Help me plan what to wear',
+        msg: 'Help me figure out what to wear'
+      },
+      {
+        label: '✨ Just browsing',
+        msg: 'I\'m just browsing, what\'s trending right now?'
+      }
+    ], (msg) => {
+      if (msg === 'I want honest feedback on my outfit') {
+        // Outfit check flow — ask for photo
+        addMessage('ai',
+          'Love it. Show me what you\'re wearing ' +
+          'and I\'ll give you my honest take — ' +
+          'what works, what doesn\'t, and one ' +
+          'specific thing to make it better.'
+        );
+        setTimeout(() => {
+          renderChipGroup([
+            { label: '📷 Take photo now', action: 'camera' },
+            { label: '🖼️ Upload from gallery', action: 'gallery' }
+          ], () => {});
+          scrollToLatest();
+        }, 400);
+      } else {
+        sendMessage(msg);
+      }
+    });
     scrollToLatest();
-  }, 400);
+  }, 500);
 }
 
 // ── Auth UI ───────────────────────────────────────────────────────────────
@@ -1310,23 +1342,51 @@ async function checkSession() {
 }
 
 async function loadUserGreeting() {
-  if (!currentUser) { showOnboardingWelcome(); return; }
-  try {
-    const context = await apiFetch('/api/profile', {});
-    if (context.profile?.color_season) {
+  const chatEl = document.getElementById('lumenChat');
+  if (!chatEl) return;
+  chatEl.innerHTML = '';
+
+  if (currentUser) {
+    const context = await apiFetch('/api/profile', {})
+      .catch(() => ({ profile: {} }));
+    const profile = context?.profile || {};
+    const name = currentUser.user_metadata?.full_name?.split(' ')[0]
+      || currentUser.email?.split('@')[0]
+      || '';
+    const hasProfile = profile.color_season || profile.gender;
+
+    if (hasProfile) {
       addMessage('ai',
-        'Welcome back! 👋\n\nI remember you — ' + context.profile.color_season + ' palette' +
-        (context.profile.gender ? ', ' + context.profile.gender : '') +
-        '. Ready to continue where we left off?\n\nWhat are we working on today?');
-      renderChipGroup([
-        { label:'📸 Find something I saw', msg:'I saw something I love and want to find it' },
-        { label:'👗 What do I wear today',  msg:'Help me put together an outfit' },
-        { label:'🛍️ Shop for something',   msg:'I want to shop for something specific' }
-      ], msg => sendMessage(msg));
+        'Welcome back' + (name ? ', ' + name : '') + '! 👋\n\n' +
+        'What\'s on your mind today?'
+      );
+      setTimeout(() => {
+        renderChipGroup([
+          {
+            label: '📷 Rate my outfit today',
+            msg: 'I want feedback on what I\'m wearing today'
+          },
+          {
+            label: '👗 What should I wear?',
+            msg: 'Help me figure out what to wear today'
+          },
+          {
+            label: '🛍️ Find something',
+            msg: 'I want to find something specific'
+          },
+          {
+            label: '✨ Show me trends',
+            msg: 'Show me what\'s trending right now'
+          }
+        ], (msg) => sendMessage(msg));
+        scrollToLatest();
+      }, 400);
     } else {
       showOnboardingWelcome();
     }
-  } catch(e) { showOnboardingWelcome(); }
+  } else {
+    showOnboardingWelcome();
+  }
 }
 
 // ── Desktop layout ────────────────────────────────────────────────────────
