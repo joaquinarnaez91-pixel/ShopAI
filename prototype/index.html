@@ -291,6 +291,7 @@ let profileOpen     = false;
 let currentDiveProduct = null;
 let tryOnPersonDataUri = null;
 let _outfitCheckMode = false;
+let currentProfile = {};
 
 // Onboarding
 let onboardingStep   = 0;
@@ -371,6 +372,17 @@ function extractProfile(msgs) {
 
 function detectApiMode(text) {
   return /\b(find|shop|buy|search|where (to )?(buy|get|find)|price|store|purchase|sneaker|boot|sandal|shoe|clothing|outfit pieces|pieces for)\b/i.test(text) ? 'discover' : 'style';
+}
+
+function detectCategory(text) {
+  const t = text.toLowerCase();
+  if (/dress|gown|jumpsuit|romper/.test(t)) return 'dresses';
+  if (/skirt|pants|jeans|shorts|leggings|trousers|chinos|jogger/.test(t)) return 'bottoms';
+  if (/shirt|tee|top|blouse|sweater|hoodie|jacket|coat|blazer/.test(t)) return 'tops';
+  if (/shoe|boot|sneaker|sandal|heel|loafer|oxford/.test(t)) return 'shoes';
+  if (/bag|purse|tote|backpack|wallet/.test(t)) return 'bags';
+  if (/watch|ring|necklace|bracelet|earring|jewelry|accessory/.test(t)) return 'accessories';
+  return 'clothing';
 }
 
 function startEnrichAnim() {
@@ -1222,7 +1234,7 @@ function renderOutfitCheckResult(result, photoUrl) {
   findBtn.className = 'l-chip';
   findBtn.style.cssText = 'font-size:12px;padding:6px 12px';
   findBtn.textContent = '🛍️ Find this piece';
-  findBtn.onclick = () => sendMessage(
+  findBtn.onclick = () => handleDirectSearch(
     'Find me: ' + (result.change_item || result.one_change || 'this item')
   );
   actions.appendChild(findBtn);
@@ -1317,7 +1329,7 @@ function renderVisionResults(analysis, originalImage) {
 }
 
 function searchVisionItem(query) {
-  sendMessage('Find me this: ' + query);
+  handleDirectSearch('Find me this: ' + query);
 }
 
 // ── Style Quiz ────────────────────────────────────────────────────────────
@@ -1377,6 +1389,115 @@ function renderStyleQuiz() {
 }
 
 // ── Send Message ──────────────────────────────────────────────────────────
+// ── Direct search (Claude brain → SerpAPI) ───────────────────────────────
+async function handleDirectSearch(text) {
+  addMessage('user', text);
+
+  const loadingId = 'search-' + Date.now();
+  addMessage('ai', '🧠 Finding the best options for you...', loadingId);
+  scrollToLatest();
+
+  try {
+    const profileContext = currentProfile && Object.keys(currentProfile).length
+      ? 'User profile: ' + JSON.stringify({
+          season:    currentProfile.color_season,
+          undertone: currentProfile.undertone,
+          palette:   currentProfile.palette,
+          aesthetic: currentProfile.aesthetic,
+          gender:    currentProfile.gender,
+          age:       currentProfile.age_range,
+          size:      currentProfile.size_info
+        })
+      : '';
+
+    const brainMessages = [{
+      role: 'user',
+      content: profileContext + '\n\n' +
+        'The user needs: ' + text + '\n\n' +
+        'Based on their specific profile, recommend 4 specific products to search for. ' +
+        'Each must match their color palette, aesthetic, and body type.\n\n' +
+        'Output ONLY this JSON, nothing else:\n' +
+        'SEARCH_MODELS:{"models":[' +
+        '{"brand":"Everlane","model":"Slim Chino","query":"Everlane slim chino dark olive mens",' +
+        '"category":"bottoms","why":"Olive sits perfectly in your Autumn palette"}' +
+        ']}'
+    }];
+
+    const brainResponse = await apiFetch('/api/chat', { messages: brainMessages, tab: 'discover' });
+    const content = brainResponse.content || '';
+    const match = content.match(/SEARCH_MODELS:\s*(\{[\s\S]*?\})\s*$/);
+
+    if (!match) {
+      console.warn('[search] no SEARCH_MODELS, using fallback');
+      await fallbackDirectSearch(text, loadingId);
+      return;
+    }
+
+    let modelData;
+    try { modelData = JSON.parse(match[1]); }
+    catch(e) { await fallbackDirectSearch(text, loadingId); return; }
+
+    const products = await apiFetch('/api/search', {
+      models: modelData.models || [],
+      userProfile: currentProfile || {}
+    });
+
+    document.getElementById(loadingId)?.remove();
+
+    if (!products?.length) {
+      addMessage('ai', 'I couldn\'t find exact matches right now. Try describing it differently.');
+      return;
+    }
+
+    const firstWhy = modelData.models?.[0]?.why || '';
+    addMessage('ai',
+      'Here\'s what I found for you' + (firstWhy ? ' — ' + firstWhy : '') + ' 👇'
+    );
+    renderProductsInline(products,
+      'Picked for your ' + (currentProfile?.color_season || 'style'));
+
+    setTimeout(() => {
+      renderChipGroup([
+        { label: '💰 Lower budget',  msg: 'Find me cheaper: ' + text },
+        { label: '🏆 More premium',  msg: 'Find me premium version: ' + text },
+        { label: '🎨 Different color', msg: 'Find me different color: ' + text },
+        { label: '📷 Rate my outfit',  msg: 'I want feedback on my outfit' }
+      ], (msg) => sendMessage(msg));
+      scrollToLatest();
+    }, 300);
+
+  } catch(e) {
+    document.getElementById(loadingId)?.remove();
+    console.error('[search] brain error:', e.message);
+    addMessage('ai', 'Something went wrong. Try again.');
+  }
+}
+
+async function fallbackDirectSearch(text, loadingId) {
+  const query = text.replace(/^find me( this)?:/i, '').trim();
+
+  const products = await apiFetch('/api/search', {
+    models: [{
+      brand: '',
+      model: query,
+      query: query,
+      category: detectCategory(query),
+      why: 'Matches your style profile'
+    }],
+    userProfile: currentProfile || {}
+  }).catch(() => []);
+
+  document.getElementById(loadingId)?.remove();
+
+  if (!products?.length) {
+    addMessage('ai', 'No matches found. Try describing it differently.');
+    return;
+  }
+
+  addMessage('ai', 'Here\'s what I found 👇');
+  renderProductsInline(products, 'For you');
+}
+
 async function sendMessage(text) {
   if (!text.trim() || isLoading) return;
   isLoading = true;
@@ -1440,6 +1561,7 @@ async function sendMessage(text) {
           renderPaletteInChat(prof.palette, prof.season);
         }
         if (prof.style) userProfile.style = prof.style;
+        currentProfile = { ...currentProfile, ...prof };
         updateProfileDisplay();
         if (onboardingStep === 1 && prof.palette?.length > 0) { onboardingStep = 2; setTimeout(() => renderStyleQuiz(), 600); }
         if (hadPhoto && prof.palette?.length > 0) {
@@ -1704,6 +1826,7 @@ async function loadUserGreeting() {
     const context = await apiFetch('/api/profile', {})
       .catch(() => ({ profile: {} }));
     const profile = context?.profile || {};
+    currentProfile = profile;
     const name = currentUser.user_metadata?.full_name?.split(' ')[0]
       || currentUser.email?.split('@')[0]
       || '';
