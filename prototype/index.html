@@ -27,7 +27,7 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--tx1)
 .l-profile-btn { width:36px; height:36px; border-radius:50%; background:var(--card); border:1.5px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--tx2); }
 
 /* CHAT */
-.l-chat { flex:1; overflow-y:auto; overflow-x:hidden; padding:16px 0 140px; -webkit-overflow-scrolling:touch; }
+.l-chat { flex:1; overflow-y:auto !important; overflow-x:hidden; padding:16px 0 140px; -webkit-overflow-scrolling:touch; height:calc(100vh - 60px - 72px); }
 .l-chat::-webkit-scrollbar { display:none; }
 
 /* MESSAGES */
@@ -50,9 +50,9 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--tx1)
 .l-card-row::-webkit-scrollbar { display:none; }
 
 /* PRODUCT CARD */
-.l-card { flex-shrink:0; width:200px; border-radius:16px; border:1.5px solid var(--border); background:var(--bg); overflow:hidden; cursor:pointer; scroll-snap-align:start; transition:transform 0.15s; position:relative; }
-.l-card:active { transform:scale(0.97); }
-.l-card-img { width:100%; height:180px; background:var(--photo); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.l-card { flex-shrink:0; width:220px; border-radius:16px; border:1.5px solid var(--border); background:var(--bg); overflow:hidden; cursor:pointer; scroll-snap-align:start; box-shadow:0 2px 8px rgba(0,0,0,0.06); transition:transform 0.15s,box-shadow 0.15s; position:relative; }
+.l-card:active { transform:scale(0.97); box-shadow:0 1px 4px rgba(0,0,0,0.08); }
+.l-card-img { width:100%; height:200px; background:var(--photo); display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; }
 .l-card-img img { width:100%; height:100%; object-fit:cover; }
 .l-card-body { padding:10px 12px 12px; }
 .l-card-brand { font-size:10px; font-weight:700; color:var(--tx3); text-transform:uppercase; letter-spacing:0.5px; }
@@ -297,10 +297,14 @@ function stopEnrichAnim() {
 function chat() { return document.getElementById('lumenChat'); }
 
 function scrollToLatest() {
-  const el = chat();
-  if (!el) return;
-  const last = el.lastElementChild;
-  if (last) last.scrollIntoView({ behavior:'smooth', block:'start' });
+  const chatEl = document.getElementById('lumenChat');
+  if (!chatEl) return;
+  const items = chatEl.querySelectorAll('.l-msg, .l-chips, .l-card-row');
+  if (!items.length) return;
+  const last = items[items.length - 1];
+  setTimeout(() => {
+    last.scrollIntoView({ behavior:'smooth', block:'start' });
+  }, 100);
 }
 
 function addMessage(role, text, id) {
@@ -345,7 +349,16 @@ function renderChipGroup(chips, onSelect) {
     btn.onclick = () => {
       document.querySelectorAll('.chip-group').forEach(el => el.remove());
       row.remove();
-      if (onSelect) onSelect(chip.msg, chip.action);
+      if (chip.action === 'gallery') {
+        document.getElementById('galleryInput').click();
+      } else if (chip.action === 'camera') {
+        document.getElementById('cameraInput').click();
+      } else if (chip.action === 'focus') {
+        const inp = document.getElementById('lumenInput');
+        if (inp) inp.focus();
+      } else if (onSelect) {
+        onSelect(chip.msg, chip.action);
+      }
     };
     row.appendChild(btn);
   });
@@ -440,7 +453,7 @@ function renderProductsInline(prods, label) {
     const ind = p.priceIndicator || 'USUAL';
     card.innerHTML =
       (i === 0 ? '<div class="l-expert-badge">Expert Pick</div>' : '') +
-      `<div class="l-card-img">${p.img ? `<img src="${p.img}" onerror="this.style.display='none'">` : '<div style="font-size:32px;color:var(--tx3)">👟</div>'}</div>` +
+      `<div class="l-card-img">${p.img ? `<img src="${p.img}" onerror="this.style.display='none'">` : '<div style="display:flex;align-items:center;justify-content:center;font-size:40px;color:var(--tx3)">🛍️</div>'}</div>` +
       `<button class="l-card-pin${isPinned ? ' saved' : ''}" id="pin-${p.id}" onclick="event.stopPropagation();toggleSave(${p.id})">` +
         `<svg viewBox="0 0 24 24" width="14" height="14" fill="${isPinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>` +
       `</button>` +
@@ -708,15 +721,8 @@ function renderOutfitCards(text) {
     renderChipGroup([
       { label:'🛍️ Shop these looks',  msg:'Find clothes for my outfit formulas' },
       { label:'✨ Refine my style',    msg:'Tell me more about my style and give me more outfits' },
-      { label:'📷 Visual search',      action:'photo' },
-    ], (msg, action) => {
-      if (action === 'photo') {
-        const inp = document.getElementById('cameraInput');
-        if (inp) inp.click();
-      } else {
-        sendMessage(msg);
-      }
-    });
+      { label:'📷 Visual search',      action:'camera' },
+    ], msg => sendMessage(msg));
     scrollToLatest();
   }, 400);
 
@@ -811,7 +817,6 @@ function renderVisionResults(analysis, originalImage) {
 }
 
 function searchVisionItem(query) {
-  currentMode = 'discover';
   sendMessage('Find me this: ' + query);
 }
 
@@ -1014,71 +1019,29 @@ function wireInput(inp, btn) {
 
 // ── Onboarding ────────────────────────────────────────────────────────────
 function showOnboardingWelcome() {
-  onboardingStep = 0;
+  const chatEl = document.getElementById('lumenChat');
+  if (!chatEl) { console.error('[scroll] lumenChat not found'); return; }
+
+  chatEl.innerHTML = '';
+
   addMessage('ai',
-    'Hi! I\'m Lumen ✨ — your personal style companion.\n\n' +
-    'I\'m here to help you:\n' +
-    '• Find anything you see on Instagram or in stores\n' +
-    '• Discover what colors and styles work for YOU\n' +
-    '• Build outfits from what you already own\n' +
-    '• Shop smarter across every store\n\n' +
-    'The more I know about you, the better I get. Let\'s start with 3 quick questions so I can personalize everything.'
+    'Hi, I\'m Lumen ✨\n\n' +
+    'Your personal style companion — ' +
+    'I help you decide what to wear, ' +
+    'find things you love, and build ' +
+    'a style that\'s completely yours.\n\n' +
+    'What\'s on your mind?'
   );
 
   setTimeout(() => {
-    addMessage('ai', 'First — who are we styling? This helps me show you the right cuts, fits and trends.');
     renderChipGroup([
-      { label:'👨 Man',        msg:'👨 Man' },
-      { label:'👩 Woman',      msg:'👩 Woman' },
-      { label:'🧑 Non-binary', msg:'🧑 Non-binary' },
-    ], msg => {
-      userGender = msg.replace(/\p{Emoji}/gu, '').trim().toLowerCase();
-      addMessage('user', msg);
-      setTimeout(() => {
-        addMessage('ai', 'What\'s your age range? Trends and recommendations vary a lot — I want to show you what\'s actually relevant.');
-        renderChipGroup([
-          { label:'18–24', msg:'18–24' },
-          { label:'25–34', msg:'25–34' },
-          { label:'35–44', msg:'35–44' },
-          { label:'45+',   msg:'45+' },
-        ], msg => {
-          userAge = msg;
-          addMessage('user', msg);
-          setTimeout(() => {
-            addMessage('ai', 'Do you know your color season? This tells me which colors make you glow. Don\'t worry if you\'re not sure — I\'ll figure it out for you.');
-            renderChipGroup([
-              { label:'🌸 Spring',     msg:'🌸 Spring' },
-              { label:'☀️ Summer',    msg:'☀️ Summer' },
-              { label:'🍂 Autumn',    msg:'🍂 Autumn' },
-              { label:'❄️ Winter',    msg:'❄️ Winter' },
-              { label:'Not sure yet', msg:'Not sure yet' },
-            ], msg => {
-              userCurrentSeason = msg === 'Not sure yet' ? null : msg.replace(/\p{Emoji}/gu, '').trim();
-              addMessage('user', msg);
-              setTimeout(() => {
-                addMessage('ai',
-                  'Last thing — and this is optional but powerful. ' +
-                  'If you share a selfie, I can analyze your exact skin tone and tell you which colors are made for you. ' +
-                  'Your photo is never stored. Want to try it?');
-                renderChipGroup([
-                  { label:'📷 Share a photo',    action:'photo' },
-                  { label:'💬 Ask me questions', msg:'Ask me questions to find my colors' },
-                ], (msg, action) => {
-                  onboardingStep = 1;
-                  if (action === 'photo') {
-                    const inp = document.getElementById('cameraInput');
-                    if (inp) inp.click();
-                  } else {
-                    sendMessage(msg);
-                  }
-                });
-              }, 300);
-            });
-          }, 300);
-        });
-      }, 300);
-    });
-  }, 500);
+      { label:'📷 Rate my outfit',          msg:'I want you to rate my outfit' },
+      { label:'🛍️ Find something I saw',    msg:'I saw something I love and want to find it' },
+      { label:'👗 Help me plan what to wear', msg:'Help me plan what to wear' },
+      { label:'✨ Just browsing',            msg:'I\'m just browsing, show me what\'s trending' },
+    ], (msg) => sendMessage(msg));
+    scrollToLatest();
+  }, 400);
 }
 
 // ── Auth UI ───────────────────────────────────────────────────────────────
