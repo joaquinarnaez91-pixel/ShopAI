@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     // image  = the product/garment image
     // mask   = the body silhouette from Step 1
     const output = await replicate.run(
-      "subhash25rawat/flux-vton:hash_que_aparezca_en_la_web",
+      "subhash25rawat/flux-vton:a02643ce418c0e12bad371c4adbfaec0dd1cb34b034ef37650ef205f92ad6199",
       {
         input: {
           image: productUrl,
