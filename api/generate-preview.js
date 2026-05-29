@@ -13,13 +13,13 @@ export default async function handler(req, res) {
   console.log('[preview] key prefix:', process.env.OPENAI_API_KEY?.slice(0, 10));
 
   const prompt =
-    'Fashion editorial photo. ' +
+    'Fashion editorial flat lay or clothing on mannequin. ' +
+    'NO human face, NO human body, NO model. ' +
+    'Show only the clothing items displayed as if worn by an invisible person or laid flat. ' +
     'Outfit: ' + outfitDescription + '. ' +
-    'Styled with: ' + changeDescription + '. ' +
-    'Style: ' + (style || 'modern casual') + '. ' +
-    'Clean neutral background. ' +
-    'Professional fashion photography. ' +
-    'No face needed, focus on clothing.';
+    'With this addition: ' + changeDescription + '. ' +
+    'Clean white background. ' +
+    'Professional product photography, high quality fashion magazine style.';
 
   const models = ['gpt-image-1', 'dall-e-3'];
   let url = null;

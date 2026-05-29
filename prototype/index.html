@@ -46,8 +46,9 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--tx1)
 .l-chip:active { background:var(--tx1); color:#fff; border-color:var(--tx1); }
 
 /* PRODUCT CARD ROW */
-.l-card-row { padding:8px 16px; display:flex; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.l-card-row { padding:8px 16px; display:flex; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; cursor:grab; user-select:none; }
 .l-card-row::-webkit-scrollbar { display:none; }
+.l-card-row.dragging { cursor:grabbing; scroll-snap-type:none; }
 
 /* PRODUCT CARD */
 .l-card { flex-shrink:0; width:220px; border-radius:16px; border:1.5px solid var(--border); background:var(--bg); overflow:hidden; cursor:pointer; scroll-snap-align:start; box-shadow:0 2px 12px rgba(0,0,0,0.07); transition:transform 0.15s,box-shadow 0.15s; position:relative; }
@@ -580,7 +581,65 @@ function renderProductsInline(prods, label) {
   });
 
   c.appendChild(row);
+  applyCardScroll(row);
+  addTasteFeedback(prods);
   scrollToLatest();
+}
+
+function applyCardScroll(row) {
+  let isDown = false, startX = 0, scrollLeft = 0;
+  row.addEventListener('mousedown', e => {
+    isDown = true;
+    row.classList.add('dragging');
+    startX = e.pageX - row.offsetLeft;
+    scrollLeft = row.scrollLeft;
+  });
+  row.addEventListener('mouseleave', () => { isDown = false; row.classList.remove('dragging'); });
+  row.addEventListener('mouseup', () => { isDown = false; row.classList.remove('dragging'); });
+  row.addEventListener('mousemove', e => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - row.offsetLeft;
+    row.scrollLeft = scrollLeft - (x - startX) * 1.5;
+  });
+}
+
+function addTasteFeedback(prods) {
+  const c = chat();
+  if (!c || !prods.length) return;
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;gap:8px;padding:4px 16px 8px;align-items:center';
+  const label = document.createElement('span');
+  label.style.cssText = 'font-size:12px;color:var(--tx3)';
+  label.textContent = 'These picks:';
+  wrap.appendChild(label);
+  const buttons = [
+    { emoji: '❤️', label: 'Love it', type: 'love' },
+    { emoji: '👍', label: 'Good', type: 'good' },
+    { emoji: '👎', label: 'Not for me', type: 'not_for_me' }
+  ];
+  buttons.forEach(b => {
+    const btn = document.createElement('button');
+    btn.style.cssText = 'padding:4px 10px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-size:13px;cursor:pointer;transition:all 0.15s';
+    btn.textContent = b.emoji + ' ' + b.label;
+    btn.onclick = () => {
+      wrap.querySelectorAll('button').forEach(el => el.style.opacity = '0.4');
+      btn.style.opacity = '1';
+      btn.style.borderColor = 'var(--tx1)';
+      btn.style.background = 'var(--card)';
+      const token = localStorage.getItem('lumen_token');
+      fetch('/api/taste-signal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+        body: JSON.stringify({
+          signal_type: b.type,
+          content: { products: prods.map(p => ({ brand: p.brand, name: p.name, category: p.category })) }
+        })
+      }).catch(() => {});
+    };
+    wrap.appendChild(btn);
+  });
+  c.appendChild(wrap);
 }
 
 function toggleSave(id) {
@@ -627,65 +686,153 @@ function renderScoreBars(scores) {
 
 // ── Deep Dive ─────────────────────────────────────────────────────────────
 function openDeepDive(p) {
-  const dd      = document.getElementById('deepDive');
+  const dd = document.getElementById('deepDive');
   const overlay = document.getElementById('overlay');
+  if (!dd || !overlay) return;
   currentDiveProduct = p;
 
-  dd.innerHTML =
-    `<div style="padding:12px 16px 0;display:flex;justify-content:center">` +
-      `<div style="width:36px;height:4px;border-radius:2px;background:var(--border)"></div>` +
-    `</div>` +
-    `<div style="width:100%;height:240px;background:var(--photo);overflow:hidden">` +
-      (p.img ? `<img src="${p.img}" style="width:100%;height:100%;object-fit:cover">` : `<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:48px">👟</div>`) +
-    `</div>` +
-    `<div style="padding:16px">` +
-      `<div style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px">${p.brand || ''}</div>` +
-      `<div style="font-size:18px;font-weight:700;color:var(--tx1);margin:4px 0 8px;line-height:1.3">${p.name || ''}</div>` +
-      `<div style="font-size:22px;font-weight:700;color:var(--tx1);margin-bottom:12px">$${p.price || '—'}</div>` +
-      `<a href="${p.link || '#'}" target="_blank" style="display:block;text-align:center;padding:14px;background:var(--tx1);color:#fff;border-radius:12px;font-size:15px;font-weight:600;text-decoration:none;margin-bottom:10px">` +
-        `Buy at ${p.source || 'Store'} →` +
-      `</a>` +
-      `<button onclick="openTryOn()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:var(--card);color:var(--tx1);border:1.5px solid var(--border);border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:16px">` +
-        `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>` +
-        `Try On` +
-      `</button>` +
-      `<div id="dd-enrich-${p.id}">` +
-        `<div style="text-align:center;color:var(--tx3);font-size:13px;padding:20px 0">` +
-          `<div class="enrich-loading-label" style="margin-bottom:8px">Loading expert analysis…</div>` +
-          `<div class="enrich-progress"><div class="enrich-progress-fill"></div></div>` +
-        `</div>` +
-      `</div>` +
-    `</div>`;
+  dd.innerHTML = '';
+
+  // Sticky header
+  const header = document.createElement('div');
+  header.style.cssText =
+    'position:sticky;top:0;z-index:10;background:var(--bg);' +
+    'border-bottom:1px solid var(--border);padding:12px 16px;' +
+    'display:flex;justify-content:space-between;align-items:center';
+  header.innerHTML =
+    '<div style="width:36px;height:4px;border-radius:2px;' +
+    'background:var(--border);cursor:pointer" onclick="closeDeepDive()"></div>' +
+    '<button onclick="closeDeepDive()" style="font-size:24px;background:none;' +
+    'border:none;cursor:pointer;color:var(--tx2);line-height:1;padding:0 4px">✕</button>';
+  dd.appendChild(header);
+
+  // Product image (3:4 aspect ratio)
+  const imgWrap = document.createElement('div');
+  imgWrap.style.cssText =
+    'width:100%;background:var(--photo);aspect-ratio:3/4;' +
+    'overflow:hidden;display:flex;align-items:center;justify-content:center';
+  if (p.img) {
+    const img = document.createElement('img');
+    img.src = p.img;
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+    img.onerror = () => { imgWrap.innerHTML = '<div style="font-size:48px">👗</div>'; };
+    imgWrap.appendChild(img);
+  } else {
+    imgWrap.innerHTML = '<div style="font-size:48px">👗</div>';
+  }
+  dd.appendChild(imgWrap);
+
+  // Main content
+  const content = document.createElement('div');
+  content.style.cssText = 'padding:20px 16px';
+
+  // Brand / name / price / retailer
+  content.innerHTML =
+    '<div style="font-size:11px;font-weight:700;color:var(--tx3);' +
+    'text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">' +
+    (p.brand || '') + '</div>' +
+    '<div style="font-size:20px;font-weight:600;color:var(--tx1);' +
+    'line-height:1.3;margin-bottom:8px">' + (p.name || '') + '</div>' +
+    '<div style="font-size:24px;font-weight:700;color:var(--tx1);' +
+    'margin-bottom:4px">$' + (p.price || '—') + '</div>' +
+    '<div style="font-size:12px;color:var(--tx3);margin-bottom:20px">' +
+    'Available at ' + (p.source || 'Retailer') +
+    (p.delivery ? ' · ' + p.delivery : '') + '</div>';
+
+  // Buy CTA
+  const buyBtn = document.createElement('a');
+  buyBtn.href = p.link || '#';
+  buyBtn.target = '_blank';
+  buyBtn.style.cssText =
+    'display:block;text-align:center;padding:16px;background:var(--tx1);' +
+    'color:#fff;border-radius:12px;font-size:15px;font-weight:600;' +
+    'text-decoration:none;margin-bottom:24px;letter-spacing:0.3px';
+  buyBtn.textContent = 'Shop at ' + (p.source || 'Store') + ' →';
+  content.appendChild(buyBtn);
+
+  // Divider
+  const div1 = document.createElement('div');
+  div1.style.cssText = 'height:1px;background:var(--border);margin-bottom:20px';
+  content.appendChild(div1);
+
+  // Price indicator + rating row
+  const statsRow = document.createElement('div');
+  statsRow.style.cssText = 'display:flex;gap:12px;margin-bottom:20px';
+  const indColors = {
+    LOW:   { bg:'#E8F5E9', color:'#2E7D32', label:'🟢 Good price' },
+    USUAL: { bg:'#FFF8E1', color:'#F57F17', label:'🟡 Usual price' },
+    HIGH:  { bg:'#FFEBEE', color:'#C62828', label:'🔴 High price' }
+  };
+  const ind = indColors[p.priceIndicator] || indColors.USUAL;
+  statsRow.innerHTML =
+    '<div style="flex:1;padding:12px;border-radius:10px;background:' + ind.bg + ';text-align:center">' +
+    '<div style="font-size:10px;font-weight:700;color:' + ind.color +
+    ';text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Price</div>' +
+    '<div style="font-size:13px;font-weight:600;color:' + ind.color + '">' + ind.label + '</div></div>' +
+    '<div style="flex:1;padding:12px;border-radius:10px;background:var(--card);text-align:center">' +
+    '<div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;' +
+    'letter-spacing:1px;margin-bottom:4px">Rating</div>' +
+    '<div style="font-size:13px;font-weight:600;color:var(--tx1)">★ ' + (p.rating || '—') +
+    ' <span style="color:var(--tx3);font-weight:400">(' +
+    (p.reviews || 0).toLocaleString() + ')</span></div></div>';
+  content.appendChild(statsRow);
+
+  // Fit guide bars
+  const fitSection = document.createElement('div');
+  fitSection.style.cssText = 'margin-bottom:20px';
+  fitSection.innerHTML =
+    '<div style="font-size:11px;font-weight:700;color:var(--tx3);' +
+    'text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Fit Guide</div>' +
+    renderFitBar('Fit', 50) + renderFitBar('Length', 50);
+  content.appendChild(fitSection);
+
+  // Divider
+  const div2 = document.createElement('div');
+  div2.style.cssText = 'height:1px;background:var(--border);margin-bottom:20px';
+  content.appendChild(div2);
+
+  // Enrich placeholder
+  const enrichSection = document.createElement('div');
+  enrichSection.id = 'dd-enrich-' + p.id;
+  enrichSection.style.cssText = 'margin-bottom:20px';
+  enrichSection.innerHTML =
+    '<div style="text-align:center;padding:16px;color:var(--tx3);font-size:13px">' +
+    '✨ Loading Lumen\'s take...</div>';
+  content.appendChild(enrichSection);
+
+  // Style It placeholder
+  const styleSection = document.createElement('div');
+  styleSection.id = 'dd-style-' + p.id;
+  content.appendChild(styleSection);
+
+  dd.appendChild(content);
 
   dd.scrollTop = 0;
   dd.classList.add('open');
   overlay.classList.add('show');
   deepDiveOpen = true;
-  startEnrichAnim();
 
+  // Swipe down to close
+  let touchStartY = 0;
+  dd.addEventListener('touchstart', e => {
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  dd.addEventListener('touchend', e => {
+    if (e.changedTouches[0].clientY - touchStartY > 70) closeDeepDive();
+  }, { passive: true });
+
+  // Load enrich data
   enrichProduct(p).then(data => {
-    stopEnrichAnim();
+    if (!data) return;
     const el = document.getElementById('dd-enrich-' + p.id);
-    if (!el || !data) return;
-    el.innerHTML =
-      `<div style="font-size:13px;font-weight:700;color:var(--tx1);margin-bottom:8px">Expert take</div>` +
-      `<div style="font-size:14px;color:var(--tx2);line-height:1.6;margin-bottom:16px">${data.expertTake || ''}</div>` +
-      `<div style="display:flex;gap:8px;margin-bottom:16px">` +
-        `<div style="flex:1;padding:12px;background:#E8F5E9;border-radius:12px">` +
-          `<div style="font-size:10px;font-weight:700;color:#2E7D32;margin-bottom:4px">PROS</div>` +
-          `<div style="font-size:13px;color:var(--tx1)">${data.prosSummary || ''}</div>` +
-        `</div>` +
-        `<div style="flex:1;padding:12px;background:#FFF8E1;border-radius:12px">` +
-          `<div style="font-size:10px;font-weight:700;color:#F57F17;margin-bottom:4px">CONS</div>` +
-          `<div style="font-size:13px;color:var(--tx1)">${data.consSummary || ''}</div>` +
-        `</div>` +
-      `</div>` +
-      renderScoreBars(data.scores) +
-      `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">` +
-        (data.technology || []).map(t => `<span style="padding:4px 10px;background:var(--card);border-radius:20px;font-size:11px;color:var(--tx2)">${t}</span>`).join('') +
-      `</div>` +
-      (data.funFact ? `<div style="margin-top:16px;font-size:13px;color:var(--tx3);font-style:italic;line-height:1.55">${data.funFact}</div>` : '');
-  }).catch(() => stopEnrichAnim());
+    if (!el) return;
+    el.innerHTML = renderEnrichSection(data, p);
+    const styleSec = document.getElementById('dd-style-' + p.id);
+    renderStyleItSection(p, styleSec);
+  }).catch(() => {
+    const el = document.getElementById('dd-enrich-' + p.id);
+    if (el) el.innerHTML = '';
+  });
 }
 
 function closeDeepDive() {
@@ -695,6 +842,102 @@ function closeDeepDive() {
   if (!profileOpen) overlay.classList.remove('show');
   deepDiveOpen = false;
   stopEnrichAnim();
+}
+
+function renderFitBar(label, position) {
+  const left  = label === 'Fit' ? 'Runs Small'  : 'Runs Short';
+  const right = label === 'Fit' ? 'Runs Large'  : 'Runs Long';
+  return '<div style="margin-bottom:14px">' +
+    '<div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:6px">' + label + '</div>' +
+    '<div style="position:relative;height:4px;background:var(--border);border-radius:2px;margin:0 4px">' +
+    '<div style="position:absolute;width:12px;height:12px;border-radius:50%;background:var(--tx1);' +
+    'top:-4px;left:calc(' + position + '% - 6px);transition:left 0.3s"></div></div>' +
+    '<div style="display:flex;justify-content:space-between;margin-top:6px">' +
+    '<span style="font-size:10px;color:var(--tx3)">' + left + '</span>' +
+    '<span style="font-size:10px;color:var(--tx2);font-weight:600">True to Size</span>' +
+    '<span style="font-size:10px;color:var(--tx3)">' + right + '</span>' +
+    '</div></div>';
+}
+
+function renderEnrichSection(data, p) {
+  const scores = data.scores || {};
+  return '<div>' +
+    '<div style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;' +
+    'letter-spacing:1px;margin-bottom:8px">Lumen\'s Take</div>' +
+    '<div style="font-size:14px;color:var(--tx2);line-height:1.6;margin-bottom:16px;' +
+    'font-style:italic">"' + (data.expertTake || '') + '"</div>' +
+    '<div style="display:flex;gap:8px;margin-bottom:16px">' +
+    '<div style="flex:1;padding:12px;background:#F0FFF4;border-radius:10px">' +
+    '<div style="font-size:10px;font-weight:700;color:#2E7D32;margin-bottom:4px">✓ PROS</div>' +
+    '<div style="font-size:12px;color:var(--tx1);line-height:1.4">' + (data.prosSummary || '') + '</div></div>' +
+    '<div style="flex:1;padding:12px;background:#FFF8E1;border-radius:10px">' +
+    '<div style="font-size:10px;font-weight:700;color:#F57F17;margin-bottom:4px">→ CONSIDER</div>' +
+    '<div style="font-size:12px;color:var(--tx1);line-height:1.4">' + (data.consSummary || '') + '</div></div>' +
+    '</div>' +
+    '<div style="margin-bottom:16px">' +
+    renderScoreBar('Comfort', scores.comfort) +
+    renderScoreBar('Value', scores.value) +
+    renderScoreBar('Style', scores.style) +
+    renderScoreBar('Fit Match', scores.fitMatch) +
+    '</div>' +
+    (data.technology?.length ?
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">' +
+      data.technology.map(t =>
+        '<span style="padding:4px 10px;background:var(--card);border-radius:20px;' +
+        'font-size:11px;color:var(--tx2);border:1px solid var(--border)">' + t + '</span>'
+      ).join('') + '</div>' : '') +
+    (data.funFact ?
+      '<div style="font-size:13px;color:var(--tx3);font-style:italic;line-height:1.55;margin-top:4px">' +
+      data.funFact + '</div>' : '') +
+    '</div>';
+}
+
+function renderScoreBar(label, value) {
+  const v = value || 0;
+  const color = v >= 80 ? '#2E7D32' : v >= 60 ? '#F57F17' : '#C62828';
+  return '<div style="margin-bottom:10px">' +
+    '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
+    '<span style="font-size:12px;color:var(--tx2)">' + label + '</span>' +
+    '<span style="font-size:12px;font-weight:700;color:' + color + '">' + v + '</span></div>' +
+    '<div style="height:4px;background:var(--border);border-radius:2px">' +
+    '<div style="height:100%;width:' + v + '%;background:' + color +
+    ';border-radius:2px;transition:width 0.6s ease"></div></div></div>';
+}
+
+function renderStyleItSection(p, container) {
+  if (!container) return;
+  container.innerHTML =
+    '<div style="height:1px;background:var(--border);margin:4px 0 20px"></div>' +
+    '<div style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;' +
+    'letter-spacing:1px;margin-bottom:12px">Style It</div>' +
+    '<div style="font-size:13px;color:var(--tx2);margin-bottom:12px">Complete the look:</div>';
+
+  const shopLookBtn = document.createElement('button');
+  shopLookBtn.className = 'l-chip';
+  shopLookBtn.style.cssText =
+    'width:100%;padding:12px;font-size:13px;margin-bottom:8px;' +
+    'border-radius:10px;justify-content:center';
+  shopLookBtn.textContent = '🛍️ Shop the complete look';
+  shopLookBtn.onclick = () => {
+    closeDeepDive();
+    sendMessage('Build me a complete outfit around the ' + p.brand + ' ' + (p.name || '') + '. Find all the pieces.');
+  };
+  container.appendChild(shopLookBtn);
+
+  const similarBtn = document.createElement('button');
+  similarBtn.className = 'l-chip';
+  similarBtn.style.cssText =
+    'width:100%;padding:12px;font-size:13px;border-radius:10px;justify-content:center';
+  similarBtn.textContent = '🔍 Find similar at lower price';
+  similarBtn.onclick = () => {
+    closeDeepDive();
+    sendMessage('Find me something similar to ' + p.brand + ' ' + (p.name || '') + ' but at a lower price point');
+  };
+  container.appendChild(similarBtn);
+
+  const pad = document.createElement('div');
+  pad.style.height = '40px';
+  container.appendChild(pad);
 }
 
 // ── Virtual Try-On ────────────────────────────────────────────────────────
@@ -877,41 +1120,6 @@ async function signOut() {
   showAuthScreen();
 }
 
-// ── Deep dive touch (swipe down to close) ────────────────────────────────
-(function() {
-  let tx0 = 0, ty0 = 0, tt0 = 0, dragging = false;
-  const el = () => document.getElementById('deepDive');
-
-  document.addEventListener('touchstart', e => {
-    const dd = el();
-    if (!dd || !deepDiveOpen) return;
-    if (!dd.contains(e.target)) return;
-    tx0 = e.touches[0].clientX; ty0 = e.touches[0].clientY; tt0 = Date.now();
-    dragging = true;
-    dd.style.transition = 'none';
-  }, { passive:true });
-
-  document.addEventListener('touchmove', e => {
-    const dd = el();
-    if (!dragging || !dd) return;
-    const dy = e.touches[0].clientY - ty0;
-    if (dy > 0 && dd.scrollTop <= 0) {
-      dd.style.transform = `translateX(-50%) translateY(${dy * 0.4}px)`;
-      e.preventDefault();
-    }
-  }, { passive:false });
-
-  document.addEventListener('touchend', e => {
-    const dd = el();
-    if (!dragging || !dd) return;
-    dragging = false;
-    const dy  = e.changedTouches[0].clientY - ty0;
-    const vel = dy / (Date.now() - tt0);
-    dd.style.transition = '';
-    if (dy > 80 && vel > 0.2) { closeDeepDive(); return; }
-    dd.style.transform = '';
-  }, { passive:true });
-})();
 
 // ── Outfit formula cards ──────────────────────────────────────────────────
 function renderOutfitCards(text) {
