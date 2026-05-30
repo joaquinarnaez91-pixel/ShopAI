@@ -1830,13 +1830,14 @@ async function renderOccasionCard(palette, occasion) {
 async function generateOutfitImages(outfitEls, occasion, palette) {
   const promises = outfitEls.map(async ({ cell, outfit }) => {
     try {
-      const result = await fetch('/api/generate-occasion', {
+      const result = await fetch('/api/generate-preview', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + (currentSession?.access_token || '')
         },
         body: JSON.stringify({
+          mode: 'occasion',
           description: outfit.description,
           occasion: occasion.occasion,
           palette: (palette.colors || []).map(c => c.name).join(', '),
