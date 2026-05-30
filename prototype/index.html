@@ -1979,26 +1979,52 @@ async function sendMessage(text) {
       } catch(e) { console.error('[profile] parse error:', e.message); }
     }
 
+    // Diagnostics
+    console.log('[occasion] raw response length:', content?.length);
+    console.log('[occasion] has COLOR_PALETTE:', content?.includes('COLOR_PALETTE:'));
+    console.log('[occasion] has OCCASION_OUTFITS:', content?.includes('OCCASION_OUTFITS:'));
+
     // Parse occasion tokens (COLOR_PALETTE + OCCASION_OUTFITS)
     const paletteStart  = content.indexOf('COLOR_PALETTE:');
     const occasionStart = content.indexOf('OCCASION_OUTFITS:');
-    let occasionParsed = false;
+    const hasOccasionTokens = paletteStart !== -1 && occasionStart !== -1 && paletteStart < occasionStart;
 
-    if (paletteStart !== -1 && occasionStart !== -1 && paletteStart < occasionStart) {
+    if (hasOccasionTokens) {
+      // Extract raw strings for each token
+      const paletteRaw = content
+        .slice(paletteStart + 'COLOR_PALETTE:'.length, occasionStart)
+        .replace(/^```(?:json)?\s*/m, '').replace(/\s*```\s*$/m, '')
+        .trim();
+      const occasionRaw = content
+        .slice(occasionStart + 'OCCASION_OUTFITS:'.length)
+        .replace(/^```(?:json)?\s*/m, '').replace(/\s*```\s*$/m, '')
+        .trim();
+
+      console.log('[occasion] paletteRaw length:', paletteRaw.length, '| first 80:', paletteRaw.slice(0, 80));
+      console.log('[occasion] occasionRaw length:', occasionRaw.length, '| first 80:', occasionRaw.slice(0, 80));
+
+      // Always show clean text BEFORE the tokens — never show raw token text
+      const displayText = content.slice(0, paletteStart)
+        .replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '').trim();
+      if (displayText) addMessage('ai', displayText);
+      messages.push({ role:'assistant', content });
+
       let paletteJson = null, occasionJson = null;
-      try { paletteJson  = JSON.parse(content.slice(paletteStart  + 'COLOR_PALETTE:'.length,   occasionStart).trim()); } catch(e) { console.error('[occasion] palette parse:', e); }
-      try { occasionJson = JSON.parse(content.slice(occasionStart + 'OCCASION_OUTFITS:'.length).trim()); } catch(e) { console.error('[occasion] outfits parse:', e); }
-      if (paletteJson && occasionJson) {
-        const displayText = content.slice(0, paletteStart).replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '').trim();
-        if (displayText) addMessage('ai', displayText);
-        messages.push({ role:'assistant', content });
-        renderOccasionCard(paletteJson, occasionJson);
-        occasionParsed = true;
-      }
-    }
+      try { paletteJson  = JSON.parse(paletteRaw); }
+      catch(e) { console.error('[occasion] palette parse error:', e.message, '| raw:', paletteRaw.slice(0, 120)); }
+      try { occasionJson = JSON.parse(occasionRaw); }
+      catch(e) { console.error('[occasion] occasion parse error:', e.message, '| raw:', occasionRaw.slice(0, 120)); }
 
-    if (!occasionParsed) {
-      // Parse SEARCH_MODELS
+      console.log('[occasion] paletteJson ok:', !!paletteJson);
+      console.log('[occasion] occasionJson ok:', !!occasionJson);
+
+      if (paletteJson && occasionJson) {
+        console.log('[occasion] rendering card for:', occasionJson.occasion);
+        setTimeout(() => renderOccasionCard(paletteJson, occasionJson), 300);
+      }
+
+    } else {
+      // No occasion tokens — normal SEARCH_MODELS / text path
       const tokMatch = content.match(/SEARCH_MODELS:\s*(\{[\s\S]*\})/);
       if (tokMatch) {
         const displayText = content.slice(0, content.indexOf('SEARCH_MODELS:')).replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '').replace(/\s*```[a-z]*\s*$/g, '').trim();
