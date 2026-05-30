@@ -293,6 +293,7 @@ let profileOpen     = false;
 let currentDiveProduct = null;
 let tryOnPersonDataUri = null;
 let _outfitCheckMode = false;
+let _occasionMode = false;
 let currentProfile = {};
 
 // Onboarding
@@ -1707,9 +1708,200 @@ async function fallbackDirectSearch(text, loadingId) {
   renderProductsInline(products, 'For you');
 }
 
+// ── Occasion Card ─────────────────────────────────────────────────────────
+async function renderOccasionCard(palette, occasion) {
+  const chatEl = document.getElementById('lumenChat');
+  if (!chatEl) return;
+
+  const card = document.createElement('div');
+  card.style.cssText =
+    'margin:8px 16px;border-radius:20px;border:1.5px solid var(--border);' +
+    'overflow:hidden;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.06)';
+
+  // Header: occasion label + vibe + palette swatches
+  const header = document.createElement('div');
+  header.style.cssText = 'padding:16px 18px 12px;border-bottom:1px solid var(--border);background:#FAFAFA';
+  header.innerHTML =
+    '<div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:2px;margin-bottom:4px">' +
+    (occasion.occasion || 'Your Event') + '</div>' +
+    '<div style="font-size:15px;font-weight:600;color:var(--tx1);margin-bottom:10px">' +
+    (palette.vibe || '') + '</div>' +
+    '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+    (palette.colors || []).map(c =>
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:3px">' +
+      '<div style="width:28px;height:28px;border-radius:50%;background:' + c.hex +
+      ';border:1.5px solid rgba(0,0,0,0.08);box-shadow:0 1px 4px rgba(0,0,0,0.1)"></div>' +
+      '<div style="font-size:8px;color:var(--tx3);text-align:center;max-width:36px;line-height:1.2">' + c.name + '</div>' +
+      '</div>'
+    ).join('') + '</div>';
+  card.appendChild(header);
+
+  // 2×2 outfit grid
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)';
+
+  const outfitEls = [];
+  (occasion.outfits || []).slice(0, 4).forEach((outfit) => {
+    const cell = document.createElement('div');
+    cell.style.cssText =
+      'background:#fff;position:relative;aspect-ratio:3/4;overflow:hidden;' +
+      'display:flex;align-items:center;justify-content:center;cursor:pointer';
+
+    cell.innerHTML =
+      '<div style="text-align:center;color:var(--tx3)">' +
+      '<div style="font-size:24px;margin-bottom:6px">✨</div>' +
+      '<div style="font-size:10px">Generating...</div></div>';
+
+    const labelEl = document.createElement('div');
+    labelEl.style.cssText =
+      'position:absolute;bottom:0;left:0;right:0;padding:20px 10px 8px;' +
+      'background:linear-gradient(transparent,rgba(0,0,0,0.5));' +
+      'color:white;font-size:11px;font-weight:600;text-align:center';
+    labelEl.textContent = outfit.label;
+    cell.appendChild(labelEl);
+
+    const btns = document.createElement('div');
+    btns.style.cssText =
+      'position:absolute;top:8px;right:8px;display:flex;gap:4px;opacity:0;transition:opacity 0.2s';
+    btns.id = 'outfit-btns-' + outfit.id;
+
+    const btnStyle =
+      'width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.95);' +
+      'border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;' +
+      'justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.2)';
+
+    const likeBtn = document.createElement('button');
+    likeBtn.style.cssText = btnStyle;
+    likeBtn.textContent = '❤️';
+
+    const dislikeBtn = document.createElement('button');
+    dislikeBtn.style.cssText = btnStyle;
+    dislikeBtn.textContent = '👎';
+
+    likeBtn.onclick = (e) => { e.stopPropagation(); handleOutfitFeedback(outfit, 'positive', cell, likeBtn, dislikeBtn, occasion, palette); };
+    dislikeBtn.onclick = (e) => { e.stopPropagation(); handleOutfitFeedback(outfit, 'negative', cell, likeBtn, dislikeBtn, occasion, palette); };
+
+    btns.appendChild(likeBtn);
+    btns.appendChild(dislikeBtn);
+    cell.appendChild(btns);
+
+    cell.addEventListener('mouseenter', () => { btns.style.opacity = '1'; });
+    cell.addEventListener('mouseleave', () => { btns.style.opacity = '0'; });
+    cell.addEventListener('touchstart', () => { btns.style.opacity = '1'; }, { passive: true });
+
+    cell.onclick = () => {
+      handleOutfitFeedback(outfit, 'positive', cell, likeBtn, dislikeBtn, occasion, palette);
+      setTimeout(() => sendMessage('Find me the pieces for this look: ' + outfit.label + ' — ' + outfit.pieces.map(p => p.query).join(', ')), 300);
+    };
+
+    grid.appendChild(cell);
+    outfitEls.push({ cell, outfit, likeBtn, dislikeBtn });
+  });
+
+  card.appendChild(grid);
+
+  // Bottom chips
+  const chips = document.createElement('div');
+  chips.style.cssText = 'padding:12px 14px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border)';
+  [
+    { label: '👔 Show men\'s looks',  msg: 'Show me men\'s outfit options for ' + occasion.occasion },
+    { label: '🎨 Different colors',   msg: 'Show different color palette for ' + occasion.occasion },
+    { label: '👗 More formal',        msg: 'Show more formal options for ' + occasion.occasion },
+    { label: '😎 More casual',        msg: 'Show more casual options for ' + occasion.occasion },
+    { label: '💬 Something else',     action: 'focus' }
+  ].forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'l-chip';
+    btn.style.cssText = 'font-size:11px;padding:5px 10px';
+    btn.textContent = c.label;
+    btn.onclick = () => {
+      if (c.action === 'focus') document.getElementById('lumenInput')?.focus();
+      else sendMessage(c.msg);
+    };
+    chips.appendChild(btn);
+  });
+  card.appendChild(chips);
+  chatEl.appendChild(card);
+  scrollToLatest();
+
+  generateOutfitImages(outfitEls, occasion, palette);
+}
+
+async function generateOutfitImages(outfitEls, occasion, palette) {
+  const promises = outfitEls.map(async ({ cell, outfit }) => {
+    try {
+      const result = await fetch('/api/generate-occasion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + (currentSession?.access_token || '')
+        },
+        body: JSON.stringify({
+          description: outfit.description,
+          occasion: occasion.occasion,
+          palette: (palette.colors || []).map(c => c.name).join(', '),
+          gender: occasion.gender || 'women'
+        })
+      }).then(r => r.json());
+
+      if (result.url) {
+        const img = document.createElement('img');
+        img.src = result.url;
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0';
+        img.onload = () => scrollToLatest();
+        const placeholder = cell.querySelector('div:not([style*="absolute"])');
+        if (placeholder) placeholder.remove();
+        cell.insertBefore(img, cell.firstChild);
+      }
+    } catch(e) {
+      console.error('[occasion] image gen failed:', e.message);
+    }
+  });
+  await Promise.allSettled(promises);
+}
+
+async function handleOutfitFeedback(outfit, signal, cell, likeBtn, dislikeBtn, occasion, palette) {
+  if (signal === 'positive') {
+    likeBtn.style.background = '#E8490F';
+    likeBtn.style.color = 'white';
+    cell.style.outline = '2px solid #E8490F';
+  } else {
+    dislikeBtn.style.background = '#111';
+    dislikeBtn.style.color = 'white';
+    cell.style.opacity = '0.4';
+    cell.style.transition = 'opacity 0.3s';
+  }
+  fetch('/api/taste-signal', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + (currentSession?.access_token || '')
+    },
+    body: JSON.stringify({
+      signal_type: signal,
+      content: {
+        type: 'occasion_outfit',
+        occasion: occasion.occasion,
+        outfit_label: outfit.label,
+        outfit_description: outfit.description,
+        colors: (palette.colors || []).map(c => c.name),
+        vibe: palette.vibe,
+        gender: occasion.gender,
+        pieces: outfit.pieces
+      }
+    })
+  }).catch(() => {});
+}
+
 async function sendMessage(text) {
   if (!text.trim() || isLoading) return;
   isLoading = true;
+
+  // Occasion detection
+  const occasionKeywords = ['baby shower', 'wedding', 'birthday', 'dinner', 'brunch', 'graduation', 'beach', 'cocktail', 'gala', 'party', 'date night', 'work event', 'conference', 'casual', 'dress code', 'what to wear'];
+  const hasOccasion = occasionKeywords.some(k => text.toLowerCase().includes(k));
+  const isOccasionRequest = hasOccasion || text.toLowerCase().includes('have an event') || text.toLowerCase().includes('what should i wear') || text.toLowerCase().includes('help me dress');
+  if (isOccasionRequest) _occasionMode = true;
 
   if (onboardingActive && onboardingStep === 0) onboardingStep = 1;
 
@@ -1786,47 +1978,67 @@ async function sendMessage(text) {
       } catch(e) { console.error('[profile] parse error:', e.message); }
     }
 
-    // Parse SEARCH_MODELS
-    const tokMatch = content.match(/SEARCH_MODELS:\s*(\{[\s\S]*\})/);
-    if (tokMatch) {
-      const displayText = content.slice(0, content.indexOf('SEARCH_MODELS:')).replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '').replace(/\s*```[a-z]*\s*$/g, '').trim();
-      if (displayText) addMessage('ai', displayText);
-      messages.push({ role:'assistant', content });
-      userProfile = { ...userProfile, ...extractProfile(messages) };
-      updateProfileDisplay();
+    // Parse occasion tokens (COLOR_PALETTE + OCCASION_OUTFITS)
+    const paletteStart  = content.indexOf('COLOR_PALETTE:');
+    const occasionStart = content.indexOf('OCCASION_OUTFITS:');
+    let occasionParsed = false;
 
-      let modelData;
-      try { modelData = JSON.parse(tokMatch[1]); }
-      catch(e) { addMessage('ai', 'Let me search for the best options for you…'); isLoading = false; return; }
-
-      const srchTypId = showTyping();
-      try {
-        const found = await apiFetch('/api/search', { models:modelData.models || [], userProfile });
-        removeTyping(srchTypId);
-        if (!found.length) { addMessage('ai', "I couldn't find exact matches right now. Could you try rephrasing?"); isLoading = false; return; }
-        products = found;
-        const useCase = (products[0]?.category) || 'your needs';
-        addMessage('ai', products[0]?.why
-          ? 'Here are my picks for you — each selected for ' + useCase + '. Real prices across retailers.'
-          : 'I found ' + products.length + ' options — here are your top picks:');
-        renderProductsInline(products, 'Expert picks for you');
-        renderChipGroup([
-          { label:'🔍 Compare these',    msg:'Compare the items shown' },
-          { label:'💰 Lower budget',     msg:'Show me lower budget options' },
-          { label:'🏆 More premium',     msg:'Show me more premium options' },
-          { label:'🎨 Specific color',   msg:'I want a specific color' },
-        ], msg => sendMessage(msg));
-      } catch(e) {
-        removeTyping(srchTypId);
-        addMessage('ai', 'I had trouble searching right now. Please try again in a moment.');
+    if (paletteStart !== -1 && occasionStart !== -1 && paletteStart < occasionStart) {
+      let paletteJson = null, occasionJson = null;
+      try { paletteJson  = JSON.parse(content.slice(paletteStart  + 'COLOR_PALETTE:'.length,   occasionStart).trim()); } catch(e) { console.error('[occasion] palette parse:', e); }
+      try { occasionJson = JSON.parse(content.slice(occasionStart + 'OCCASION_OUTFITS:'.length).trim()); } catch(e) { console.error('[occasion] outfits parse:', e); }
+      if (paletteJson && occasionJson) {
+        const displayText = content.slice(0, paletteStart).replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '').trim();
+        if (displayText) addMessage('ai', displayText);
+        messages.push({ role:'assistant', content });
+        renderOccasionCard(paletteJson, occasionJson);
+        occasionParsed = true;
       }
+    }
 
-    } else {
-      const displayContent = content.replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '').trim();
-      messages.push({ role:'assistant', content });
-      addMessage('ai', displayContent);
-      renderOutfitCards(displayContent);
-      if (onboardingActive && onboardingStep === 3) onboardingActive = false;
+    if (!occasionParsed) {
+      // Parse SEARCH_MODELS
+      const tokMatch = content.match(/SEARCH_MODELS:\s*(\{[\s\S]*\})/);
+      if (tokMatch) {
+        const displayText = content.slice(0, content.indexOf('SEARCH_MODELS:')).replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '').replace(/\s*```[a-z]*\s*$/g, '').trim();
+        if (displayText) addMessage('ai', displayText);
+        messages.push({ role:'assistant', content });
+        userProfile = { ...userProfile, ...extractProfile(messages) };
+        updateProfileDisplay();
+
+        let modelData;
+        try { modelData = JSON.parse(tokMatch[1]); }
+        catch(e) { addMessage('ai', 'Let me search for the best options for you…'); isLoading = false; return; }
+
+        const srchTypId = showTyping();
+        try {
+          const found = await apiFetch('/api/search', { models:modelData.models || [], userProfile });
+          removeTyping(srchTypId);
+          if (!found.length) { addMessage('ai', "I couldn't find exact matches right now. Could you try rephrasing?"); isLoading = false; return; }
+          products = found;
+          const useCase = (products[0]?.category) || 'your needs';
+          addMessage('ai', products[0]?.why
+            ? 'Here are my picks for you — each selected for ' + useCase + '. Real prices across retailers.'
+            : 'I found ' + products.length + ' options — here are your top picks:');
+          renderProductsInline(products, 'Expert picks for you');
+          renderChipGroup([
+            { label:'🔍 Compare these',    msg:'Compare the items shown' },
+            { label:'💰 Lower budget',     msg:'Show me lower budget options' },
+            { label:'🏆 More premium',     msg:'Show me more premium options' },
+            { label:'🎨 Specific color',   msg:'I want a specific color' },
+          ], msg => sendMessage(msg));
+        } catch(e) {
+          removeTyping(srchTypId);
+          addMessage('ai', 'I had trouble searching right now. Please try again in a moment.');
+        }
+
+      } else {
+        const displayContent = content.replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '').trim();
+        messages.push({ role:'assistant', content });
+        addMessage('ai', displayContent);
+        renderOutfitCards(displayContent);
+        if (onboardingActive && onboardingStep === 3) onboardingActive = false;
+      }
     }
 
   } catch(e) {
@@ -1870,12 +2082,16 @@ function showOnboardingWelcome() {
     'What\'s on your mind?'
   );
 
-  // 4 entry chips after short delay
+  // Entry chips after short delay
   setTimeout(() => {
     renderChipGroup([
       {
         label: '📷 Rate my outfit',
         msg: 'I want honest feedback on my outfit'
+      },
+      {
+        label: '🎉 I have an event',
+        msg: 'I have an event coming up and need help with what to wear'
       },
       {
         label: '🛍️ Find something I saw',
@@ -1888,8 +2104,16 @@ function showOnboardingWelcome() {
       {
         label: '✨ Just browsing',
         msg: 'I\'m just browsing, what\'s trending right now?'
+      },
+      {
+        label: '💬 Something else',
+        action: 'focus'
       }
-    ], (msg) => {
+    ], (msg, action) => {
+      if (action === 'focus') {
+        document.getElementById('lumenInput')?.focus();
+        return;
+      }
       if (msg === 'I want honest feedback on my outfit') {
         _outfitCheckMode = true;
         console.log('[outfit] mode set to true');
@@ -2053,6 +2277,10 @@ async function loadUserGreeting() {
             msg: 'I want feedback on what I\'m wearing today'
           },
           {
+            label: '🎉 I have an event',
+            msg: 'I have an event coming up and need help with what to wear'
+          },
+          {
             label: '👗 What should I wear?',
             msg: 'Help me figure out what to wear today'
           },
@@ -2063,8 +2291,16 @@ async function loadUserGreeting() {
           {
             label: '✨ Show me trends',
             msg: 'Show me what\'s trending right now'
+          },
+          {
+            label: '💬 Something else',
+            action: 'focus'
           }
-        ], (msg) => {
+        ], (msg, action) => {
+          if (action === 'focus') {
+            document.getElementById('lumenInput')?.focus();
+            return;
+          }
           if (msg === 'I want feedback on what I\'m wearing today') {
             _outfitCheckMode = true;
             console.log('[outfit] mode set to true (returning user)');

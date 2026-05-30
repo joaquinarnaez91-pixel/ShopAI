@@ -116,6 +116,23 @@ Never ask for a photo more than once per conversation.
 WHEN TO SEARCH PRODUCTS:
 Only suggest searching for products when user explicitly wants to buy something. Default to style advice first.
 
+OCCASION MODE:
+When the user mentions a specific event or occasion (baby shower, wedding, dinner, beach day, graduation, cocktail party, etc.), respond with:
+1. One warm sentence acknowledging the occasion
+2. 2-3 clarifying questions only if needed (dress code, indoor/outdoor, time of day)
+3. Then emit TWO tokens on their own lines with no markdown or backticks:
+
+COLOR_PALETTE:{"colors":[{"name":"Baby Blue","hex":"#B8D4E8"},{"name":"White","hex":"#FFFFFF"},{"name":"Sand","hex":"#C4A882"},{"name":"Turquoise","hex":"#40B4B4"},{"name":"Cream","hex":"#F5F0E8"}],"vibe":"Elevated · Cute · Coastal"}
+
+OCCASION_OUTFITS:{"occasion":"Baby Shower","gender":"women","outfits":[{"id":"1","label":"Flowy & feminine","description":"Flowy baby blue maxi dress, thin straps, simple silhouette. Paired with tan strappy sandals. Full body shot, face not visible, clean white background.","pieces":[{"query":"baby blue maxi dress women","type":"dress"},{"query":"tan strappy sandals women","type":"shoes"}]},{"id":"2","label":"Coastal chic","description":"White wide leg linen trousers, blue halter neck top, minimal jewelry. Full body shot, face not visible, clean white background.","pieces":[{"query":"white wide leg linen trousers women","type":"bottom"},{"query":"blue halter top women","type":"top"}]},{"id":"3","label":"Garden party","description":"Blue and white floral midi dress, fitted bodice, flowy skirt, wedge sandals. Full body shot, face not visible, clean white background.","pieces":[{"query":"blue floral midi dress women","type":"dress"},{"query":"nude wedge sandals women","type":"shoes"}]},{"id":"4","label":"Effortless summer","description":"White linen co-ord set, wide leg pants and relaxed top, tan belt, white sandals. Full body shot, face not visible, clean white background.","pieces":[{"query":"white linen co-ord set women","type":"set"},{"query":"tan leather belt women","type":"accessory"}]}]}
+
+IMPORTANT:
+- Gender comes from user profile unless specified in conversation
+- Always 4 outfits minimum
+- Colors must match the occasion vibe
+- Outfit descriptions must specify: 'Full body shot, face not visible, clean white or soft neutral background'
+- Keep text response under 60 words before the tokens
+
 OUTFIT FORMULA FORMAT:
 When giving outfit formulas, always use this structure:
 
@@ -186,7 +203,7 @@ ${lumenContext.recentHistory.map(m => m.role + ': ' + m.content).join('\n')}
 
   // 5. Select system prompt
   const basePrompt = tab === 'discover' ? DISCOVER_SYSTEM_PROMPT : STYLE_SYSTEM_PROMPT;
-  const systemPrompt = basePrompt + (contextString ? '\n\n' + contextString : '');
+  const systemPrompt = basePrompt + (contextString ? '\n\n' + contextString : '') + (lumenContext.tasteSummary || '');
 
   // 6. Claude API call
   const useWebSearch = tab === 'discover';

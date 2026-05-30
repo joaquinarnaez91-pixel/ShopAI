@@ -19,7 +19,7 @@ export async function verifyUser(req) {
 }
 
 export async function getLumenContext(userId) {
-  const [profileRes, historyRes, wardrobeRes] =
+  const [profileRes, historyRes, wardrobeRes, signalsRes] =
     await Promise.all([
       supabaseAdmin
         .from('profiles')
@@ -36,13 +36,37 @@ export async function getLumenContext(userId) {
         .from('wardrobe_items')
         .select('*')
         .eq('user_id', userId)
-        .limit(20)
+        .limit(20),
+      supabaseAdmin
+        .from('taste_signals')
+        .select('signal_type, content')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(50)
     ]);
+
+  const signals  = signalsRes.data || [];
+  const likes    = signals.filter(s => s.signal_type === 'positive');
+  const dislikes = signals.filter(s => s.signal_type === 'negative');
+
+  let tasteSummary = '';
+  if (signals.length > 0) {
+    const likedVibes    = [...new Set(likes.flatMap(s => s.content?.outfit_label ? [s.content.outfit_label] : []).slice(0, 5))];
+    const likedColors   = [...new Set(likes.flatMap(s => s.content?.colors || []).slice(0, 10))];
+    const dislikedVibes = [...new Set(dislikes.flatMap(s => s.content?.outfit_label ? [s.content.outfit_label] : []).slice(0, 5))];
+    tasteSummary =
+      '\n\nUSER TASTE PROFILE (from interactions):\n' +
+      (likedVibes.length    ? 'Likes: '           + likedVibes.join(', ')    + '\n' : '') +
+      (likedColors.length   ? 'Favorite colors: ' + likedColors.join(', ')   + '\n' : '') +
+      (dislikedVibes.length ? 'Dislikes: '        + dislikedVibes.join(', ') + '\n' : '') +
+      'Use this to personalize ALL recommendations.';
+  }
 
   return {
     profile: profileRes.data || {},
     recentHistory: (historyRes.data || []).reverse(),
-    wardrobe: wardrobeRes.data || []
+    wardrobe: wardrobeRes.data || [],
+    tasteSummary
   };
 }
 
