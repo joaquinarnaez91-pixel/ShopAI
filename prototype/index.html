@@ -2672,17 +2672,7 @@ function cancelAddItem() {
 checkSession();
 </script>
 
-<div id="closetPanel" style="
-  position:fixed;bottom:0;left:50%;
-  transform:translateX(-50%) translateY(100%);
-  width:100%;max-width:480px;height:90vh;
-  background:var(--bg);
-  border-radius:20px 20px 0 0;
-  border-top:1px solid var(--border);
-  overflow:hidden;z-index:200;
-  transition:transform 0.35s
-    cubic-bezier(0.32,0.72,0,1);
-  display:flex;flex-direction:column">
+<div id="closetPanel" style="position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:480px;height:90vh;background:var(--bg);border-radius:20px 20px 0 0;border-top:1px solid var(--border);overflow:hidden;z-index:1001;transition:transform 0.35s cubic-bezier(0.32,0.72,0,1);display:flex;flex-direction:column">
 
   <!-- Header -->
   <div style="padding:12px 16px;
