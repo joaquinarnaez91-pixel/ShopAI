@@ -161,10 +161,34 @@ async function handlePost(req, res, user) {
   });
 }
 
+// ── PATCH: add brand to item tags ─────────────────────────────────────────
+async function handlePatch(req, res, user) {
+  const { id, brand } = req.body;
+  if (!id) return res.status(400).json({ error: 'id required' });
+
+  const { data: existing } = await supabaseAdmin
+    .from('wardrobe_items')
+    .select('tags')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single();
+
+  const updatedTags = [...(existing?.tags || []), brand].filter(Boolean);
+
+  const { error } = await supabaseAdmin
+    .from('wardrobe_items')
+    .update({ tags: updatedTags })
+    .eq('id', id)
+    .eq('user_id', user.id);
+
+  if (error) return res.status(500).json({ error: error.message });
+  return res.status(200).json({ ok: true });
+}
+
 // ── Router ────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
 
@@ -174,6 +198,7 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET')    return await handleGet(req, res, user);
     if (req.method === 'POST')   return await handlePost(req, res, user);
+    if (req.method === 'PATCH')  return await handlePatch(req, res, user);
     if (req.method === 'DELETE') return await handleDelete(req, res, user);
     return res.status(405).json({ error: 'Method not allowed' });
   } catch(e) {
