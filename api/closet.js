@@ -52,8 +52,8 @@ async function removeBackground(imageBase64) {
     throw new Error('Background removal failed');
   }
 
-  const buffer = await response.buffer();
-  return buffer.toString('base64');
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer).toString('base64');
 }
 
 async function analyzeGarment(imageBase64, mimeType) {
@@ -123,6 +123,9 @@ async function handlePost(req, res, user) {
 
   const fileName = 'closet/' + user.id + '/' + Date.now() + '.png';
   const buffer = Buffer.from(cleanBase64, 'base64');
+
+  // Create bucket if it doesn't exist yet
+  await supabaseAdmin.storage.createBucket('lumen-closet', { public: true }).catch(() => {});
 
   const { error: uploadError } = await supabaseAdmin
     .storage.from('lumen-closet')
