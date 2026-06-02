@@ -308,6 +308,11 @@ let _outfitCheckMode = false;
 let _occasionMode = false;
 let currentProfile = {};
 
+// Closet
+let closetItems = [];
+let closetVisible = false;
+let closetActiveCategory = 'all';
+
 // Onboarding
 let onboardingStep   = 0;
 let onboardingActive = true;
@@ -468,22 +473,22 @@ function renderChipGroup(chips, onSelect) {
     btn.onclick = () => {
       document.querySelectorAll('.chip-group').forEach(el => el.remove());
       row.remove();
-      if (chip.action === 'gallery') {
-        document.getElementById('galleryInput')?.click();
-        return;
-      }
-      if (chip.action === 'camera') {
-        document.getElementById('cameraInput')?.click();
-        return;
-      }
       if (chip.action === 'focus') {
-        document.getElementById('lumenInput')?.focus();
-        return;
-      }
-      if (onSelect) {
-        onSelect(chip.msg, chip.action, chip.occasion);
-      } else if (chip.msg) {
-        sendMessage(chip.msg);
+        const inp = document.getElementById('lumenInput') || document.getElementById('mInput');
+        if (inp) {
+          inp.placeholder = 'What do you like about it? (comfort, style, color, brand...)';
+          inp.focus();
+        }
+      } else if (chip.action === 'camera') {
+        _outfitCheckMode = true;
+        document.getElementById('cameraInput')?.click();
+      } else if (chip.action === 'gallery') {
+        document.getElementById('galleryInput')?.click();
+      } else if (chip.action === 'delete') {
+        if (onSelect) onSelect(chip.msg, chip.action, { itemId: chip.itemId, itemName: chip.itemName });
+      } else {
+        if (onSelect) onSelect(chip.msg, chip.action);
+        else if (chip.msg) sendMessage(chip.msg);
       }
     };
     row.appendChild(btn);
@@ -1123,6 +1128,7 @@ function closeProfile() {
 function handleOverlayClick() {
   closeDeepDive();
   closeProfile();
+  if (closetVisible) toggleCloset();
 }
 
 async function signOut() {
@@ -2388,6 +2394,219 @@ function init() {
   wireInput(document.getElementById('lumenInput'), document.getElementById('lumenSend'));
   setupDesktopLayout();
   loadUserGreeting();
+}
+
+// ── Closet ────────────────────────────────────────────────────────────────
+function toggleCloset() {
+  const panel = document.getElementById('closetPanel');
+  const overlay = document.getElementById('overlay');
+  if (!panel) return;
+
+  closetVisible = !closetVisible;
+
+  if (closetVisible) {
+    panel.style.transform = 'translateX(-50%) translateY(0)';
+    if (overlay) overlay.classList.add('show');
+    loadClosetItems();
+  } else {
+    panel.style.transform = 'translateX(-50%) translateY(100%)';
+    if (overlay) overlay.classList.remove('show');
+  }
+}
+
+async function loadClosetItems() {
+  try {
+    const res = await fetch('/api/wardrobe', {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + (currentSession?.access_token || '')
+      }
+    });
+    const data = await res.json();
+    closetItems = data.items || [];
+    renderClosetGrid(closetActiveCategory);
+    updateClosetProgress();
+  } catch(e) {
+    console.error('[closet] load error:', e.message);
+  }
+}
+
+function renderClosetGrid(category) {
+  closetActiveCategory = category;
+  const grid = document.getElementById('closetGrid');
+  const emptyEl = document.getElementById('closetEmpty');
+  if (!grid) return;
+
+  const filtered = category === 'all' ?
+    closetItems :
+    closetItems.filter(i => i.category === category);
+
+  Array.from(grid.children).forEach(child => {
+    if (child.id !== 'closetEmpty') child.remove();
+  });
+
+  if (filtered.length === 0) {
+    if (emptyEl) emptyEl.style.display = 'block';
+    return;
+  }
+
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  filtered.forEach(item => {
+    const cell = document.createElement('div');
+    cell.style.cssText =
+      'aspect-ratio:3/4;border-radius:10px;' +
+      'overflow:hidden;background:var(--card);' +
+      'position:relative;cursor:pointer;' +
+      'border:1px solid var(--border);' +
+      'transition:transform 0.15s';
+
+    cell.innerHTML =
+      (item.image_url ?
+        '<img src="' + item.image_url + '" ' +
+        'style="width:100%;height:100%;object-fit:contain;padding:6px">' :
+        '<div style="display:flex;height:100%;align-items:center;' +
+        'justify-content:center;font-size:28px">👗</div>'
+      ) +
+      '<div style="position:absolute;bottom:0;left:0;right:0;' +
+      'padding:4px 6px 5px;background:rgba(255,255,255,0.93);' +
+      'font-size:9px;font-weight:600;color:var(--tx1);line-height:1.2;' +
+      'overflow:hidden;white-space:nowrap;text-overflow:ellipsis">' +
+      (item.name || 'Item') + '</div>';
+
+    cell.addEventListener('touchstart', () => {
+      cell.style.transform = 'scale(0.96)';
+    }, { passive: true });
+    cell.addEventListener('touchend', () => {
+      cell.style.transform = 'scale(1)';
+    }, { passive: true });
+
+    cell.onclick = () => showClosetItem(item);
+    grid.appendChild(cell);
+  });
+}
+
+function filterCloset(category, btn) {
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderClosetGrid(category);
+}
+
+function updateClosetProgress() {
+  const count = closetItems.length;
+  const pct = Math.min((count / 10) * 100, 100);
+  const countEl = document.getElementById('closetCount');
+  const barEl = document.getElementById('closetProgressBar');
+  if (countEl) countEl.textContent = count;
+  if (barEl) barEl.style.width = pct + '%';
+}
+
+async function handleClosetUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+
+  const reader = new FileReader();
+  reader.onload = async function(ev) {
+    const base64 = ev.target.result.split(',')[1];
+    const mimeType = file.type;
+
+    const grid = document.getElementById('closetGrid');
+    const emptyEl = document.getElementById('closetEmpty');
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    const loadingCell = document.createElement('div');
+    loadingCell.id = 'prettify-loading';
+    loadingCell.style.cssText =
+      'aspect-ratio:3/4;border-radius:10px;background:var(--card);' +
+      'display:flex;flex-direction:column;align-items:center;' +
+      'justify-content:center;border:1.5px dashed var(--accent);gap:6px';
+    loadingCell.innerHTML =
+      '<div style="font-size:22px">✨</div>' +
+      '<div style="font-size:9px;color:var(--accent);font-weight:700;' +
+      'text-align:center;text-transform:uppercase;letter-spacing:0.5px">' +
+      'Prettifying...</div>';
+
+    grid.insertBefore(loadingCell, grid.firstChild);
+
+    try {
+      const result = await fetch('/api/prettify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + (currentSession?.access_token || '')
+        },
+        body: JSON.stringify({ imageBase64: base64, mimeType })
+      }).then(r => r.json());
+
+      document.getElementById('prettify-loading')?.remove();
+
+      if (result.error) {
+        console.error('[closet] prettify error:', result.error);
+        if (closetItems.length === 0 && emptyEl) emptyEl.style.display = 'block';
+        return;
+      }
+
+      closetItems.unshift({
+        id: result.item.id,
+        name: result.item.name,
+        category: result.item.category,
+        colors: [result.item.color],
+        image_url: result.item.imageUrl
+      });
+
+      renderClosetGrid(closetActiveCategory);
+      updateClosetProgress();
+      console.log('[closet] added:', result.item.name);
+
+    } catch(err) {
+      document.getElementById('prettify-loading')?.remove();
+      console.error('[closet] upload failed:', err.message);
+      if (closetItems.length === 0 && emptyEl) emptyEl.style.display = 'block';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function showClosetItem(item) {
+  toggleCloset();
+
+  setTimeout(() => {
+    addMessage('ai',
+      '👗 <strong>' + item.name + '</strong>\n\nWhat would you like to do with this?'
+    );
+    renderChipGroup([
+      { label: '✨ Build outfit with this', msg: 'Build me an outfit around my ' + item.name },
+      { label: '🔍 Find similar pieces',    msg: 'Find pieces similar to my ' + item.name },
+      { label: '💰 Find this cheaper',       msg: 'Find me ' + item.name + ' at a lower price' },
+      { label: '🗑️ Remove from closet', action: 'delete', itemId: item.id, itemName: item.name }
+    ], (msg, action, extra) => {
+      if (action === 'delete') {
+        deleteClosetItem(extra?.itemId, extra?.itemName);
+      } else {
+        sendMessage(msg);
+      }
+    });
+    scrollToLatest();
+  }, 400);
+}
+
+async function deleteClosetItem(id, name) {
+  if (!id) return;
+  try {
+    await fetch('/api/wardrobe', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + (currentSession?.access_token || '')
+      },
+      body: JSON.stringify({ id })
+    });
+    closetItems = closetItems.filter(i => i.id !== id);
+    addMessage('ai', (name || 'Item') + ' removed from your closet.');
+  } catch(e) {
+    console.error('[closet] delete error:', e.message);
+  }
 }
 
 checkSession();
