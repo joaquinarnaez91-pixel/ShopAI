@@ -2492,6 +2492,27 @@ function updateClosetProgress() {
   if (barEl) barEl.style.width = pct + '%';
 }
 
+function compressImage(dataUrl, maxDim, quality) {
+  maxDim = maxDim || 1200;
+  quality = quality || 0.8;
+  return new Promise(function(resolve) {
+    const img = new Image();
+    img.onload = function() {
+      let w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+        else        { w = Math.round(w * maxDim / h); h = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const out = canvas.toDataURL('image/jpeg', quality);
+      resolve({ base64: out.split(',')[1], mimeType: 'image/jpeg' });
+    };
+    img.src = dataUrl;
+  });
+}
+
 async function handleClosetUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -2499,8 +2520,7 @@ async function handleClosetUpload(e) {
 
   const reader = new FileReader();
   reader.onload = async function(ev) {
-    const base64 = ev.target.result.split(',')[1];
-    const mimeType = file.type;
+    const { base64, mimeType } = await compressImage(ev.target.result);
 
     const grid = document.getElementById('closetGrid');
     const emptyEl = document.getElementById('closetEmpty');
