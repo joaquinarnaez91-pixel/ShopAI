@@ -1039,7 +1039,7 @@ async function pollWarp(predictionId) {
   const token = session?.access_token || '';
   for (let i = 0; i < 40; i++) {
     await new Promise(r => setTimeout(r, 3000));
-    const res = await fetch('/api/warp-poll?id=' + encodeURIComponent(predictionId), {
+    const res = await fetch('/api/warp?id=' + encodeURIComponent(predictionId), {
       headers: { 'Authorization': 'Bearer ' + token }
     });
     const data = await res.json();
@@ -2407,7 +2407,7 @@ function toggleCloset() {
 
 async function loadClosetItems() {
   try {
-    const res = await fetch('/api/wardrobe', {
+    const res = await fetch('/api/closet', {
       method: 'GET',
       headers: {
         'Authorization': 'Bearer ' + (currentSession?.access_token || '')
@@ -2521,7 +2521,7 @@ async function handleClosetUpload(e) {
     grid.insertBefore(loadingCell, grid.firstChild);
 
     try {
-      const result = await fetch('/api/prettify', {
+      const result = await fetch('/api/closet', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2585,7 +2585,7 @@ function showClosetItem(item) {
 async function deleteClosetItem(id, name) {
   if (!id) return;
   try {
-    await fetch('/api/wardrobe', {
+    await fetch('/api/closet', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
