@@ -112,6 +112,12 @@ async function analyzeGarment(imageBase64, mimeType) {
 }
 
 async function handlePost(req, res, user) {
+  // Phase 2: save composited editorial card and create DB record
+  if (req.body.action === 'finalize') {
+    return handleFinalize(req, res, user);
+  }
+
+  // Phase 1: remove background + analyze, return to client for compositing
   const { imageBase64, mimeType } = req.body;
   if (!imageBase64) return res.status(400).json({ error: 'Image required' });
 
@@ -123,11 +129,16 @@ async function handlePost(req, res, user) {
   ]);
 
   console.log('[closet] identified:', garmentData.name, garmentData.category);
+  return res.status(200).json({ cleanBase64, garmentData });
+}
+
+async function handleFinalize(req, res, user) {
+  const { compositeBase64, name, category, color, brand } = req.body;
+  if (!compositeBase64) return res.status(400).json({ error: 'compositeBase64 required' });
 
   const fileName = 'closet/' + user.id + '/' + Date.now() + '.png';
-  const buffer = Buffer.from(cleanBase64, 'base64');
+  const buffer = Buffer.from(compositeBase64, 'base64');
 
-  // Create bucket if it doesn't exist yet
   await supabaseAdmin.storage.createBucket('lumen-closet', { public: true }).catch(() => {});
 
   const { error: uploadError } = await supabaseAdmin
@@ -143,11 +154,11 @@ async function handlePost(req, res, user) {
     .from('wardrobe_items')
     .insert({
       user_id: user.id,
-      name: garmentData.name,
-      category: garmentData.category,
-      colors: [garmentData.color],
+      name: name || 'Clothing Item',
+      category: category || 'tops',
+      colors: [color].filter(Boolean),
       image_url: imageUrl,
-      tags: [garmentData.color, garmentData.category, garmentData.brand].filter(Boolean)
+      tags: [color, category, brand].filter(Boolean)
     })
     .select()
     .single();
@@ -160,9 +171,9 @@ async function handlePost(req, res, user) {
       id: item.id,
       name: item.name,
       category: item.category,
-      color: garmentData.color,
-      brand: garmentData.brand,
-      imageUrl: imageUrl
+      color,
+      brand: brand || null,
+      imageUrl
     }
   });
 }

@@ -2513,6 +2513,59 @@ function compressImage(dataUrl, maxDim, quality) {
   });
 }
 
+function composeEditorialCard(cleanBase64, brandName) {
+  return new Promise(function(resolve, reject) {
+    const img = new Image();
+    img.onload = function() {
+      const W = 800, H = 1000, STRIP = 60;
+      const canvas = document.createElement('canvas');
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext('2d');
+
+      // Warm sand background
+      ctx.fillStyle = '#EDE0D0';
+      ctx.fillRect(0, 0, W, H);
+
+      // Scale garment to 75% of canvas height, centered in upper area
+      const availH = H - STRIP;
+      const targetH = availH * 0.75;
+      const scale = Math.min(targetH / img.height, (W * 0.8) / img.width);
+      const dw = img.width * scale;
+      const dh = img.height * scale;
+      const dx = (W - dw) / 2;
+      const dy = (availH - dh) / 2;
+
+      // Garment drop shadow
+      ctx.shadowColor = 'rgba(0,0,0,0.08)';
+      ctx.shadowBlur = 24;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 8;
+      ctx.drawImage(img, dx, dy, dw, dh);
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+
+      // Bottom white strip
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, H - STRIP, W, STRIP);
+
+      // Brand label: LUMEN | BRANDNAME
+      const label = 'LUMEN | ' + (brandName ? brandName.toUpperCase() : 'LUMEN');
+      ctx.fillStyle = '#111111';
+      ctx.font = '700 18px -apple-system, "Helvetica Neue", Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      if ('letterSpacing' in ctx) ctx.letterSpacing = '2px';
+      ctx.fillText(label, W / 2, H - STRIP / 2);
+
+      resolve(canvas.toDataURL('image/png').split(',')[1]);
+    };
+    img.onerror = reject;
+    img.src = 'data:image/png;base64,' + cleanBase64;
+  });
+}
+
 function showPhotoGuide() {
   const guide = document.createElement('div');
   guide.id = 'photo-guide';
@@ -2655,7 +2708,8 @@ async function handleClosetUpload(e) {
         return;
       }
 
-      showBrandConfirmation(result.item);
+      window._pendingCleanBase64 = result.cleanBase64;
+      showBrandConfirmation(result.garmentData);
 
     } catch(err) {
       document.getElementById('prettify-loading')?.remove();
@@ -2723,7 +2777,7 @@ function showBrandConfirmation(item) {
 
   card.innerHTML =
     '<div style="display:flex;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border)">' +
-      '<img src="' + item.imageUrl + '" style="width:60px;height:60px;object-fit:contain;border-radius:8px;background:var(--card);flex-shrink:0">' +
+      '<img src="data:image/png;base64,' + (window._pendingCleanBase64 || '') + '" style="width:60px;height:60px;object-fit:contain;border-radius:8px;background:var(--card);flex-shrink:0">' +
       '<div style="flex:1;min-width:0">' +
         '<div style="font-size:13px;font-weight:700;color:var(--tx1);margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">' + item.name + '</div>' +
         '<div style="font-size:11px;color:var(--tx3);margin-bottom:8px">' + item.category + '</div>' +
@@ -2751,34 +2805,57 @@ function selectBrand(brand) {
 
 async function confirmAddItem(item) {
   const brandInput = document.getElementById('brandInput');
-  const brand = brandInput?.value?.trim() || null;
+  const brand = brandInput?.value?.trim() || item.brand || null;
 
-  if (brand) {
-    await fetch('/api/closet', {
-      method: 'PATCH',
+  const confirmBtn = document.querySelector('#brand-confirm-card button');
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '✨ Composing…'; }
+
+  try {
+    const compositeBase64 = await composeEditorialCard(
+      window._pendingCleanBase64,
+      brand
+    );
+
+    const result = await fetch('/api/closet', {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + (currentSession?.access_token || '')
       },
-      body: JSON.stringify({ id: item.id, brand })
-    }).catch(() => {});
+      body: JSON.stringify({
+        action: 'finalize',
+        compositeBase64,
+        name: item.name,
+        category: item.category,
+        color: item.color,
+        brand
+      })
+    }).then(r => r.json());
+
+    if (result.error) throw new Error(result.error);
+
+    closetItems.unshift({
+      id: result.item.id,
+      name: result.item.name,
+      category: result.item.category,
+      colors: [item.color].filter(Boolean),
+      image_url: result.item.imageUrl,
+      brand
+    });
+
+    window._pendingCleanBase64 = null;
+    document.getElementById('brand-confirm-card')?.remove();
+    renderClosetGrid(closetActiveCategory);
+    updateClosetProgress();
+
+  } catch(err) {
+    console.error('[closet] finalize error:', err.message);
+    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '✓ Add to closet'; }
   }
-
-  closetItems.unshift({
-    id: item.id,
-    name: item.name,
-    category: item.category,
-    colors: [item.color],
-    image_url: item.imageUrl,
-    brand: brand
-  });
-
-  document.getElementById('brand-confirm-card')?.remove();
-  renderClosetGrid(closetActiveCategory);
-  updateClosetProgress();
 }
 
 function cancelAddItem() {
+  window._pendingCleanBase64 = null;
   document.getElementById('brand-confirm-card')?.remove();
   if (closetItems.length === 0) {
     const emptyEl = document.getElementById('closetEmpty');
