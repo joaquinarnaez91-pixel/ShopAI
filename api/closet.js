@@ -37,7 +37,10 @@ async function removeBackground(imageBase64) {
   const form = new FormData();
   form.append('image_file_b64', imageBase64);
   form.append('size', 'auto');
-  form.append('type', 'product');
+  form.append('type', 'auto');
+  form.append('crop', 'true');
+  form.append('crop_margin', '10px');
+  form.append('scale', 'original');
   form.append('format', 'png');
 
   const response = await fetch('https://api.remove.bg/v1.0/removebg', {
