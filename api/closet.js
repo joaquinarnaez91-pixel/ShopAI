@@ -34,24 +34,20 @@ async function removeBackground(imageBase64) {
   const fetch = (await import('node-fetch')).default;
   const FormData = (await import('form-data')).default;
 
+  const imageBuffer = Buffer.from(imageBase64, 'base64');
   const form = new FormData();
-  form.append('image_file_b64', imageBase64);
-  form.append('size', 'auto');
-  form.append('type', 'auto');
-  form.append('crop', 'true');
-  form.append('crop_margin', '10px');
-  form.append('scale', 'original');
-  form.append('format', 'png');
+  form.append('imageFile', imageBuffer, { filename: 'image.jpg', contentType: 'image/jpeg' });
+  form.append('ghostMannequin.mode', 'ai.auto');
 
-  const response = await fetch('https://api.remove.bg/v1.0/removebg', {
+  const response = await fetch('https://image-api.photoroom.com/v2/edit', {
     method: 'POST',
-    headers: { 'X-Api-Key': process.env.REMOVEBG_API_KEY, ...form.getHeaders() },
+    headers: { 'x-api-key': process.env.PHOTOROOM_API_KEY, ...form.getHeaders() },
     body: form
   });
 
   if (!response.ok) {
     const err = await response.text();
-    console.error('[closet] removebg error:', err);
+    console.error('[closet] photoroom error:', err);
     throw new Error('Background removal failed');
   }
 
