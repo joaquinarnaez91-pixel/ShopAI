@@ -347,6 +347,7 @@ function parseMarkdown(t) {
   return t
     .replace(/SEARCH_MODELS:\{[\s\S]*?\}/g, '')
     .replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '')
+    .replace(/OUTFIT_CARD:\{[\s\S]*?\}/g, '')
     .replace(/```[\s\S]*?```/g, '')
     .replace(/^#{1,3}\s+(.+)$/gm, '<strong>$1</strong>')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -1196,6 +1197,147 @@ function renderOutfitCards(text) {
   return true;
 }
 
+// ── Closet Outfit Card ────────────────────────────────────────────────────
+async function ensureClosetLoaded() {
+  if (closetItems.length > 0) return;
+  try {
+    const res = await fetch('/api/closet', {
+      headers: { 'Authorization': 'Bearer ' + (currentSession?.access_token || '') }
+    });
+    const data = await res.json();
+    closetItems = data.items || [];
+  } catch(e) { console.error('[closet] preload error:', e.message); }
+}
+
+function renderClosetOutfitCard(cardData) {
+  const c = chat();
+  if (!c) return;
+
+  const { title, occasion, item_ids, note } = cardData;
+  const items = (item_ids || [])
+    .map(id => closetItems.find(i => String(i.id) === String(id)))
+    .filter(Boolean);
+
+  if (!items.length) {
+    console.warn('[outfit_card] no items matched ids:', item_ids, 'closet size:', closetItems.length);
+    return;
+  }
+
+  const card = document.createElement('div');
+  card.style.cssText =
+    'margin:8px 16px;border-radius:20px;border:1.5px solid var(--border);' +
+    'overflow:hidden;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.06)';
+
+  // Header
+  const header = document.createElement('div');
+  header.style.cssText = 'padding:14px 16px 10px;border-bottom:1px solid var(--border)';
+  header.innerHTML =
+    '<div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;' +
+    'letter-spacing:1px;margin-bottom:3px">' + (occasion || 'Your outfit') + '</div>' +
+    '<div style="font-size:16px;font-weight:700;color:var(--tx1)">' + (title || 'Outfit from your closet') + '</div>';
+  card.appendChild(header);
+
+  // Collage grid
+  const n = Math.min(items.length, 4);
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;gap:1px;background:var(--border);' +
+    (n === 1 ? 'grid-template-columns:1fr' :
+     n === 2 ? 'grid-template-columns:1fr 1fr' :
+               'grid-template-columns:1fr 1fr');
+
+  items.slice(0, 4).forEach((item, idx) => {
+    const cell = document.createElement('div');
+    const isBottomSingle = n === 3 && idx === 2;
+    cell.style.cssText = 'background:var(--photo);overflow:hidden;' +
+      (isBottomSingle ? 'grid-column:span 2;aspect-ratio:2/1' : 'aspect-ratio:1/1');
+
+    if (item.image_url) {
+      const img = document.createElement('img');
+      img.src = item.image_url;
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+      img.onerror = () => {
+        cell.style.display = 'flex';
+        cell.style.alignItems = 'center';
+        cell.style.justifyContent = 'center';
+        cell.innerHTML = '<span style="font-size:28px">👗</span>';
+      };
+      cell.appendChild(img);
+    } else {
+      cell.style.cssText += ';display:flex;align-items:center;justify-content:center';
+      cell.innerHTML = '<span style="font-size:28px">👗</span>';
+    }
+    grid.appendChild(cell);
+  });
+  card.appendChild(grid);
+
+  // Styling note
+  if (note) {
+    const noteEl = document.createElement('div');
+    noteEl.style.cssText =
+      'padding:10px 16px;border-top:1px solid var(--border);' +
+      'font-size:13px;color:var(--tx2);line-height:1.5;font-style:italic';
+    noteEl.textContent = '✨ ' + note;
+    card.appendChild(noteEl);
+  }
+
+  // Taste actions
+  const actions = document.createElement('div');
+  actions.style.cssText =
+    'padding:10px 16px 12px;display:flex;gap:8px;border-top:1px solid var(--border)';
+
+  const mkBtn = (emoji, label) => {
+    const btn = document.createElement('button');
+    btn.style.cssText =
+      'padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);' +
+      'background:var(--bg);font-size:13px;cursor:pointer;transition:all 0.15s;font-family:var(--font)';
+    btn.textContent = emoji + ' ' + label;
+    return btn;
+  };
+
+  const likeBtn    = mkBtn('❤️', 'Love it');
+  const dislikeBtn = mkBtn('👎', 'Not for me');
+
+  const sendSignal = (type) => {
+    fetch('/api/taste-signal', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + (currentSession?.access_token || '')
+      },
+      body: JSON.stringify({
+        signal_type: type,
+        content: {
+          type: 'closet_outfit',
+          title,
+          occasion,
+          item_ids,
+          items: items.map(i => ({ id: i.id, name: i.name, category: i.category }))
+        }
+      })
+    }).catch(() => {});
+  };
+
+  likeBtn.onclick = () => {
+    likeBtn.style.background = 'var(--tx1)';
+    likeBtn.style.color = '#fff';
+    dislikeBtn.style.opacity = '0.4';
+    sendSignal('positive');
+  };
+  dislikeBtn.onclick = () => {
+    dislikeBtn.style.background = 'var(--tx1)';
+    dislikeBtn.style.color = '#fff';
+    likeBtn.style.opacity = '0.4';
+    sendSignal('negative');
+  };
+
+  actions.appendChild(likeBtn);
+  actions.appendChild(dislikeBtn);
+  card.appendChild(actions);
+
+  c.appendChild(card);
+  scrollToLatest();
+}
+
 // ── Photo Upload & Vision ─────────────────────────────────────────────────
 async function handlePhotoUpload(e) {
   console.log('[photo] outfitCheckMode:', _outfitCheckMode, 'file:', e.target.files[0]?.name);
@@ -2036,9 +2178,23 @@ async function sendMessage(text) {
       }
 
     } else {
-      // No occasion tokens — normal SEARCH_MODELS / text path
+      // No occasion tokens — check OUTFIT_CARD, SEARCH_MODELS, or plain text
+      const outfitCardMatch = content.match(/OUTFIT_CARD:\s*(\{[\s\S]*?\})/);
       const tokMatch = content.match(/SEARCH_MODELS:\s*(\{[\s\S]*\})/);
-      if (tokMatch) {
+
+      if (outfitCardMatch) {
+        const displayText = content.slice(0, content.indexOf('OUTFIT_CARD:'))
+          .replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '').trim();
+        if (displayText) addMessage('ai', displayText);
+        messages.push({ role:'assistant', content });
+        try {
+          const cardData = JSON.parse(outfitCardMatch[1]);
+          setTimeout(async () => {
+            await ensureClosetLoaded();
+            renderClosetOutfitCard(cardData);
+          }, 300);
+        } catch(e) { console.error('[outfit_card] parse error:', e.message); }
+      } else if (tokMatch) {
         const displayText = content.slice(0, content.indexOf('SEARCH_MODELS:')).replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '').replace(/\s*```[a-z]*\s*$/g, '').trim();
         if (displayText) addMessage('ai', displayText);
         messages.push({ role:'assistant', content });
