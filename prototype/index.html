@@ -764,6 +764,7 @@ function openDeepDive(p) {
     'color:#fff;border-radius:12px;font-size:15px;font-weight:600;' +
     'text-decoration:none;margin-bottom:24px;letter-spacing:0.3px';
   buyBtn.textContent = 'Shop at ' + (p.source || 'Store') + ' →';
+  buyBtn.addEventListener('click', () => logLinkClick(p.name, p.price, p.source, p.link || '', 'chat'));
   content.appendChild(buyBtn);
 
   // Divider
@@ -3046,9 +3047,20 @@ async function loadSimilarItems(item) {
   }
 }
 
+function logLinkClick(title, price, merchant, link, source) {
+  if (!currentSession?.access_token) return;
+  fetch('/api/taste-signal', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
+    body: JSON.stringify({ signal_type: 'link_click', content: { title, price, merchant, link, source } })
+  }).catch(() => {});
+}
+
 function openSimilarProduct(idx) {
   const p = _similarProducts[idx];
-  if (p && p.link) window.open(p.link, '_blank', 'noopener');
+  if (!p || !p.link) return;
+  logLinkClick(p.title, p.price, p.merchant, p.link, 'similar');
+  window.open(p.link, '_blank', 'noopener');
 }
 
 function toggleSimilarLike(btn, idx) {

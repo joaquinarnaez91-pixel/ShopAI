@@ -1,4 +1,5 @@
 import https from 'https';
+import { wrapUrl } from './_lib/affiliate.js';
 
 const BLOCKLIST = ['ALO', 'Fashion Nova', 'Steve Madden', 'Shein', 'Temu'];
 
@@ -201,7 +202,7 @@ async function searchForModel(m, serpKey, rfKey) {
       rating:         mock.rating,
       reviews:        mock.reviews,
       img:            '',
-      link:           'https://www.google.com/search?q=' + encodeURIComponent(mock.brand + ' ' + mock.model),
+      link:           wrapUrl('https://www.google.com/search?q=' + encodeURIComponent(mock.brand + ' ' + mock.model)),
       source:         'Google Search',
       delivery:       '',
       prices30day:    makePricePoints(mock.price)
@@ -220,7 +221,7 @@ async function searchForModel(m, serpKey, rfKey) {
     rating:         best.rating,
     reviews:        best.reviews,
     img:            best.img,
-    link:           best.link,
+    link:           wrapUrl(best.link),
     source:         best.source,
     delivery:       best.delivery,
     prices30day
@@ -273,7 +274,7 @@ async function wardrobeSimilar(name, brand, category, colors, serpKey, anthropic
       }
     } catch(e) { console.error('[wardrobe-similar] serp error:', e.message); }
   }
-  return results.slice(0, 8).map(p => ({ image: p.img, title: p.title, price: p.price, merchant: p.source, link: p.link }));
+  return results.slice(0, 8).map(p => ({ image: p.img, title: p.title, price: p.price, merchant: p.source, link: wrapUrl(p.link) }));
 }
 
 export default async function handler(req, res) {
