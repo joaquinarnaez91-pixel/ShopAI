@@ -1,6 +1,9 @@
 import https from 'https';
 import { verifyUser } from './_lib/getLumenContext.js';
 import { supabaseAdmin } from './_lib/supabase.js';
+import { prettifyImage } from './_lib/prettifyImage.js';
+
+export const config = { maxDuration: 60 };
 
 // ── GET: list wardrobe items ──────────────────────────────────────────────
 async function handleGet(req, res, user) {
@@ -30,31 +33,6 @@ async function handleDelete(req, res, user) {
 }
 
 // ── POST: prettify image + save to wardrobe ───────────────────────────────
-async function removeBackground(imageBase64) {
-  const fetch = (await import('node-fetch')).default;
-  const FormData = (await import('form-data')).default;
-
-  const imageBuffer = Buffer.from(imageBase64, 'base64');
-  const form = new FormData();
-  form.append('imageFile', imageBuffer, { filename: 'image.jpg', contentType: 'image/jpeg' });
-  form.append('ghostMannequin.mode', 'ai.auto');
-
-  const response = await fetch('https://image-api.photoroom.com/v2/edit', {
-    method: 'POST',
-    headers: { 'x-api-key': process.env.PHOTOROOM_API_KEY, ...form.getHeaders() },
-    body: form
-  });
-
-  if (!response.ok) {
-    const err = await response.text();
-    console.error('[closet] photoroom error:', err);
-    throw new Error('Background removal failed');
-  }
-
-  const arrayBuffer = await response.arrayBuffer();
-  return Buffer.from(arrayBuffer).toString('base64');
-}
-
 async function analyzeGarment(imageBase64, mimeType) {
   return new Promise((resolve) => {
     const payload = JSON.stringify({
@@ -121,7 +99,7 @@ async function handlePost(req, res, user) {
 
   const [garmentData, cleanBase64] = await Promise.all([
     analyzeGarment(imageBase64, mimeType || 'image/jpeg'),
-    removeBackground(imageBase64)
+    prettifyImage(imageBase64, mimeType || 'image/jpeg')
   ]);
 
   console.log('[closet] identified:', garmentData.name, garmentData.category);
