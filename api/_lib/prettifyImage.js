@@ -8,11 +8,11 @@ export async function prettifyImage(imageBase64, mimeType = 'image/jpeg') {
         { text: PRETTIFY_PROMPT }
       ]
     }],
-    generationConfig: { responseModalities: ['IMAGE'] }
+    generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
   });
 
   const response = await fetch(
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
     {
       method: 'POST',
       headers: {
