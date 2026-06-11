@@ -1357,8 +1357,9 @@ async function ensureClosetLoaded() {
     const res = await fetch('/api/closet', {
       headers: { 'Authorization': 'Bearer ' + (currentSession?.access_token || '') }
     });
+    if (!res.ok) { console.error('[closet] preload error:', res.status); return; }
     const data = await res.json();
-    closetItems = data.items || [];
+    if (Array.isArray(data.items)) closetItems = data.items;
   } catch(e) { console.error('[closet] preload error:', e.message); }
 }
 
@@ -2805,6 +2806,9 @@ function toggleCloset() {
 }
 
 async function loadClosetItems() {
+  // Render cached items immediately so the panel is never blank while fetching.
+  renderClosetGrid(closetActiveCategory);
+  updateClosetProgress();
   try {
     const res = await fetch('/api/closet', {
       method: 'GET',
@@ -2812,12 +2816,18 @@ async function loadClosetItems() {
         'Authorization': 'Bearer ' + (currentSession?.access_token || '')
       }
     });
+    if (!res.ok) {
+      // Non-200 response (e.g. auth error, 500): keep existing closetItems intact.
+      console.error('[closet] fetch error:', res.status);
+      return;
+    }
     const data = await res.json();
     closetItems = data.items || [];
     renderClosetGrid(closetActiveCategory);
     updateClosetProgress();
   } catch(e) {
     console.error('[closet] load error:', e.message);
+    // Network failure: leave closetItems/grid as-is so cached items remain visible.
   }
 }
 
