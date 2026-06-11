@@ -101,6 +101,18 @@ html,body { height:100%; overflow:hidden; background:#FFFFFF; color:var(--tx1); 
 @keyframes enrichSlide { 0%{transform:translateX(-200%);} 100%{transform:translateX(500%);} }
 @keyframes shimmer { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
 .skel { background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite; }
+/* First-run onboarding */
+.ob-overlay { position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.6);display:flex;align-items:flex-end;justify-content:center; }
+.ob-sheet { width:100%;max-width:480px;background:#fff;border-radius:24px 24px 0 0;padding:32px 28px calc(32px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;text-align:center; }
+.ob-icon { font-size:64px;line-height:1;margin-bottom:20px; }
+.ob-title { font-size:22px;font-weight:700;color:#111;margin-bottom:10px;font-family:var(--font); }
+.ob-body { font-size:15px;color:#555;line-height:1.55;margin-bottom:28px;max-width:300px; }
+.ob-dots { display:flex;gap:6px;margin-bottom:28px; }
+.ob-dot { width:8px;height:8px;border-radius:50%;background:#E5E5E5;transition:background 0.2s; }
+.ob-dot.active { background:#111; }
+.ob-actions { display:flex;justify-content:space-between;align-items:center;width:100%; }
+.ob-skip { font-size:14px;color:#999;cursor:pointer;padding:4px;background:none;border:none;font-family:var(--font); }
+.ob-next { padding:14px 32px;background:#111;color:#fff;border:none;border-radius:100px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font); }
 
 /* TABLET: un-fix input bar once viewport is wider than mobile */
 @media (min-width:481px) {
@@ -2064,6 +2076,27 @@ async function sendMessage(text) {
 
   if (onboardingActive && onboardingStep === 0) onboardingStep = 1;
 
+  // Nudge toward closet when asking for outfit help but wardrobe is empty
+  const isWardrobeRequest = /\b(outfit|wear|closet|wardrobe|style me|what (should|do) i wear|dress me)\b/i.test(text);
+  if (isWardrobeRequest && closetItems.length === 0) {
+    addMessage('user', text);
+    messages.push({ role:'user', content:text });
+    setTimeout(() => {
+      addMessage('ai', 'Before I can style outfits for you, add a few items to your closet — I\'ll work with what you actually own. 👗');
+      renderChipGroup([
+        { label:'📷 Add items now', action:'opencloset' },
+        { label:'💬 Just browse instead', msg: text }
+      ], (msg, action) => {
+        if (action === 'opencloset') { toggleCloset(); return; }
+        isLoading = false;
+        sendMessage(msg);
+      });
+      scrollToLatest();
+      isLoading = false;
+    }, 350);
+    return;
+  }
+
   addMessage('user', text);
   messages.push({ role:'user', content:text });
   const typId = showTyping();
@@ -2337,6 +2370,58 @@ function showOnboardingWelcome() {
   }, 500);
 }
 
+// ── First-run onboarding (3-screen modal) ────────────────────────────────
+const OB_SLIDES = [
+  { icon:'👗', title:'Your wardrobe, elevated', body:'Add your clothes once. Lumen learns your style and builds outfits from what you actually own.' },
+  { icon:'✨', title:'Ask anything',             body:'"What do I wear to a wedding?" Lumen styles you from your closet — or finds what\'s missing.' },
+  { icon:'🛍️', title:'Shop smarter',             body:'When your wardrobe needs a gap filled, Lumen searches across stores to find the perfect piece.' }
+];
+
+function showFirstRunOnboarding(afterFn) {
+  let idx = 0;
+  const overlay = document.createElement('div');
+  overlay.className = 'ob-overlay';
+
+  function render() {
+    const s = OB_SLIDES[idx];
+    const isLast = idx === OB_SLIDES.length - 1;
+    overlay.innerHTML =
+      '<div class="ob-sheet">' +
+        '<div class="ob-icon">' + s.icon + '</div>' +
+        '<div class="ob-title">' + s.title + '</div>' +
+        '<div class="ob-body">' + s.body + '</div>' +
+        '<div class="ob-dots">' +
+          OB_SLIDES.map((_, i) => '<div class="ob-dot' + (i === idx ? ' active' : '') + '"></div>').join('') +
+        '</div>' +
+        '<div class="ob-actions">' +
+          '<button class="ob-skip" onclick="finishOnboarding()">Skip</button>' +
+          '<button class="ob-next" onclick="' + (isLast ? 'finishOnboarding()' : 'nextObSlide()') + '">' +
+            (isLast ? 'Get started →' : 'Next →') +
+          '</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  window.nextObSlide  = () => { idx = Math.min(idx + 1, OB_SLIDES.length - 1); render(); };
+  window.finishOnboarding = () => {
+    overlay.remove();
+    markOnboarded();
+    if (afterFn) afterFn();
+  };
+
+  render();
+  document.body.appendChild(overlay);
+}
+
+async function markOnboarded() {
+  if (!currentSession?.access_token) return;
+  fetch('/api/profile', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentSession.access_token },
+    body: JSON.stringify({ updates: { has_onboarded: true } })
+  }).catch(() => {});
+}
+
 // ── Auth UI ───────────────────────────────────────────────────────────────
 function showAuthScreen() {
   const el = document.createElement('div');
@@ -2463,6 +2548,17 @@ async function loadUserGreeting() {
       || currentUser.email?.split('@')[0]
       || '';
     const hasProfile = profile.color_season || profile.gender;
+
+    if (!profile.has_onboarded) {
+      showFirstRunOnboarding(() => {
+        if (hasProfile) {
+          addMessage('ai', 'Welcome back' + (name ? ', ' + name : '') + '! 👋\n\nWhat\'s on your mind today?');
+        } else {
+          showOnboardingWelcome();
+        }
+      });
+      return;
+    }
 
     if (hasProfile) {
       addMessage('ai',
@@ -2879,7 +2975,7 @@ async function handleClosetUpload(e) {
 
       if (result.error) {
         console.error('[closet]', result.error);
-        if (closetItems.length === 0 && emptyEl) emptyEl.style.display = 'block';
+        showPrettifyError(grid, emptyEl);
         return;
       }
 
@@ -2893,10 +2989,30 @@ async function handleClosetUpload(e) {
     } catch(err) {
       document.getElementById('prettify-loading')?.remove();
       console.error('[closet] upload failed:', err.message);
-      if (closetItems.length === 0 && emptyEl) emptyEl.style.display = 'block';
+      showPrettifyError(grid, emptyEl);
     }
   };
   reader.readAsDataURL(file);
+}
+
+function showPrettifyError(grid, emptyEl) {
+  if (closetItems.length === 0 && emptyEl) emptyEl.style.display = 'block';
+  const errCell = document.createElement('div');
+  errCell.style.cssText =
+    'aspect-ratio:3/4;border-radius:10px;background:var(--card);' +
+    'display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+    'padding:14px;border:1.5px dashed #ff3b30;gap:8px;text-align:center';
+  errCell.innerHTML =
+    '<div style="font-size:28px">📷</div>' +
+    '<div style="font-size:11px;font-weight:600;color:var(--tx1);line-height:1.5">' +
+      'That photo didn\'t work — try better lighting or lay the item flat' +
+    '</div>' +
+    '<button onclick="this.closest(\'[style]\').remove();showPhotoGuide()" ' +
+      'style="margin-top:4px;padding:7px 14px;background:var(--tx1);color:#fff;' +
+      'border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font)">' +
+      'Try again' +
+    '</button>';
+  if (grid) grid.insertBefore(errCell, grid.firstChild);
 }
 
 async function deleteClosetItem(id) {
@@ -3795,22 +3911,11 @@ checkSession();
     gap:8px;align-content:start">
 
     <!-- Empty state -->
-    <div id="closetEmpty"
-      style="grid-column:1/-1;
-      text-align:center;padding:48px 20px;
-      color:var(--tx3)">
-      <div style="font-size:40px;
-        margin-bottom:12px">👗</div>
-      <div style="font-size:14px;
-        font-weight:600;color:var(--tx2);
-        margin-bottom:6px">
-        Your closet is empty
-      </div>
-      <div style="font-size:12px;
-        line-height:1.5">
-        Add your clothes and Lumen will<br>
-        build outfits from what you own
-      </div>
+    <div id="closetEmpty" style="grid-column:1/-1;text-align:center;padding:52px 24px 32px;display:flex;flex-direction:column;align-items:center">
+      <div style="font-size:72px;line-height:1;margin-bottom:20px">👗</div>
+      <div style="font-size:17px;font-weight:700;color:var(--tx1);margin-bottom:8px">Your closet is empty</div>
+      <div style="font-size:13px;color:var(--tx2);line-height:1.55;margin-bottom:24px;max-width:240px">Add your first item and Lumen will start building outfits from your own wardrobe</div>
+      <button onclick="showPhotoGuide()" style="padding:13px 28px;background:var(--tx1);color:#fff;border:none;border-radius:100px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">📷 Add my first item</button>
     </div>
   </div>
 
