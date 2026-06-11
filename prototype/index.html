@@ -303,6 +303,7 @@ let currentProfile = {};
 let closetItems = [];
 let closetSelectMode = false;
 const closetSelectedIds = new Set();
+let _detailItem = null;
 let closetVisible = false;
 let closetActiveCategory = 'all';
 
@@ -2485,7 +2486,7 @@ function renderClosetGrid(category) {
         (sel ? '✓' : '') + '</div>';
       cell.onclick = () => toggleItemSelect(item.id);
     } else {
-      cell.onclick = () => showClosetItem(item);
+      cell.onclick = () => openItemDetail(item);
     }
     grid.appendChild(cell);
   });
@@ -2734,30 +2735,7 @@ async function handleClosetUpload(e) {
   reader.readAsDataURL(file);
 }
 
-function showClosetItem(item) {
-  toggleCloset();
-
-  setTimeout(() => {
-    addMessage('ai',
-      '👗 <strong>' + item.name + '</strong>\n\nWhat would you like to do with this?'
-    );
-    renderChipGroup([
-      { label: '✨ Build outfit with this', msg: 'Build me an outfit around my ' + item.name },
-      { label: '🔍 Find similar pieces',    msg: 'Find pieces similar to my ' + item.name },
-      { label: '💰 Find this cheaper',       msg: 'Find me ' + item.name + ' at a lower price' },
-      { label: '🗑️ Remove from closet', action: 'delete', itemId: item.id, itemName: item.name }
-    ], (msg, action, extra) => {
-      if (action === 'delete') {
-        deleteClosetItem(extra?.itemId, extra?.itemName);
-      } else {
-        sendMessage(msg);
-      }
-    });
-    scrollToLatest();
-  }, 400);
-}
-
-async function deleteClosetItem(id, name) {
+async function deleteClosetItem(id) {
   if (!id) return;
   try {
     await fetch('/api/closet', {
@@ -2769,10 +2747,119 @@ async function deleteClosetItem(id, name) {
       body: JSON.stringify({ id })
     });
     closetItems = closetItems.filter(i => i.id !== id);
-    addMessage('ai', (name || 'Item') + ' removed from your closet.');
+    renderClosetGrid(closetActiveCategory);
+    updateClosetProgress();
   } catch(e) {
     console.error('[closet] delete error:', e.message);
   }
+}
+
+function openItemDetail(item) {
+  _detailItem = item;
+  const inner = document.getElementById('itemDetailInner');
+  if (!inner) return;
+  inner.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:10">' +
+      '<div style="font-size:15px;font-weight:700;color:var(--tx1);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:280px">' + item.name + '</div>' +
+      '<button onclick="closeItemDetail()" style="font-size:22px;background:none;border:none;cursor:pointer;color:var(--tx2);padding:4px 8px">✕</button>' +
+    '</div>' +
+    (item.image_url
+      ? '<img src="' + item.image_url + '" style="width:100%;aspect-ratio:1/1;object-fit:cover;display:block">'
+      : '<div style="width:100%;aspect-ratio:1/1;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:64px">👗</div>'
+    ) +
+    '<div style="padding:16px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:10px">' +
+      '<div>' +
+        '<label style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px">Name</label>' +
+        '<input id="detailNameInput" type="text" value="' + item.name.replace(/"/g,'&quot;') + '" oninput="markDetailDirty()" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:var(--font);box-sizing:border-box;outline:none">' +
+      '</div>' +
+      '<div style="position:relative">' +
+        '<label style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px">Brand</label>' +
+        '<input id="detailBrandInput" type="text" autocomplete="off" value="' + (item.brand||'').replace(/"/g,'&quot;') + '" placeholder="Add brand…"' +
+          ' oninput="markDetailDirty();filterBrandsDetail(this.value)"' +
+          ' onfocus="filterBrandsDetail(this.value)"' +
+          ' onblur="setTimeout(hideBrandSuggestionsDetail,150)"' +
+          ' style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:var(--font);box-sizing:border-box;outline:none">' +
+        '<div id="brandSuggestionsDetail" style="display:none;position:absolute;left:0;right:0;background:#fff;border:1.5px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow-y:auto;max-height:150px;z-index:200;box-shadow:0 6px 16px rgba(0,0,0,0.08)"></div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:6px">' +
+        '<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:var(--card);border:1px solid var(--border);color:var(--tx2)">' + item.category + '</span>' +
+      '</div>' +
+      '<button id="detailSaveBtn" onclick="saveDetailEdit()" style="display:none;padding:10px;background:var(--tx1);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">Save changes</button>' +
+    '</div>' +
+    '<div style="padding:16px;display:flex;flex-direction:column;gap:10px;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))">' +
+      '<button onclick="detailAction(\'style\')"  style="padding:14px 18px;background:var(--tx1);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);text-align:left">✨  Style this item</button>' +
+      '<button onclick="detailAction(\'similar\')" style="padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:var(--font);text-align:left;color:var(--tx1)">🔍  Find similar pieces</button>' +
+      '<button onclick="detailAction(\'cheaper\')" style="padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:var(--font);text-align:left;color:var(--tx1)">💰  Find this cheaper</button>' +
+      '<button onclick="detailAction(\'remove\')"  style="padding:14px 18px;background:none;border:1.5px solid #ff3b30;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:var(--font);color:#ff3b30;text-align:left">Remove from closet</button>' +
+    '</div>';
+  document.getElementById('itemDetailSheet').style.transform = 'translateX(-50%) translateY(0)';
+}
+
+function closeItemDetail() {
+  document.getElementById('itemDetailSheet').style.transform = 'translateX(-50%) translateY(100%)';
+  _detailItem = null;
+}
+
+function markDetailDirty() {
+  const btn = document.getElementById('detailSaveBtn');
+  if (btn) btn.style.display = 'block';
+}
+
+async function saveDetailEdit() {
+  if (!_detailItem) return;
+  const name  = document.getElementById('detailNameInput')?.value?.trim();
+  const brand = document.getElementById('detailBrandInput')?.value?.trim() || null;
+  if (!name) return;
+  const btn = document.getElementById('detailSaveBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  try {
+    await fetch('/api/closet', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (currentSession?.access_token||'') },
+      body: JSON.stringify({ id: _detailItem.id, name, brand })
+    });
+    const item = closetItems.find(i => i.id === _detailItem.id);
+    if (item) { item.name = name; item.brand = brand; _detailItem = item; }
+    if (btn) { btn.style.display = 'none'; btn.disabled = false; btn.textContent = 'Save changes'; }
+    renderClosetGrid(closetActiveCategory);
+  } catch(e) {
+    console.error('[detail] save error:', e.message);
+    if (btn) { btn.disabled = false; btn.textContent = 'Save changes'; }
+  }
+}
+
+function detailAction(action) {
+  if (!_detailItem) return;
+  const item = _detailItem;
+  closeItemDetail();
+  if (action === 'remove') { deleteClosetItem(item.id); return; }
+  toggleCloset();
+  setTimeout(() => {
+    if (action === 'style')   sendMessage('Build me an outfit around my ' + item.name);
+    if (action === 'similar') sendMessage('Find pieces similar to my ' + item.name);
+    if (action === 'cheaper') sendMessage('Find me ' + item.name + ' at a lower price');
+  }, 400);
+}
+
+function filterBrandsDetail(val) {
+  const box = document.getElementById('brandSuggestionsDetail');
+  if (!box) return;
+  const q = val.trim().toLowerCase();
+  const matches = q ? BRANDS.filter(b => b.toLowerCase().includes(q)).slice(0,8) : BRANDS.slice(0,8);
+  if (!matches.length) { box.style.display = 'none'; return; }
+  box.innerHTML = matches.map(b => {
+    const lo = b.toLowerCase(), idx = lo.indexOf(q);
+    const label = q && idx !== -1
+      ? b.slice(0,idx) + '<strong>' + b.slice(idx,idx+q.length) + '</strong>' + b.slice(idx+q.length) : b;
+    return '<div onmousedown="selectBrandDetail(\'' + b.replace(/'/g,"\\'") + '\')" style="padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);color:var(--tx1)">' + label + '</div>';
+  }).join('');
+  box.style.display = 'block';
+}
+function hideBrandSuggestionsDetail() { const b = document.getElementById('brandSuggestionsDetail'); if(b) b.style.display='none'; }
+function selectBrandDetail(brand) {
+  const input = document.getElementById('detailBrandInput');
+  if (input) { input.value = brand; input.focus(); markDetailDirty(); }
+  hideBrandSuggestionsDetail();
 }
 
 function toggleClosetSelectMode() {
@@ -3210,6 +3297,11 @@ checkSession();
       style="display:none"
       onchange="handleClosetUpload(event)">
   </div>
+</div>
+
+<!-- Item detail sheet -->
+<div id="itemDetailSheet" style="position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:480px;height:92vh;background:var(--bg);border-radius:20px 20px 0 0;border-top:1px solid var(--border);overflow-y:auto;z-index:1002;transition:transform 0.35s cubic-bezier(0.32,0.72,0,1)">
+  <div id="itemDetailInner"></div>
 </div>
 
 </body>
