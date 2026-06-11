@@ -211,11 +211,12 @@ ${lumenContext.recentHistory.map(m => m.role + ': ' + m.content).join('\n')}
 ` : '';
 
   // 4. Get request body
-  const { messages, tab } = req.body;
+  const { messages, tab, lang } = req.body;
 
   // 5. Select system prompt
   const basePrompt = tab === 'discover' ? DISCOVER_SYSTEM_PROMPT : STYLE_SYSTEM_PROMPT;
-  const systemPrompt = basePrompt + (contextString ? '\n\n' + contextString : '') + (lumenContext.tasteSummary || '');
+  const langInstruction = lang === 'es' ? '\n\nIMPORTANT: Always respond in Spanish (natural Latin American Spanish). This includes outfit card titles, styling notes, and all conversational text.' : '';
+  const systemPrompt = basePrompt + (contextString ? '\n\n' + contextString : '') + (lumenContext.tasteSummary || '') + langInstruction;
 
   // 6. Claude API call
   const useWebSearch = tab === 'discover';

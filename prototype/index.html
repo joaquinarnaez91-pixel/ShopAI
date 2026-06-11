@@ -314,6 +314,120 @@ if ('serviceWorker' in navigator) {
 const SUPABASE_URL      = 'https://mipdomxenbsmgrsitote.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pcGRvbXhlbmJzbWdyc2l0b3RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MjM0MzUsImV4cCI6MjA5NTQ5OTQzNX0.5BOsjNK60UMz8woU-tHyNloPACX6lIKOrBF4BgdLdKw';
 
+// ── i18n ──────────────────────────────────────────────────────────────────
+const STRINGS = {
+  en: {
+    chat_placeholder:    'Ask Lumen anything about style…',
+    // Closet panel
+    closet_title:        'My Closet',
+    closet_count_hint:   'Add 10 for better suggestions',
+    closet_empty_title:  'Your closet is empty',
+    closet_empty_body:   'Add your first item and Lumen will start building outfits from your own wardrobe',
+    closet_add_first:    'Add my first item',
+    closet_add_item:     'Add clothing item',
+    closet_select:       'Select',
+    closet_done:         'Done',
+    // Item detail
+    detail_style:        'Style this item',
+    detail_cheaper:      'Find this cheaper',
+    detail_remove:       'Remove from closet',
+    detail_shop_similar: 'Shop similar',
+    detail_save:         'Save changes',
+    detail_saving:       'Saving…',
+    // Brand confirm / add flow
+    add_save_closet:     'Save to closet',
+    add_cancel:          'Cancel',
+    // Multi-item review
+    multi_edit_hint:     'Edit names, skip items you don\'t want, then tap Add',
+    // Profile sheet
+    profile_title:       'Your Style Profile',
+    profile_signout:     'Sign out',
+    profile_lang_toggle: 'ES',
+    // Auth screen
+    auth_signin:         'Sign in',
+    auth_signup:         'Create account',
+    auth_continue:       'Continue',
+    auth_google:         'Continue with Google',
+    auth_email_ph:       'Email address',
+    auth_pass_ph:        'Password',
+    // Onboarding modal
+    ob_skip:             'Skip',
+    ob_next:             'Next →',
+    ob_start:            'Get started →',
+    ob_slide1_title:     'Your wardrobe, elevated',
+    ob_slide1_body:      'Add your clothes once. Lumen learns your style and builds outfits from what you actually own.',
+    ob_slide2_title:     'Ask anything',
+    ob_slide2_body:      'What do I wear to a wedding? Lumen styles you from your closet — or finds what\'s missing.',
+    ob_slide3_title:     'Shop smarter',
+    ob_slide3_body:      'When your wardrobe needs a gap filled, Lumen searches across stores to find the perfect piece.',
+    // Nudges
+    nudge_0:             'Snap your first item — try a tee laid flat on your bed',
+    nudge_few:           'Add one more and Lumen can build your first outfit',
+    nudge_ready:         'Ask Lumen: what should I wear tomorrow?',
+  },
+  es: {
+    chat_placeholder:    'Pregúntale a Lumen sobre tu estilo…',
+    closet_title:        'Mi guardarropa',
+    closet_count_hint:   'Agrega 10 prendas para mejores sugerencias',
+    closet_empty_title:  'Tu guardarropa está vacío',
+    closet_empty_body:   'Agrega tu primera prenda y Lumen comenzará a armar outfits con lo que ya tenés',
+    closet_add_first:    'Agregar mi primera prenda',
+    closet_add_item:     'Agregar prenda',
+    closet_select:       'Seleccionar',
+    closet_done:         'Listo',
+    detail_style:        'Armar outfit con esta prenda',
+    detail_cheaper:      'Encontrar más barato',
+    detail_remove:       'Quitar del guardarropa',
+    detail_shop_similar: 'Ver similares',
+    detail_save:         'Guardar cambios',
+    detail_saving:       'Guardando…',
+    add_save_closet:     'Guardar en guardarropa',
+    add_cancel:          'Cancelar',
+    multi_edit_hint:     'Editá los nombres, quitá lo que no querés y tocá Agregar',
+    profile_title:       'Tu perfil de estilo',
+    profile_signout:     'Cerrar sesión',
+    profile_lang_toggle: 'EN',
+    auth_signin:         'Iniciar sesión',
+    auth_signup:         'Crear cuenta',
+    auth_continue:       'Continuar',
+    auth_google:         'Continuar con Google',
+    auth_email_ph:       'Correo electrónico',
+    auth_pass_ph:        'Contraseña',
+    ob_skip:             'Omitir',
+    ob_next:             'Siguiente →',
+    ob_start:            'Empezar →',
+    ob_slide1_title:     'Tu guardarropa, elevado',
+    ob_slide1_body:      'Agregá tu ropa una vez. Lumen aprende tu estilo y arma outfits con lo que ya tenés.',
+    ob_slide2_title:     'Preguntá lo que quieras',
+    ob_slide2_body:      '¿Qué me pongo para una boda? Lumen te estiliza con tu guardarropa — o encuentra lo que falta.',
+    ob_slide3_title:     'Comprá mejor',
+    ob_slide3_body:      'Cuando necesitás completar tu guardarropa, Lumen busca en todas las tiendas la prenda perfecta.',
+    nudge_0:             'Fotografiá tu primera prenda — probá una remera sobre la cama',
+    nudge_few:           'Agregá una más y Lumen puede armar tu primer outfit',
+    nudge_ready:         'Preguntale a Lumen: ¿qué me pongo mañana?',
+  }
+};
+let currentLang = localStorage.getItem('lumen_lang') || 'en';
+function t(key) { return (STRINGS[currentLang] || STRINGS.en)[key] || key; }
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('lumen_lang', lang);
+  applyLang();
+}
+function applyLang() {
+  const set = (id, key) => { const el = document.getElementById(id); if (el) el.textContent = t(key); };
+  const inp = document.getElementById('lumenInput');
+  if (inp) inp.placeholder = t('chat_placeholder');
+  set('closetTitle',      'closet_title');
+  set('closetHint',       'closet_count_hint');
+  set('closetEmptyTitle', 'closet_empty_title');
+  set('closetEmptyBody',  'closet_empty_body');
+  set('closetAddFirstBtn','closet_add_first');
+  set('closetAddItemText','closet_add_item');
+  const selBtn = document.getElementById('closetSelectBtn');
+  if (selBtn) selBtn.textContent = closetSelectMode ? t('closet_done') : t('closet_select');
+}
+
 // ── State ─────────────────────────────────────────────────────────────────
 let products        = [];
 let savedItems      = [];   // saved product ids
@@ -1125,7 +1239,7 @@ function openProfile() {
   ).join('');
 
   content.innerHTML =
-    `<div style="font-size:18px;font-weight:700;margin-bottom:4px">Your Style Profile</div>` +
+    `<div style="font-size:18px;font-weight:700;margin-bottom:4px">${t('profile_title')}</div>` +
     `<div style="font-size:13px;color:var(--tx3);margin-bottom:20px">${currentUser?.email || ''}</div>` +
     (paletteHtml
       ? `<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">${paletteHtml}</div>` +
@@ -1134,8 +1248,15 @@ function openProfile() {
       : `<div style="font-size:13px;color:var(--tx3);margin-bottom:16px">Complete color analysis to see your palette</div>`) +
     (userGender ? `<div style="font-size:13px;color:var(--tx2);margin-bottom:6px">${userGender}</div>` : '') +
     (userAge    ? `<div style="font-size:13px;color:var(--tx2);margin-bottom:16px">${userAge}</div>` : '') +
-    `<div style="border-top:1px solid var(--border);padding-top:16px">` +
-      `<button onclick="signOut()" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;background:transparent;font-size:14px;color:var(--tx2);font-family:var(--font);cursor:pointer">Sign out</button>` +
+    `<div style="border-top:1px solid var(--border);padding-top:16px;display:flex;flex-direction:column;gap:10px">` +
+      `<div style="display:flex;align-items:center;justify-content:space-between">` +
+        `<span style="font-size:13px;color:var(--ink-soft)">Language</span>` +
+        `<div style="display:flex;gap:0;border:1.5px solid var(--border);border-radius:8px;overflow:hidden">` +
+          `<button onclick="setLang('en');closeProfile();openProfile()" style="padding:6px 14px;border:none;background:${currentLang==='en'?'var(--ink)':'transparent'};color:${currentLang==='en'?'#fff':'var(--ink-soft)'};font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">EN</button>` +
+          `<button onclick="setLang('es');closeProfile();openProfile()" style="padding:6px 14px;border:none;background:${currentLang==='es'?'var(--ink)':'transparent'};color:${currentLang==='es'?'#fff':'var(--ink-soft)'};font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">ES</button>` +
+        `</div>` +
+      `</div>` +
+      `<button onclick="signOut()" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;background:transparent;font-size:14px;color:var(--tx2);font-family:var(--font);cursor:pointer">${t('profile_signout')}</button>` +
     `</div>`;
 
   sheet.classList.add('open');
@@ -1817,7 +1938,7 @@ async function handleDirectSearch(text) {
         ']}'
     }];
 
-    const brainResponse = await apiFetch('/api/chat', { messages: brainMessages, tab: 'discover' });
+    const brainResponse = await apiFetch('/api/chat', { messages: brainMessages, tab: 'discover', lang: currentLang });
     const content = brainResponse.content || '';
     const match = content.match(/SEARCH_MODELS:\s*(\{[\s\S]*?\})\s*$/);
 
@@ -2148,7 +2269,7 @@ async function sendMessage(text) {
       userCurrentSeason ? 'Color season: ' + userCurrentSeason : null,
     ].filter(Boolean).join(', ') || undefined;
 
-    const data = await apiFetch('/api/chat', { messages:apiMessages, tab, userContext }, controller.signal);
+    const data = await apiFetch('/api/chat', { messages:apiMessages, tab, userContext, lang:currentLang }, controller.signal);
     clearTimeout(timeoutId);
     removeTyping(typId);
     const content = data.content || '';
@@ -2384,11 +2505,11 @@ function showOnboardingWelcome() {
 }
 
 // ── First-run onboarding (3-screen modal) ────────────────────────────────
-const OB_SLIDES = [
-  { icon:'<svg viewBox="0 0 48 48" width="64" height="64" fill="none" stroke="var(--accent)" stroke-width="1.5" aria-hidden="true"><path d="M38 34H10a2 2 0 0 1-1.4-3.42L24 16l15.4 14.58A2 2 0 0 1 38 34z"/><path d="M24 16V11"/><circle cx="24" cy="9" r="2.5"/></svg>', title:'Your wardrobe, elevated', body:'Add your clothes once. Lumen learns your style and builds outfits from what you actually own.' },
-  { icon:'<svg viewBox="0 0 48 48" width="64" height="64" fill="none" stroke="var(--accent)" stroke-width="1.5" aria-hidden="true"><path d="M40 8H8a2 2 0 0 0-2 2v20a2 2 0 0 0 2 2h4v6l8-6h20a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2z"/><circle cx="16" cy="20" r="1.5" fill="var(--accent)"/><circle cx="24" cy="20" r="1.5" fill="var(--accent)"/><circle cx="32" cy="20" r="1.5" fill="var(--accent)"/></svg>', title:'Ask anything', body:'"What do I wear to a wedding?" Lumen styles you from your closet — or finds what\'s missing.' },
-  { icon:'<svg viewBox="0 0 48 48" width="64" height="64" fill="none" stroke="var(--accent)" stroke-width="1.5" aria-hidden="true"><path d="M12 14h24l-3 22H15L12 14z"/><path d="M19 14V11a5 5 0 0 1 10 0v3"/><circle cx="24" cy="26" r="3" fill="var(--accent)" stroke="none"/></svg>', title:'Shop smarter', body:'When your wardrobe needs a gap filled, Lumen searches across stores to find the perfect piece.' }
-];
+function getObSlides() { return [
+  { icon:'<svg viewBox="0 0 48 48" width="64" height="64" fill="none" stroke="var(--accent)" stroke-width="1.5" aria-hidden="true"><path d="M38 34H10a2 2 0 0 1-1.4-3.42L24 16l15.4 14.58A2 2 0 0 1 38 34z"/><path d="M24 16V11"/><circle cx="24" cy="9" r="2.5"/></svg>', title:t('ob_slide1_title'), body:t('ob_slide1_body') },
+  { icon:'<svg viewBox="0 0 48 48" width="64" height="64" fill="none" stroke="var(--accent)" stroke-width="1.5" aria-hidden="true"><path d="M40 8H8a2 2 0 0 0-2 2v20a2 2 0 0 0 2 2h4v6l8-6h20a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2z"/><circle cx="16" cy="20" r="1.5" fill="var(--accent)"/><circle cx="24" cy="20" r="1.5" fill="var(--accent)"/><circle cx="32" cy="20" r="1.5" fill="var(--accent)"/></svg>', title:t('ob_slide2_title'), body:t('ob_slide2_body') },
+  { icon:'<svg viewBox="0 0 48 48" width="64" height="64" fill="none" stroke="var(--accent)" stroke-width="1.5" aria-hidden="true"><path d="M12 14h24l-3 22H15L12 14z"/><path d="M19 14V11a5 5 0 0 1 10 0v3"/><circle cx="24" cy="26" r="3" fill="var(--accent)" stroke="none"/></svg>', title:t('ob_slide3_title'), body:t('ob_slide3_body') }
+]; }
 
 function showFirstRunOnboarding(afterFn) {
   let idx = 0;
@@ -2396,26 +2517,27 @@ function showFirstRunOnboarding(afterFn) {
   overlay.className = 'ob-overlay';
 
   function render() {
-    const s = OB_SLIDES[idx];
-    const isLast = idx === OB_SLIDES.length - 1;
+    const slides = getObSlides();
+    const s = slides[idx];
+    const isLast = idx === slides.length - 1;
     overlay.innerHTML =
       '<div class="ob-sheet">' +
         '<div class="ob-icon" style="display:flex;align-items:center;justify-content:center">' + s.icon + '</div>' +
         '<div class="ob-title">' + s.title + '</div>' +
         '<div class="ob-body">' + s.body + '</div>' +
         '<div class="ob-dots">' +
-          OB_SLIDES.map((_, i) => '<div class="ob-dot' + (i === idx ? ' active' : '') + '"></div>').join('') +
+          slides.map((_, i) => '<div class="ob-dot' + (i === idx ? ' active' : '') + '"></div>').join('') +
         '</div>' +
         '<div class="ob-actions">' +
-          '<button class="ob-skip" onclick="finishOnboarding()">Skip</button>' +
+          '<button class="ob-skip" onclick="finishOnboarding()">' + t('ob_skip') + '</button>' +
           '<button class="ob-next" onclick="' + (isLast ? 'finishOnboarding()' : 'nextObSlide()') + '">' +
-            (isLast ? 'Get started →' : 'Next →') +
+            (isLast ? t('ob_start') : t('ob_next')) +
           '</button>' +
         '</div>' +
       '</div>';
   }
 
-  window.nextObSlide  = () => { idx = Math.min(idx + 1, OB_SLIDES.length - 1); render(); };
+  window.nextObSlide  = () => { idx = Math.min(idx + 1, getObSlides().length - 1); render(); };
   window.finishOnboarding = () => {
     overlay.remove();
     markOnboarded();
@@ -2445,12 +2567,12 @@ function showAuthScreen() {
       '<div style="font-size:28px;font-weight:700;margin-bottom:4px;text-align:center">Lumen</div>' +
       '<div style="font-size:13px;color:var(--tx3);margin-bottom:40px;text-align:center">Your personal style guide</div>' +
       '<div id="auth-tabs" style="display:flex;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px">' +
-        '<button id="tab-login" onclick="showAuthTab(\'login\')" style="flex:1;padding:10px;border:none;background:var(--tx1);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">Sign in</button>' +
-        '<button id="tab-signup" onclick="showAuthTab(\'signup\')" style="flex:1;padding:10px;border:none;background:#fff;color:var(--tx2);font-size:13px;cursor:pointer;font-family:var(--font)">Create account</button>' +
+        '<button id="tab-login" onclick="showAuthTab(\'login\')" style="flex:1;padding:10px;border:none;background:var(--tx1);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">' + t('auth_signin') + '</button>' +
+        '<button id="tab-signup" onclick="showAuthTab(\'signup\')" style="flex:1;padding:10px;border:none;background:#fff;color:var(--tx2);font-size:13px;cursor:pointer;font-family:var(--font)">' + t('auth_signup') + '</button>' +
       '</div>' +
-      '<input id="auth-email" type="email" placeholder="Email address" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;margin-bottom:12px;box-sizing:border-box;font-family:var(--font);outline:none">' +
-      '<input id="auth-password" type="password" placeholder="Password" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;margin-bottom:20px;box-sizing:border-box;font-family:var(--font);outline:none">' +
-      '<button onclick="submitAuth()" style="width:100%;padding:14px;background:var(--tx1);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font)">Continue</button>' +
+      '<input id="auth-email" type="email" placeholder="' + t('auth_email_ph') + '" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;margin-bottom:12px;box-sizing:border-box;font-family:var(--font);outline:none">' +
+      '<input id="auth-password" type="password" placeholder="' + t('auth_pass_ph') + '" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;margin-bottom:20px;box-sizing:border-box;font-family:var(--font);outline:none">' +
+      '<button onclick="submitAuth()" style="width:100%;padding:14px;background:var(--tx1);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font)">' + t('auth_continue') + '</button>' +
       '<div style="display:flex;align-items:center;gap:12px;margin:16px 0">' +
         '<div style="flex:1;height:1px;background:var(--border)"></div>' +
         '<div style="font-size:12px;color:var(--tx3)">or</div>' +
@@ -2458,7 +2580,7 @@ function showAuthScreen() {
       '</div>' +
       '<button onclick="signInWithGoogle()" style="width:100%;padding:14px;background:#fff;color:var(--tx1);border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:10px">' +
         '<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>' +
-        'Continue with Google' +
+        t('auth_google') +
       '</button>' +
       '<div id="auth-error" style="color:#E8490F;font-size:12px;margin-top:12px;text-align:center"></div>' +
     '</div>';
@@ -2658,6 +2780,7 @@ function init() {
     if (saved) userProfile = JSON.parse(saved);
   } catch(e) {}
 
+  applyLang();
   wireInput(document.getElementById('lumenInput'), document.getElementById('lumenSend'));
   setupDesktopLayout();
   loadUserGreeting();
@@ -2831,19 +2954,16 @@ function updateClosetProgress() {
   if (barEl) barEl.style.width = pct + '%';
 
   if (count === 0) {
-    renderNudge('closet-nudge', 'nudge_closet_0',
-      'Snap your first item — try a tee laid flat on your bed');
+    renderNudge('closet-nudge', 'nudge_closet_0', t('nudge_0'));
   } else if (count <= 2) {
-    renderNudge('closet-nudge', 'nudge_closet_few',
-      'Add one more and Lumen can build your first outfit');
+    renderNudge('closet-nudge', 'nudge_closet_few', t('nudge_few'));
   } else {
-    renderNudge('closet-nudge', 'nudge_closet_ready',
-      'Ask Lumen: what should I wear tomorrow?',
+    renderNudge('closet-nudge', 'nudge_closet_ready', t('nudge_ready'),
       () => {
         toggleCloset();
         setTimeout(() => {
           const inp = document.getElementById('lumenInput');
-          if (inp) { inp.value = 'What should I wear tomorrow?'; inp.focus(); }
+          if (inp) { inp.value = currentLang === 'es' ? '¿Qué me pongo mañana?' : 'What should I wear tomorrow?'; inp.focus(); }
         }, 400);
       }
     );
@@ -3189,15 +3309,15 @@ function renderDetailContent() {
         '<div id="brandSuggestionsDetail" style="display:none;position:absolute;left:0;right:0;background:#fff;border:1.5px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow-y:auto;max-height:150px;z-index:200;box-shadow:0 6px 16px rgba(0,0,0,0.08)"></div>' +
       '</div>' +
       '<div><span style="font-size:11px;padding:3px 10px;border-radius:20px;background:var(--card);border:1px solid var(--border);color:var(--tx2)">' + item.category + '</span></div>' +
-      '<button id="detailSaveBtn" onclick="saveDetailEdit()" style="display:none;padding:10px;background:var(--tx1);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">Save changes</button>' +
+      '<button id="detailSaveBtn" onclick="saveDetailEdit()" style="display:none;padding:10px;background:var(--tx1);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">' + t('detail_save') + '</button>' +
     '</div>' +
     '<div style="padding:16px;display:flex;flex-direction:column;gap:10px">' +
-      '<button onclick="detailAction(\'style\')"  style="padding:14px 18px;background:var(--tx1);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);text-align:left">Style this item</button>' +
-      '<button onclick="detailAction(\'cheaper\')" style="padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:var(--font);text-align:left;color:var(--tx1)">Find this cheaper</button>' +
-      '<button onclick="detailAction(\'remove\')"  style="padding:14px 18px;background:none;border:1.5px solid #ff3b30;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:var(--font);color:#ff3b30;text-align:left">Remove from closet</button>' +
+      '<button onclick="detailAction(\'style\')"  style="padding:14px 18px;background:var(--tx1);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);text-align:left">' + t('detail_style') + '</button>' +
+      '<button onclick="detailAction(\'cheaper\')" style="padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:var(--font);text-align:left;color:var(--tx1)">' + t('detail_cheaper') + '</button>' +
+      '<button onclick="detailAction(\'remove\')"  style="padding:14px 18px;background:none;border:1.5px solid #ff3b30;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:var(--font);color:#ff3b30;text-align:left">' + t('detail_remove') + '</button>' +
     '</div>' +
     '<div id="detailSimilarSection" style="padding:0 16px 32px">' +
-      '<div style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Shop similar</div>' +
+      '<div style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">' + t('detail_shop_similar') + '</div>' +
       '<div id="detailSimilarGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
         Array(4).fill(
           '<div style="border-radius:12px;overflow:hidden;border:1.5px solid var(--border)">' +
@@ -3326,11 +3446,11 @@ async function saveDetailEdit() {
     });
     const item = closetItems.find(i => i.id === _detailItem.id);
     if (item) { item.name = name; item.brand = brand; _detailItem = item; }
-    if (btn) { btn.style.display = 'none'; btn.disabled = false; btn.textContent = 'Save changes'; }
+    if (btn) { btn.style.display = 'none'; btn.disabled = false; btn.textContent = t('detail_save'); }
     renderClosetGrid(closetActiveCategory);
   } catch(e) {
     console.error('[detail] save error:', e.message);
-    if (btn) { btn.disabled = false; btn.textContent = 'Save changes'; }
+    if (btn) { btn.disabled = false; btn.textContent = t('detail_save'); }
   }
 }
 
@@ -3372,7 +3492,7 @@ function toggleClosetSelectMode() {
   closetSelectMode = !closetSelectMode;
   closetSelectedIds.clear();
   const btn = document.getElementById('closetSelectBtn');
-  if (btn) btn.textContent = closetSelectMode ? 'Done' : 'Select';
+  if (btn) btn.textContent = closetSelectMode ? t('closet_done') : t('closet_select');
   const actionBar = document.getElementById('closetActionBar');
   const addBar   = document.getElementById('closetAddBar');
   if (actionBar) actionBar.style.display = closetSelectMode ? 'flex' : 'none';
@@ -3542,7 +3662,7 @@ function showMultiItemReview(items) {
   header.innerHTML =
     '<div>' +
       '<div style="font-size:16px;font-weight:700;color:var(--tx1);font-family:var(--font-display);letter-spacing:-0.01em">' + items.length + ' items found</div>' +
-      '<div style="font-size:12px;color:var(--tx3);margin-top:2px">Edit names, skip items you don\'t want, then tap Add</div>' +
+      '<div style="font-size:12px;color:var(--tx3);margin-top:2px">' + t('multi_edit_hint') + '</div>' +
     '</div>' +
     '<button onclick="cancelMultiReview()" style="font-size:22px;background:none;border:none;cursor:pointer;color:var(--tx2);padding:4px 8px;line-height:1">✕</button>';
   sheet.appendChild(header);
@@ -3787,8 +3907,8 @@ function showBrandConfirmation(item) {
       '<div id="brandSuggestions" style="display:none;position:absolute;left:14px;right:14px;background:#fff;border:1.5px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow-y:auto;max-height:180px;z-index:200;box-shadow:0 6px 16px rgba(0,0,0,0.08)"></div>' +
     '</div>' +
     '<div style="display:flex;gap:8px;padding:12px 14px">' +
-      '<button onclick="confirmAddItem(' + safeItem + ')" style="flex:1;padding:11px;background:var(--tx1);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">Save to closet</button>' +
-      '<button onclick="cancelAddItem()" style="padding:11px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-size:14px;cursor:pointer;font-family:var(--font)">Cancel</button>' +
+      '<button onclick="confirmAddItem(' + safeItem + ')" style="flex:1;padding:11px;background:var(--tx1);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">' + t('add_save_closet') + '</button>' +
+      '<button onclick="cancelAddItem()" style="padding:11px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-size:14px;cursor:pointer;font-family:var(--font)">' + t('add_cancel') + '</button>' +
     '</div>';
 
   grid.insertBefore(card, grid.firstChild);
@@ -3895,7 +4015,7 @@ checkSession();
     align-items:center;flex-shrink:0;
     position:sticky;top:0;background:var(--bg);
     z-index:10">
-    <div style="font-size:16px;font-weight:700;color:var(--tx1)">My Closet</div>
+    <div id="closetTitle" style="font-size:16px;font-weight:700;color:var(--tx1)">My Closet</div>
     <div style="display:flex;align-items:center;gap:4px">
       <button id="closetSelectBtn" onclick="toggleClosetSelectMode()"
         style="font-size:13px;font-weight:600;color:var(--accent);background:none;border:none;cursor:pointer;padding:6px 10px;font-family:var(--font)">Select</button>
@@ -3915,7 +4035,7 @@ checkSession();
       <span>
         <span id="closetCount">0</span> items
       </span>
-      <span style="color:var(--tx3)">
+      <span id="closetHint" style="color:var(--tx3)">
         Add 10 for better suggestions
       </span>
     </div>
@@ -4000,9 +4120,9 @@ checkSession();
     <!-- Empty state -->
     <div id="closetEmpty" style="grid-column:1/-1;text-align:center;padding:52px 24px 32px;display:flex;flex-direction:column;align-items:center">
       <div style="margin-bottom:20px"><svg viewBox="0 0 72 72" width="72" height="72" fill="none" stroke="var(--ink-faint)" stroke-width="1.5" aria-hidden="true"><path d="M56 52H16a2 2 0 0 1-1.4-3.42L36 29 57.4 48.58A2 2 0 0 1 56 52z"/><path d="M36 29V21"/><circle cx="36" cy="18.5" r="2.5"/></svg></div>
-      <div style="font-size:17px;font-weight:700;color:var(--tx1);margin-bottom:8px">Your closet is empty</div>
-      <div style="font-size:13px;color:var(--tx2);line-height:1.55;margin-bottom:24px;max-width:240px">Add your first item and Lumen will start building outfits from your own wardrobe</div>
-      <button onclick="showPhotoGuide()" style="padding:13px 28px;background:var(--tx1);color:#fff;border:none;border-radius:100px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">Add my first item</button>
+      <div id="closetEmptyTitle" style="font-size:17px;font-weight:700;color:var(--tx1);margin-bottom:8px">Your closet is empty</div>
+      <div id="closetEmptyBody" style="font-size:13px;color:var(--tx2);line-height:1.55;margin-bottom:24px;max-width:240px">Add your first item and Lumen will start building outfits from your own wardrobe</div>
+      <button id="closetAddFirstBtn" onclick="showPhotoGuide()" style="padding:13px 28px;background:var(--tx1);color:#fff;border:none;border-radius:100px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">Add my first item</button>
     </div>
   </div>
 
@@ -4026,7 +4146,7 @@ checkSession();
       font-size:15px;font-weight:600;
       cursor:pointer;font-family:var(--font)">
       <span style="font-size:18px">+</span>
-      Add clothing item
+      <span id="closetAddItemText">Add clothing item</span>
     </button>
 
     <input type="file" id="closetUpload"
