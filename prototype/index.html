@@ -3018,7 +3018,7 @@ async function loadSimilarItems(item) {
   const section = document.getElementById('detailSimilarSection');
   if (!grid || !section) return;
   try {
-    const res = await fetch('/api/wardrobe-similar', {
+    const res = await fetch('/api/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: item.name, brand: item.brand || '', category: item.category || '', colors: item.colors || '' })
