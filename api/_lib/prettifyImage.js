@@ -12,7 +12,7 @@ export async function prettifyImage(imageBase64, mimeType = 'image/jpeg') {
   });
 
   const response = await fetch(
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent',
     {
       method: 'POST',
       headers: {
