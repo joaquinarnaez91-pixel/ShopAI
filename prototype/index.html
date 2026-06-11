@@ -2457,7 +2457,7 @@ function renderClosetGrid(category) {
     cell.innerHTML =
       (item.image_url ?
         '<img src="' + item.image_url + '" ' +
-        'style="width:100%;height:100%;object-fit:contain;padding:6px">' :
+        'style="width:100%;height:100%;object-fit:cover">' :
         '<div style="display:flex;height:100%;align-items:center;' +
         'justify-content:center;font-size:28px">👗</div>'
       ) +
@@ -3001,14 +3001,9 @@ async function confirmAddItem(item) {
   const brand = brandInput?.value?.trim() || item.brand || null;
 
   const confirmBtn = document.querySelector('#brand-confirm-card button');
-  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '✨ Composing…'; }
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '✨ Saving…'; }
 
   try {
-    const compositeBase64 = await composeEditorialCard(
-      window._pendingCleanBase64,
-      brand
-    );
-
     const result = await fetch('/api/closet', {
       method: 'POST',
       headers: {
@@ -3017,7 +3012,7 @@ async function confirmAddItem(item) {
       },
       body: JSON.stringify({
         action: 'finalize',
-        compositeBase64,
+        compositeBase64: window._pendingCleanBase64,
         name: item.name,
         category: item.category,
         color: item.color,
