@@ -256,6 +256,9 @@ if ('serviceWorker' in navigator) {
     <!-- CHAT THREAD -->
     <div class="l-chat" id="lumenChat"></div>
 
+    <!-- Suggestion pills (shown when chat is empty) -->
+    <div id="chatSuggestions" style="padding:8px 12px 4px;flex-wrap:wrap;gap:7px;flex-shrink:0;display:none"></div>
+
     <!-- INPUT BAR -->
     <div class="l-input-bar">
       <div style="display:flex;gap:6px;align-items:center">
@@ -364,18 +367,23 @@ const STRINGS = {
     nudge_0:             'Snap your first item — try a tee laid flat on your bed',
     nudge_few:           'Add one more and Lumen can build your first outfit',
     nudge_ready:         'Ask Lumen: what should I wear tomorrow?',
+    // Suggestion chips
+    chip_wear_today:     'What should I wear today?',
+    chip_outfit_closet:  'Build an outfit from my closet',
+    chip_trending:       'What\'s trending this season?',
+    chip_find_item:      'Find something I saw',
   },
   es: {
     chat_placeholder:    'Pregúntale a Lumen sobre tu estilo…',
     closet_title:        'Mi guardarropa',
     closet_count_hint:   'Agrega 10 prendas para mejores sugerencias',
     closet_empty_title:  'Tu guardarropa está vacío',
-    closet_empty_body:   'Agrega tu primera prenda y Lumen comenzará a armar outfits con lo que ya tenés',
+    closet_empty_body:   'Agrega tu primera prenda y Lumen comenzará a crear outfits con lo que ya tienes',
     closet_add_first:    'Agregar mi primera prenda',
     closet_add_item:     'Agregar prenda',
     closet_select:       'Seleccionar',
     closet_done:         'Listo',
-    detail_style:        'Armar outfit con esta prenda',
+    detail_style:        'Crear outfit con esta prenda',
     detail_cheaper:      'Encontrar más barato',
     detail_remove:       'Quitar del guardarropa',
     detail_shop_similar: 'Ver similares',
@@ -383,7 +391,7 @@ const STRINGS = {
     detail_saving:       'Guardando…',
     add_save_closet:     'Guardar en guardarropa',
     add_cancel:          'Cancelar',
-    multi_edit_hint:     'Editá los nombres, quitá lo que no querés y tocá Agregar',
+    multi_edit_hint:     'Edita los nombres, quita lo que no quieres y toca Agregar',
     profile_title:       'Tu perfil de estilo',
     profile_signout:     'Cerrar sesión',
     profile_lang_toggle: 'EN',
@@ -397,14 +405,19 @@ const STRINGS = {
     ob_next:             'Siguiente →',
     ob_start:            'Empezar →',
     ob_slide1_title:     'Tu guardarropa, elevado',
-    ob_slide1_body:      'Agregá tu ropa una vez. Lumen aprende tu estilo y arma outfits con lo que ya tenés.',
-    ob_slide2_title:     'Preguntá lo que quieras',
+    ob_slide1_body:      'Agrega tu ropa una vez. Lumen aprende tu estilo y crea outfits con lo que ya tienes.',
+    ob_slide2_title:     'Pregunta lo que quieras',
     ob_slide2_body:      '¿Qué me pongo para una boda? Lumen te estiliza con tu guardarropa — o encuentra lo que falta.',
-    ob_slide3_title:     'Comprá mejor',
-    ob_slide3_body:      'Cuando necesitás completar tu guardarropa, Lumen busca en todas las tiendas la prenda perfecta.',
-    nudge_0:             'Fotografiá tu primera prenda — probá una remera sobre la cama',
-    nudge_few:           'Agregá una más y Lumen puede armar tu primer outfit',
-    nudge_ready:         'Preguntale a Lumen: ¿qué me pongo mañana?',
+    ob_slide3_title:     'Compra mejor',
+    ob_slide3_body:      'Cuando necesitas completar tu guardarropa, Lumen busca en todas las tiendas la prenda perfecta.',
+    nudge_0:             'Fotografía tu primera prenda — prueba una camiseta sobre la cama',
+    nudge_few:           'Agrega una más y Lumen puede crear tu primer outfit',
+    nudge_ready:         'Pregúntale a Lumen: ¿qué me pongo mañana?',
+    // Suggestion chips
+    chip_wear_today:     '¿Qué me pongo hoy?',
+    chip_outfit_closet:  'Crear outfit de mi guardarropa',
+    chip_trending:       '¿Qué está de moda esta temporada?',
+    chip_find_item:      'Encontrar algo que vi',
   }
 };
 let currentLang = localStorage.getItem('lumen_lang') || 'en';
@@ -426,6 +439,43 @@ function applyLang() {
   set('closetAddItemText','closet_add_item');
   const selBtn = document.getElementById('closetSelectBtn');
   if (selBtn) selBtn.textContent = closetSelectMode ? t('closet_done') : t('closet_select');
+  renderSuggestionChips();
+}
+
+// ── Suggestion chips (above input, visible when chat is empty) ────────────
+let _suggestionsHidden = false;
+function renderSuggestionChips() {
+  const wrap = document.getElementById('chatSuggestions');
+  if (!wrap || _suggestionsHidden) return;
+  wrap.innerHTML = '';
+  [
+    { key: 'chip_wear_today',    msg: () => currentLang === 'es' ? '¿Qué me pongo hoy?' : 'What should I wear today?' },
+    { key: 'chip_outfit_closet', msg: () => currentLang === 'es' ? 'Crea un outfit con mi guardarropa' : 'Build an outfit from my closet' },
+    { key: 'chip_trending',      msg: () => currentLang === 'es' ? '¿Qué está de moda esta temporada?' : "What's trending this season?" },
+    { key: 'chip_find_item',     msg: () => currentLang === 'es' ? 'Quiero encontrar algo que vi' : 'I saw something I love — help me find it' },
+  ].forEach(({ key, msg }) => {
+    const btn = document.createElement('button');
+    btn.textContent = t(key);
+    btn.style.cssText =
+      'padding:7px 14px;border-radius:var(--radius-pill);border:1.5px solid var(--border);' +
+      'background:var(--bg);font-size:13px;font-weight:500;color:var(--ink);cursor:pointer;' +
+      'font-family:var(--font);white-space:nowrap;transition:all 0.15s';
+    btn.addEventListener('click', () => {
+      hideSuggestionChips();
+      sendMessage(msg());
+    });
+    wrap.appendChild(btn);
+  });
+  wrap.style.display = 'flex';
+}
+function hideSuggestionChips() {
+  _suggestionsHidden = true;
+  const wrap = document.getElementById('chatSuggestions');
+  if (wrap) wrap.style.display = 'none';
+}
+function showSuggestionChips() {
+  _suggestionsHidden = false;
+  renderSuggestionChips();
 }
 
 // ── State ─────────────────────────────────────────────────────────────────
@@ -2202,6 +2252,7 @@ async function handleOutfitFeedback(outfit, signal, cell, likeBtn, dislikeBtn, o
 async function sendMessage(text) {
   if (!text.trim() || isLoading) return;
   isLoading = true;
+  hideSuggestionChips();
 
   // Occasion detection
   const occasionKeywords = ['baby shower', 'wedding', 'birthday', 'dinner', 'brunch', 'graduation', 'beach', 'cocktail', 'gala', 'party', 'date night', 'work event', 'conference', 'casual', 'dress code', 'what to wear'];
@@ -2448,6 +2499,7 @@ function showOnboardingWelcome() {
     'the style that\'s completely yours.\n\n' +
     'What\'s on your mind?'
   );
+  showSuggestionChips();
 
   // Entry chips after short delay
   setTimeout(() => {
@@ -2674,6 +2726,7 @@ async function loadUserGreeting() {
   const chatEl = document.getElementById('lumenChat');
   if (!chatEl) return;
   chatEl.innerHTML = '';
+  showSuggestionChips();
 
   if (currentUser) {
     const context = await apiFetch('/api/profile', {})
@@ -2703,6 +2756,7 @@ async function loadUserGreeting() {
         'Welcome back' + (name ? ', ' + name : '') + '! 👋\n\n' +
         'What\'s on your mind today?'
       );
+      showSuggestionChips();
       setTimeout(() => {
         renderChipGroup([
           {

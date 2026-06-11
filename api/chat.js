@@ -215,7 +215,7 @@ ${lumenContext.recentHistory.map(m => m.role + ': ' + m.content).join('\n')}
 
   // 5. Select system prompt
   const basePrompt = tab === 'discover' ? DISCOVER_SYSTEM_PROMPT : STYLE_SYSTEM_PROMPT;
-  const langInstruction = lang === 'es' ? '\n\nIMPORTANT: Always respond in Spanish (natural Latin American Spanish). This includes outfit card titles, styling notes, and all conversational text.' : '';
+  const langInstruction = lang === 'es' ? '\n\nIMPORTANT: Always respond in neutral Latin American Spanish (use tuteo: tú/tienes/quieres; never voseo: vos/tenés/querés). This applies to outfit card titles, styling notes, and all conversational text.' : '';
   const systemPrompt = basePrompt + (contextString ? '\n\n' + contextString : '') + (lumenContext.tasteSummary || '') + langInstruction;
 
   // 6. Claude API call
