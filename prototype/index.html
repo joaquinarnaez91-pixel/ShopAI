@@ -301,6 +301,8 @@ let currentProfile = {};
 
 // Closet
 let closetItems = [];
+let closetSelectMode = false;
+const closetSelectedIds = new Set();
 let closetVisible = false;
 let closetActiveCategory = 'all';
 
@@ -2472,7 +2474,19 @@ function renderClosetGrid(category) {
       cell.style.transform = 'scale(1)';
     }, { passive: true });
 
-    cell.onclick = () => showClosetItem(item);
+    if (closetSelectMode) {
+      const sel = closetSelectedIds.has(item.id);
+      if (sel) cell.style.outline = '2.5px solid var(--accent)';
+      cell.innerHTML +=
+        '<div style="position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;' +
+        'border:2px solid ' + (sel ? 'var(--accent)' : 'rgba(0,0,0,0.25)') + ';' +
+        'background:' + (sel ? 'var(--accent)' : 'rgba(255,255,255,0.85)') + ';' +
+        'display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;pointer-events:none">' +
+        (sel ? '✓' : '') + '</div>';
+      cell.onclick = () => toggleItemSelect(item.id);
+    } else {
+      cell.onclick = () => showClosetItem(item);
+    }
     grid.appendChild(cell);
   });
 }
@@ -2761,6 +2775,143 @@ async function deleteClosetItem(id, name) {
   }
 }
 
+function toggleClosetSelectMode() {
+  closetSelectMode = !closetSelectMode;
+  closetSelectedIds.clear();
+  const btn = document.getElementById('closetSelectBtn');
+  if (btn) btn.textContent = closetSelectMode ? 'Done' : 'Select';
+  const actionBar = document.getElementById('closetActionBar');
+  const addBar   = document.getElementById('closetAddBar');
+  if (actionBar) actionBar.style.display = closetSelectMode ? 'flex' : 'none';
+  if (addBar)    addBar.style.display    = closetSelectMode ? 'none' : 'block';
+  renderClosetGrid(closetActiveCategory);
+}
+
+function toggleItemSelect(id) {
+  if (closetSelectedIds.has(id)) closetSelectedIds.delete(id);
+  else closetSelectedIds.add(id);
+  updateClosetActionBar();
+  renderClosetGrid(closetActiveCategory);
+}
+
+function updateClosetActionBar() {
+  const n = closetSelectedIds.size;
+  const countEl  = document.getElementById('closetSelectedCount');
+  const editBtn  = document.getElementById('closetEditBtn');
+  const deleteBtn = document.getElementById('closetDeleteBtn');
+  if (countEl)  countEl.textContent  = n ? n + ' selected' : 'Select items';
+  if (editBtn)  { editBtn.disabled  = n !== 1; editBtn.style.opacity  = n === 1 ? '1' : '0.4'; }
+  if (deleteBtn){ deleteBtn.disabled = n === 0; deleteBtn.style.opacity = n > 0  ? '1' : '0.4'; }
+}
+
+async function deleteSelectedItems() {
+  const ids = [...closetSelectedIds];
+  if (!ids.length) return;
+  const deleteBtn = document.getElementById('closetDeleteBtn');
+  if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.textContent = 'Deleting…'; }
+  for (const id of ids) {
+    try {
+      await fetch('/api/closet', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (currentSession?.access_token || '') },
+        body: JSON.stringify({ id })
+      });
+      closetItems = closetItems.filter(i => i.id !== id);
+    } catch(e) { console.error('[closet] delete error:', e.message); }
+  }
+  toggleClosetSelectMode();
+  updateClosetProgress();
+}
+
+function editSelectedItem() {
+  const [id] = [...closetSelectedIds];
+  const item = closetItems.find(i => i.id === id);
+  if (!item) return;
+  toggleClosetSelectMode();
+  showEditItemCard(item);
+}
+
+function showEditItemCard(item) {
+  document.getElementById('edit-item-card')?.remove();
+  const grid = document.getElementById('closetGrid');
+  const card = document.createElement('div');
+  card.id = 'edit-item-card';
+  card.style.cssText = 'grid-column:1/-1;border:1.5px solid var(--border);border-radius:14px;overflow:visible;background:#fff;margin-bottom:8px';
+  card.innerHTML =
+    '<div style="display:flex;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border)">' +
+      (item.image_url ? '<img src="' + item.image_url + '" style="width:60px;height:60px;object-fit:contain;border-radius:8px;background:var(--card);flex-shrink:0">' : '') +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:13px;font-weight:700;color:var(--tx1)">Edit item</div>' +
+        '<div style="font-size:11px;color:var(--tx3)">' + item.category + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="padding:12px 14px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--border)">' +
+      '<div>' +
+        '<label style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px">Name</label>' +
+        '<input id="editNameInput" type="text" value="' + item.name.replace(/"/g,'&quot;') + '" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:var(--font);box-sizing:border-box;outline:none">' +
+      '</div>' +
+      '<div style="position:relative">' +
+        '<label style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px">Brand</label>' +
+        '<input id="editBrandInput" type="text" autocomplete="off" value="' + (item.brand||'').replace(/"/g,'&quot;') + '" placeholder="e.g. Nike, Zara…"' +
+          ' oninput="filterBrandsEdit(this.value)"' +
+          ' onfocus="filterBrandsEdit(this.value)"' +
+          ' onblur="setTimeout(hideBrandSuggestionsEdit,150)"' +
+          ' style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:var(--font);box-sizing:border-box;outline:none">' +
+        '<div id="brandSuggestionsEdit" style="display:none;position:absolute;left:0;right:0;background:#fff;border:1.5px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow-y:auto;max-height:160px;z-index:200;box-shadow:0 6px 16px rgba(0,0,0,0.08)"></div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:flex;gap:8px;padding:12px 14px">' +
+      '<button onclick="saveEditItem(\'' + item.id + '\')" style="flex:1;padding:11px;background:var(--tx1);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">Save changes</button>' +
+      '<button onclick="document.getElementById(\'edit-item-card\')?.remove()" style="padding:11px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-size:14px;cursor:pointer;font-family:var(--font)">Cancel</button>' +
+    '</div>';
+  grid.insertBefore(card, grid.firstChild);
+}
+
+async function saveEditItem(id) {
+  const name  = document.getElementById('editNameInput')?.value?.trim();
+  const brand = document.getElementById('editBrandInput')?.value?.trim() || null;
+  if (!name) return;
+  const saveBtn = document.querySelector('#edit-item-card button');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+  try {
+    await fetch('/api/closet', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (currentSession?.access_token || '') },
+      body: JSON.stringify({ id, name, brand })
+    });
+    const item = closetItems.find(i => i.id === id);
+    if (item) { item.name = name; item.brand = brand; }
+    document.getElementById('edit-item-card')?.remove();
+    renderClosetGrid(closetActiveCategory);
+  } catch(e) {
+    console.error('[closet] edit error:', e.message);
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save changes'; }
+  }
+}
+
+function filterBrandsEdit(val) {
+  const box   = document.getElementById('brandSuggestionsEdit');
+  const input = document.getElementById('editBrandInput');
+  if (!box) return;
+  const q = val.trim().toLowerCase();
+  const matches = q ? BRANDS.filter(b => b.toLowerCase().includes(q)).slice(0,8) : BRANDS.slice(0,8);
+  if (!matches.length) { box.style.display = 'none'; return; }
+  box.innerHTML = matches.map(b => {
+    const lo = b.toLowerCase(), idx = lo.indexOf(q);
+    const label = q && idx !== -1
+      ? b.slice(0,idx) + '<strong>' + b.slice(idx,idx+q.length) + '</strong>' + b.slice(idx+q.length)
+      : b;
+    return '<div onmousedown="selectBrandEdit(\'' + b.replace(/'/g,"\\'") + '\')" style="padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);color:var(--tx1)">' + label + '</div>';
+  }).join('');
+  box.style.display = 'block';
+}
+function hideBrandSuggestionsEdit() { const b = document.getElementById('brandSuggestionsEdit'); if(b) b.style.display='none'; }
+function selectBrandEdit(brand) {
+  const input = document.getElementById('editBrandInput');
+  if (input) { input.value = brand; input.focus(); }
+  hideBrandSuggestionsEdit();
+}
+
 const BRANDS = [
   'Zara','H&M','Nike','Adidas','Uniqlo','Mango',"Levi's",'Gap','Reformation',
   'ASOS','Anthropologie','Free People','Massimo Dutti','COS','Banana Republic',
@@ -2917,12 +3068,13 @@ checkSession();
     align-items:center;flex-shrink:0;
     position:sticky;top:0;background:var(--bg);
     z-index:10">
-    <div style="font-size:16px;font-weight:700;
-      color:var(--tx1)">My Closet</div>
-    <button onclick="toggleCloset()"
-      style="font-size:22px;background:none;
-      border:none;cursor:pointer;
-      color:var(--tx2);line-height:1">✕</button>
+    <div style="font-size:16px;font-weight:700;color:var(--tx1)">My Closet</div>
+    <div style="display:flex;align-items:center;gap:4px">
+      <button id="closetSelectBtn" onclick="toggleClosetSelectMode()"
+        style="font-size:13px;font-weight:600;color:var(--accent);background:none;border:none;cursor:pointer;padding:6px 10px;font-family:var(--font)">Select</button>
+      <button onclick="toggleCloset()"
+        style="font-size:22px;background:none;border:none;cursor:pointer;color:var(--tx2);line-height:1;padding:6px">✕</button>
+    </div>
   </div>
 
   <!-- Progress bar -->
@@ -3035,8 +3187,17 @@ checkSession();
     </div>
   </div>
 
-  <!-- Add button -->
-  <div style="padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;background:var(--bg);position:sticky;bottom:0;padding-bottom:calc(16px + env(safe-area-inset-bottom, 0px))">
+  <!-- Select-mode action bar (hidden until Select is tapped) -->
+  <div id="closetActionBar" style="display:none;padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;background:var(--bg);align-items:center;gap:10px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))">
+    <span id="closetSelectedCount" style="flex:1;font-size:13px;font-weight:600;color:var(--tx2)">Select items</span>
+    <button id="closetEditBtn" onclick="editSelectedItem()" disabled
+      style="padding:9px 18px;border-radius:10px;border:1.5px solid var(--border);background:var(--card);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--tx1);opacity:0.4">Edit</button>
+    <button id="closetDeleteBtn" onclick="deleteSelectedItems()" disabled
+      style="padding:9px 18px;border-radius:10px;border:none;background:#ff3b30;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);opacity:0.4">Delete</button>
+  </div>
+
+  <!-- Normal add button -->
+  <div id="closetAddBar" style="padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;background:var(--bg);position:sticky;bottom:0;padding-bottom:calc(16px + env(safe-area-inset-bottom, 0px))">
     <button onclick="showPhotoGuide()"
       style="display:flex;width:100%;
       align-items:center;justify-content:center;

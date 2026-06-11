@@ -154,21 +154,25 @@ async function handleFinalize(req, res, user) {
 
 // ── PATCH: add brand to item tags ─────────────────────────────────────────
 async function handlePatch(req, res, user) {
-  const { id, brand } = req.body;
+  const { id, brand, name } = req.body;
   if (!id) return res.status(400).json({ error: 'id required' });
 
-  const { data: existing } = await supabaseAdmin
-    .from('wardrobe_items')
-    .select('tags')
-    .eq('id', id)
-    .eq('user_id', user.id)
-    .single();
+  const updates = {};
+  if (name) updates.name = name;
 
-  const updatedTags = [...(existing?.tags || []), brand].filter(Boolean);
+  if (brand !== undefined) {
+    const { data: existing } = await supabaseAdmin
+      .from('wardrobe_items')
+      .select('tags')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .single();
+    updates.tags = [...(existing?.tags || []), brand].filter(Boolean);
+  }
 
   const { error } = await supabaseAdmin
     .from('wardrobe_items')
-    .update({ tags: updatedTags })
+    .update(updates)
     .eq('id', id)
     .eq('user_id', user.id);
 
