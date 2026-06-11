@@ -2561,6 +2561,7 @@ async function loadUserGreeting() {
       || currentUser.email?.split('@')[0]
       || '';
     const hasProfile = profile.color_season || profile.gender;
+    const wardrobeCount = context?.wardrobe?.length ?? 0;
 
     if (!profile.has_onboarded) {
       showFirstRunOnboarding(() => {
@@ -2569,6 +2570,7 @@ async function loadUserGreeting() {
         } else {
           showOnboardingWelcome();
         }
+        if (wardrobeCount < 3) setTimeout(() => toggleCloset(), 500);
       });
       return;
     }
@@ -2628,9 +2630,11 @@ async function loadUserGreeting() {
           }
         });
         scrollToLatest();
+        if (wardrobeCount < 3) setTimeout(() => toggleCloset(), 500);
       }, 400);
     } else {
       showOnboardingWelcome();
+      if (wardrobeCount < 3) setTimeout(() => toggleCloset(), 500);
     }
   } else {
     showOnboardingWelcome();

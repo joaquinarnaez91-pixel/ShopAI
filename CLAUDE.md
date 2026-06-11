@@ -22,3 +22,4 @@ Lumen is an AI personal style companion. Vision: visual-first AI stylist. The ta
 - One ROADMAP.md task per session unless told otherwise. Small commits, push after each task.
 - STOP and ask Joaquin (product owner) for: any product/UX decision, anything ambiguous, anything requiring spend.
 - Never mark a visual feature done — end the session listing exactly what Joaquin must test on his phone.
+- prototype/index.html is very large: NEVER read it in full. Always use targeted pattern search (Grep) to locate sections.
