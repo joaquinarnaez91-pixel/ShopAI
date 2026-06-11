@@ -1,7 +1,7 @@
 import https from 'https';
 import { verifyUser } from './_lib/getLumenContext.js';
 import { supabaseAdmin } from './_lib/supabase.js';
-import { prettifyImage } from './_lib/prettifyImage.js';
+import { prettifyImage, prettifyItemFromPhoto } from './_lib/prettifyImage.js';
 
 export const config = { maxDuration: 60 };
 
@@ -85,25 +85,95 @@ async function analyzeGarment(imageBase64, mimeType) {
   });
 }
 
+async function detectGarments(imageBase64, mimeType) {
+  return new Promise((resolve) => {
+    const payload = JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 500,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: mimeType, data: imageBase64 } },
+          {
+            type: 'text',
+            text: 'List every distinct clothing item and accessory visible in this photo (top, bottom, shoes, hat, bag, etc). Return JSON array only, no other text:\n[{"item":"short description","category":"tops|bottoms|shoes|outerwear|accessories|dresses"}]'
+          }
+        ]
+      }]
+    });
+
+    const r = https.request({
+      hostname: 'api.anthropic.com',
+      path: '/v1/messages',
+      method: 'POST',
+      timeout: 30000,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Length': Buffer.byteLength(payload)
+      }
+    }, res => {
+      let d = '';
+      res.on('data', c => d += c);
+      res.on('end', () => {
+        try {
+          const body = JSON.parse(d);
+          const text = body.content.filter(b => b.type === 'text').map(b => b.text).join('');
+          resolve(JSON.parse(text.replace(/```json|```/g, '').trim()));
+        } catch(e) {
+          resolve([{ item: 'Clothing Item', category: 'tops' }]);
+        }
+      });
+    });
+    r.on('error', () => resolve([{ item: 'Clothing Item', category: 'tops' }]));
+    r.write(payload);
+    r.end();
+  });
+}
+
 async function handlePost(req, res, user) {
   // Phase 2: save composited editorial card and create DB record
   if (req.body.action === 'finalize') {
     return handleFinalize(req, res, user);
   }
 
-  // Phase 1: remove background + analyze, return to client for compositing
+  // Phase 1: detect items, remove background + analyze, return to client for compositing
   const { imageBase64, mimeType } = req.body;
   if (!imageBase64) return res.status(400).json({ error: 'Image required' });
 
-  console.log('[closet] prettify starting for user:', user.id);
+  console.log('[closet] detecting garments for user:', user.id);
+  const detected = await detectGarments(imageBase64, mimeType || 'image/jpeg');
+  console.log('[closet] detected:', detected.length, 'item(s):', detected.map(d => d.item).join(', '));
 
-  const [garmentData, cleanBase64] = await Promise.all([
-    analyzeGarment(imageBase64, mimeType || 'image/jpeg'),
-    prettifyImage(imageBase64, mimeType || 'image/jpeg')
-  ]);
+  if (detected.length <= 1) {
+    // Single item: existing flow unchanged (response shape: { cleanBase64, garmentData })
+    const [garmentData, cleanBase64] = await Promise.all([
+      analyzeGarment(imageBase64, mimeType || 'image/jpeg'),
+      prettifyImage(imageBase64, mimeType || 'image/jpeg')
+    ]);
+    console.log('[closet] identified:', garmentData.name, garmentData.category);
+    return res.status(200).json({ cleanBase64, garmentData });
+  }
 
-  console.log('[closet] identified:', garmentData.name, garmentData.category);
-  return res.status(200).json({ cleanBase64, garmentData });
+  // Multiple items: one Gemini call per item, run sequentially
+  // NOTE: each item = one Gemini call (~$0.04), so a 4-item photo ≈ $0.16 — fine for beta, batch later if needed
+  console.log('[closet] multi-garment:', detected.length, 'items — sequential Gemini calls');
+  const items = [];
+  for (const d of detected) {
+    try {
+      const cleanBase64 = await prettifyItemFromPhoto(imageBase64, mimeType || 'image/jpeg', d.item);
+      items.push({
+        cleanBase64,
+        garmentData: { name: d.item, category: d.category || 'tops', color: null, brand: null }
+      });
+    } catch(e) {
+      console.error('[closet] prettify failed for item:', d.item, e.message);
+    }
+  }
+
+  if (!items.length) return res.status(500).json({ error: 'Failed to extract any items' });
+  return res.status(200).json({ items });
 }
 
 async function handleFinalize(req, res, user) {

@@ -2879,8 +2879,12 @@ async function handleClosetUpload(e) {
         return;
       }
 
-      window._pendingCleanBase64 = result.cleanBase64;
-      showBrandConfirmation(result.garmentData);
+      if (result.items && result.items.length > 1) {
+        showMultiItemReview(result.items);
+      } else {
+        window._pendingCleanBase64 = result.cleanBase64;
+        showBrandConfirmation(result.garmentData);
+      }
 
     } catch(err) {
       document.getElementById('prettify-loading')?.remove();
@@ -3230,6 +3234,204 @@ const BRANDS = [
   'Aritzia','Everlane','Cos','& Other Stories','Monki','Weekday','Acne Studios',
   'Ganni','Sandro','Maje','Isabel Marant','Ba&sh','Theory','Vince','AllSaints'
 ];
+
+// ── Multi-garment review (2+ items detected in one photo) ─────────────────
+function showMultiItemReview(items) {
+  window._multiItems = items.map((item, i) => ({ ...item, brand: null, checked: true, _idx: i }));
+  const grid = document.getElementById('closetGrid');
+  document.getElementById('multi-review-card')?.remove();
+
+  const card = document.createElement('div');
+  card.id = 'multi-review-card';
+  card.style.cssText =
+    'grid-column:1/-1;border:1.5px solid var(--border);border-radius:14px;' +
+    'overflow:hidden;background:#fff;margin-bottom:8px';
+
+  const header = document.createElement('div');
+  header.style.cssText =
+    'padding:12px 14px;border-bottom:1px solid var(--border);' +
+    'display:flex;justify-content:space-between;align-items:center';
+  header.innerHTML =
+    '<div>' +
+      '<div style="font-size:13px;font-weight:700;color:var(--tx1)">' + items.length + ' items found in your photo</div>' +
+      '<div style="font-size:11px;color:var(--tx3)">Uncheck any you don\'t want to add</div>' +
+    '</div>' +
+    '<button onclick="cancelMultiReview()" style="font-size:20px;background:none;border:none;cursor:pointer;color:var(--tx3);line-height:1;padding:4px 8px">✕</button>';
+  card.appendChild(header);
+
+  const rowsWrap = document.createElement('div');
+  rowsWrap.id = 'multi-review-rows';
+  window._multiItems.forEach((item, i) => rowsWrap.appendChild(_buildMultiRow(item, i)));
+  card.appendChild(rowsWrap);
+
+  const footer = document.createElement('div');
+  footer.style.cssText =
+    'padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:8px';
+  const addBtn = document.createElement('button');
+  addBtn.id = 'multi-add-btn';
+  addBtn.style.cssText =
+    'flex:1;padding:11px;background:var(--tx1);color:#fff;border:none;border-radius:10px;' +
+    'font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)';
+  addBtn.textContent = 'Add all (' + items.length + ')';
+  addBtn.onclick = saveAllMultiItems;
+  const cancelBtn = document.createElement('button');
+  cancelBtn.style.cssText =
+    'padding:11px 16px;background:var(--card);border:1px solid var(--border);' +
+    'border-radius:10px;font-size:14px;cursor:pointer;font-family:var(--font)';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.onclick = cancelMultiReview;
+  footer.appendChild(addBtn);
+  footer.appendChild(cancelBtn);
+  card.appendChild(footer);
+
+  grid.insertBefore(card, grid.firstChild);
+}
+
+function _buildMultiRow(item, i) {
+  const row = document.createElement('div');
+  row.id = 'multi-row-' + i;
+  row.style.cssText =
+    'padding:10px 14px;display:flex;gap:10px;align-items:center;' +
+    'border-bottom:1px solid var(--border);transition:opacity 0.2s';
+
+  // Thumbnail
+  const thumb = document.createElement('img');
+  thumb.src = 'data:image/png;base64,' + item.cleanBase64;
+  thumb.style.cssText =
+    'width:52px;height:52px;object-fit:cover;border-radius:8px;' +
+    'background:var(--card);flex-shrink:0';
+
+  // Inputs column
+  const info = document.createElement('div');
+  info.style.cssText = 'flex:1;min-width:0;display:flex;flex-direction:column;gap:5px';
+
+  const nameIn = document.createElement('input');
+  nameIn.type = 'text';
+  nameIn.value = item.garmentData.name || '';
+  nameIn.placeholder = 'Item name';
+  nameIn.style.cssText =
+    'width:100%;padding:5px 9px;border:1.5px solid var(--border);border-radius:8px;' +
+    'font-size:13px;font-family:var(--font);box-sizing:border-box;outline:none';
+  nameIn.oninput = () => { window._multiItems[i].garmentData.name = nameIn.value; };
+
+  const brandIn = document.createElement('input');
+  brandIn.type = 'text';
+  brandIn.placeholder = 'Brand (optional)';
+  brandIn.style.cssText =
+    'width:100%;padding:5px 9px;border:1.5px solid var(--border);border-radius:8px;' +
+    'font-size:12px;font-family:var(--font);box-sizing:border-box;outline:none;color:var(--tx2)';
+  brandIn.oninput = () => { window._multiItems[i].brand = brandIn.value.trim() || null; };
+
+  const cat = document.createElement('span');
+  cat.style.cssText =
+    'font-size:10px;padding:2px 8px;border-radius:20px;background:var(--card);' +
+    'border:1px solid var(--border);color:var(--tx3);align-self:flex-start;text-transform:capitalize';
+  cat.textContent = item.garmentData.category;
+
+  info.appendChild(nameIn);
+  info.appendChild(brandIn);
+  info.appendChild(cat);
+
+  // Toggle + remove
+  const acts = document.createElement('div');
+  acts.style.cssText = 'display:flex;flex-direction:column;gap:5px;align-items:center;flex-shrink:0';
+
+  const toggle = document.createElement('button');
+  toggle.style.cssText =
+    'width:28px;height:28px;border-radius:50%;background:var(--tx1);color:#fff;' +
+    'border:none;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700';
+  toggle.textContent = '✓';
+  let on = true;
+  toggle.onclick = () => {
+    on = !on;
+    window._multiItems[i].checked = on;
+    toggle.style.background = on ? 'var(--tx1)' : 'var(--card)';
+    toggle.style.color = on ? '#fff' : 'var(--tx2)';
+    row.style.opacity = on ? '1' : '0.45';
+    _updateMultiCount();
+  };
+
+  const rem = document.createElement('button');
+  rem.style.cssText =
+    'width:28px;height:28px;border-radius:50%;background:var(--card);' +
+    'border:1.5px solid var(--border);cursor:pointer;font-size:15px;' +
+    'display:flex;align-items:center;justify-content:center;color:var(--tx3)';
+  rem.textContent = '×';
+  rem.onclick = () => {
+    window._multiItems[i].checked = false;
+    window._multiItems[i]._removed = true;
+    row.remove();
+    _updateMultiCount();
+    if (window._multiItems.every(m => !m.checked || m._removed)) cancelMultiReview();
+  };
+
+  acts.appendChild(toggle);
+  acts.appendChild(rem);
+
+  row.appendChild(thumb);
+  row.appendChild(info);
+  row.appendChild(acts);
+  return row;
+}
+
+function _updateMultiCount() {
+  const n = (window._multiItems || []).filter(m => m.checked && !m._removed).length;
+  const btn = document.getElementById('multi-add-btn');
+  if (btn) btn.textContent = 'Add all (' + n + ')';
+}
+
+async function saveAllMultiItems() {
+  const toAdd = (window._multiItems || []).filter(m => m.checked && !m._removed);
+  if (!toAdd.length) return;
+  const btn = document.getElementById('multi-add-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  let saved = 0;
+  for (const item of toAdd) {
+    try {
+      const r = await fetch('/api/closet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + (currentSession?.access_token || '')
+        },
+        body: JSON.stringify({
+          action: 'finalize',
+          compositeBase64: item.cleanBase64,
+          name: item.garmentData.name || 'Clothing Item',
+          category: item.garmentData.category || 'tops',
+          color: item.garmentData.color || null,
+          brand: item.brand || null
+        })
+      }).then(r => r.json());
+      if (r.error) throw new Error(r.error);
+      closetItems.unshift({
+        id: r.item.id,
+        name: r.item.name,
+        category: r.item.category,
+        colors: [item.garmentData.color].filter(Boolean),
+        image_url: r.item.imageUrl,
+        brand: item.brand || null
+      });
+      saved++;
+      if (btn) btn.textContent = 'Saving… (' + saved + '/' + toAdd.length + ')';
+    } catch(e) {
+      console.error('[closet] multi finalize error:', e.message);
+    }
+  }
+  window._multiItems = null;
+  document.getElementById('multi-review-card')?.remove();
+  renderClosetGrid(closetActiveCategory);
+  updateClosetProgress();
+}
+
+function cancelMultiReview() {
+  window._multiItems = null;
+  document.getElementById('multi-review-card')?.remove();
+  if (closetItems.length === 0) {
+    const emptyEl = document.getElementById('closetEmpty');
+    if (emptyEl) emptyEl.style.display = 'block';
+  }
+}
 
 function showBrandConfirmation(item) {
   const grid = document.getElementById('closetGrid');
