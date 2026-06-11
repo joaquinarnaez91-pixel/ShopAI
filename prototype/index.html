@@ -3344,15 +3344,54 @@ function _buildMultiRow(item, i) {
 
   const brandIn = document.createElement('input');
   brandIn.type = 'text';
+  brandIn.autocomplete = 'off';
   brandIn.placeholder = 'Brand (optional)';
   brandIn.style.cssText =
-    'width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;' +
+    'width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px 8px 0 0;' +
     'font-size:12px;font-family:var(--font);box-sizing:border-box;outline:none;color:var(--tx2)';
-  brandIn.oninput = () => { window._multiItems[i].brand = brandIn.value.trim() || null; };
+
+  const suggBox = document.createElement('div');
+  suggBox.style.cssText =
+    'display:none;background:#fff;border:1.5px solid var(--border);border-top:none;' +
+    'border-radius:0 0 8px 8px;overflow-y:auto;max-height:140px;' +
+    'box-shadow:0 6px 16px rgba(0,0,0,0.08)';
+
+  const brandWrap = document.createElement('div');
+  brandWrap.style.position = 'relative';
+  brandWrap.appendChild(brandIn);
+  brandWrap.appendChild(suggBox);
+
+  const showBrandSugg = (val) => {
+    const q = val.trim().toLowerCase();
+    const matches = q ? BRANDS.filter(b => b.toLowerCase().includes(q)).slice(0, 8) : BRANDS.slice(0, 8);
+    if (!matches.length) { suggBox.style.display = 'none'; return; }
+    suggBox.innerHTML = matches.map(b => {
+      const lo = b.toLowerCase(), idx = lo.indexOf(q);
+      const label = q && idx !== -1
+        ? b.slice(0, idx) + '<strong>' + b.slice(idx, idx + q.length) + '</strong>' + b.slice(idx + q.length)
+        : b;
+      return '<div style="padding:9px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);color:var(--tx1)">' + label + '</div>';
+    }).join('');
+    suggBox.querySelectorAll('div').forEach((el, j) => {
+      el.onmousedown = (e) => {
+        e.preventDefault();
+        brandIn.value = matches[j];
+        window._multiItems[i].brand = matches[j];
+        suggBox.style.display = 'none';
+        brandIn.style.borderRadius = '8px';
+      };
+    });
+    brandIn.style.borderRadius = '8px 8px 0 0';
+    suggBox.style.display = 'block';
+  };
+
+  brandIn.oninput = () => { window._multiItems[i].brand = brandIn.value.trim() || null; showBrandSugg(brandIn.value); };
+  brandIn.onfocus = () => showBrandSugg(brandIn.value);
+  brandIn.onblur = () => setTimeout(() => { suggBox.style.display = 'none'; brandIn.style.borderRadius = '8px'; }, 150);
 
   info.appendChild(catPill);
   info.appendChild(nameIn);
-  info.appendChild(brandIn);
+  info.appendChild(brandWrap);
 
   // Remove button (× just removes the row entirely)
   const rem = document.createElement('button');
