@@ -2761,46 +2761,88 @@ async function deleteClosetItem(id, name) {
   }
 }
 
+const BRANDS = [
+  'Zara','H&M','Nike','Adidas','Uniqlo','Mango',"Levi's",'Gap','Reformation',
+  'ASOS','Anthropologie','Free People','Massimo Dutti','COS','Banana Republic',
+  'J.Crew','Pull&Bear','Bershka','Shein','Gucci','Prada','Louis Vuitton',
+  'Balenciaga','Off-White','Stone Island','Ralph Lauren','Tommy Hilfiger',
+  'Calvin Klein','Versace','Burberry','Fendi','Valentino','Givenchy','Dior',
+  'Saint Laurent','Bottega Veneta','Celine','Jacquemus','Ami Paris','A.P.C.',
+  'Carhartt','Supreme','Palace','Stussy','Kith','New Balance','Asics','Vans',
+  'Converse','Dr. Martens','Birkenstock','UGG','The North Face','Patagonia',
+  'Arc\'teryx','Lululemon','Gymshark','Skims','Savage X Fenty','Victoria\'s Secret',
+  'Aritzia','Everlane','Cos','& Other Stories','Monki','Weekday','Acne Studios',
+  'Ganni','Sandro','Maje','Isabel Marant','Ba&sh','Theory','Vince','AllSaints'
+];
+
 function showBrandConfirmation(item) {
   const grid = document.getElementById('closetGrid');
   const emptyEl = document.getElementById('closetEmpty');
   if (emptyEl) emptyEl.style.display = 'none';
 
   const safeItem = JSON.stringify(item).replace(/"/g, '&quot;');
-  const BRANDS = ['Zara','H&M','Nike','Adidas','Uniqlo','Mango',"Levi's",'Gap',
-    'Reformation','ASOS','Anthropologie','Free People','Massimo Dutti','COS',
-    'Banana Republic','J.Crew','Topshop','Pull&Bear','Bershka','Shein'];
 
   const card = document.createElement('div');
   card.id = 'brand-confirm-card';
-  card.style.cssText = 'grid-column:1/-1;border:1.5px solid var(--border);border-radius:14px;overflow:hidden;background:#fff;margin-bottom:8px';
+  card.style.cssText = 'grid-column:1/-1;border:1.5px solid var(--border);border-radius:14px;overflow:visible;background:#fff;margin-bottom:8px';
 
   card.innerHTML =
     '<div style="display:flex;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border)">' +
       '<img src="data:image/png;base64,' + (window._pendingCleanBase64 || '') + '" style="width:60px;height:60px;object-fit:contain;border-radius:8px;background:var(--card);flex-shrink:0">' +
       '<div style="flex:1;min-width:0">' +
         '<div style="font-size:13px;font-weight:700;color:var(--tx1);margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">' + item.name + '</div>' +
-        '<div style="font-size:11px;color:var(--tx3);margin-bottom:8px">' + item.category + '</div>' +
-        '<input id="brandInput" type="text" placeholder="Add brand (optional)..." style="width:100%;padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--font);box-sizing:border-box;outline:none">' +
+        '<div style="font-size:11px;color:var(--tx3)">' + item.category + '</div>' +
       '</div>' +
     '</div>' +
-    '<div style="padding:8px 14px;border-bottom:1px solid var(--border)">' +
-      '<div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Popular brands</div>' +
-      '<div style="display:flex;flex-wrap:wrap;gap:6px">' +
-        BRANDS.map(b => '<button onclick="selectBrand(\'' + b.replace(/'/g, "\\'") + '\')" style="padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--card);font-size:11px;color:var(--tx2);cursor:pointer;font-family:var(--font)">' + b + '</button>').join('') +
-      '</div>' +
+    '<div style="padding:12px 14px;border-bottom:1px solid var(--border);position:relative">' +
+      '<label style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px">Brand</label>' +
+      '<input id="brandInput" type="text" autocomplete="off" placeholder="e.g. Nike, Zara, Gucci…"' +
+        ' oninput="filterBrands(this.value)"' +
+        ' onfocus="filterBrands(this.value)"' +
+        ' onblur="setTimeout(hideBrandSuggestions,150)"' +
+        ' style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:var(--font);box-sizing:border-box;outline:none">' +
+      '<div id="brandSuggestions" style="display:none;position:absolute;left:14px;right:14px;background:#fff;border:1.5px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow-y:auto;max-height:180px;z-index:200;box-shadow:0 6px 16px rgba(0,0,0,0.08)"></div>' +
     '</div>' +
-    '<div style="display:flex;gap:8px;padding:10px 14px">' +
-      '<button onclick="confirmAddItem(' + safeItem + ')" style="flex:1;padding:10px;background:var(--tx1);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">✓ Add to closet</button>' +
-      '<button onclick="cancelAddItem()" style="padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-size:14px;cursor:pointer;font-family:var(--font)">Cancel</button>' +
+    '<div style="display:flex;gap:8px;padding:12px 14px">' +
+      '<button onclick="confirmAddItem(' + safeItem + ')" style="flex:1;padding:11px;background:var(--tx1);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">Save to closet</button>' +
+      '<button onclick="cancelAddItem()" style="padding:11px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-size:14px;cursor:pointer;font-family:var(--font)">Cancel</button>' +
     '</div>';
 
   grid.insertBefore(card, grid.firstChild);
 }
 
+function filterBrands(val) {
+  const box = document.getElementById('brandSuggestions');
+  const input = document.getElementById('brandInput');
+  if (!box) return;
+  const q = val.trim().toLowerCase();
+  const matches = q
+    ? BRANDS.filter(b => b.toLowerCase().includes(q)).slice(0, 8)
+    : BRANDS.slice(0, 8);
+  if (!matches.length) { box.style.display = 'none'; return; }
+  box.innerHTML = matches.map(b => {
+    const lo = b.toLowerCase(), idx = lo.indexOf(q);
+    const label = q && idx !== -1
+      ? b.slice(0, idx) + '<strong>' + b.slice(idx, idx + q.length) + '</strong>' + b.slice(idx + q.length)
+      : b;
+    return '<div onmousedown="selectBrand(\'' + b.replace(/'/g, "\\'") + '\')"' +
+      ' style="padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);color:var(--tx1)">' +
+      label + '</div>';
+  }).join('');
+  const rect = input.getBoundingClientRect();
+  box.style.width = rect.width + 'px';
+  box.style.display = 'block';
+}
+
+function hideBrandSuggestions() {
+  const box = document.getElementById('brandSuggestions');
+  if (box) box.style.display = 'none';
+}
+
 function selectBrand(brand) {
   const input = document.getElementById('brandInput');
-  if (input) input.value = brand;
+  if (input) { input.value = brand; input.focus(); }
+  hideBrandSuggestions();
 }
 
 async function confirmAddItem(item) {
