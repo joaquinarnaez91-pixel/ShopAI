@@ -13,6 +13,7 @@
 - [x] 10. Affiliate link wrapping — wrapUrl() via Skimlinks (SKIMLINKS_ID env var); applied to all outbound product links in search.js; link_click taste signal on every product tap (source: chat|similar)
 - [x] 11. Beta readiness — empty states (closet CTA, chat nudge when no wardrobe), prettify error cell with retry, first-run 3-screen onboarding modal (has_onboarded profile flag, never shown again)
 - [x] 12. Multi-garment detection and split on closet upload — Claude detects items in a photo, Gemini extracts each one separately, frontend shows a review list before saving
-- [ ] 13. Avatar / VTON — Gemini dresses a matched model, face-swap API (InsightFace-based, ~$0.01–0.05/image) stamps your face on as a post-process
+- [x] 13. Lumen design system pass — CSS token sweep, Fraunces 600/700, SVG icon sweep (no UI emoji), PWA manifest + service worker + icons
+- [ ] 14. Avatar / VTON — Gemini dresses a matched model, face-swap API (InsightFace-based, ~$0.01–0.05/image) stamps your face on as a post-process
 
 **MVP done when:** a friend can sign up, add 5 items photographed any way, and get a visual outfit suggestion from their own clothes that looks good enough to screenshot.

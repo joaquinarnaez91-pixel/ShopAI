@@ -4,46 +4,56 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#FAF9F7">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Lumen — Your Personal Style Guide</title>
 <style>
 :root {
-  --bg:#FFFFFF; --card:#F5F5F5; --photo:#F0EEEC;
-  --tx1:#111111; --tx2:#666666; --tx3:#999999;
-  --accent:#E8490F; --border:#E5E5E5;
+  /* Design tokens */
+  --bg:#FAF9F7; --surface:#FFFFFF; --surface-warm:#F0EEEC;
+  --ink:#111110; --ink-soft:#6B6862; --ink-faint:#9B9793;
+  --accent:#E8490F; --border:#E8E6E1; --garment-bg:#F2F1EF;
+  --radius-card:16px; --radius-pill:999px;
+  --shadow-card:0 2px 12px rgba(17,17,16,0.06);
+  --font-display:'Fraunces',Georgia,serif;
   --font:-apple-system,"SF Pro Display","Helvetica Neue",Arial,sans-serif;
+  /* Legacy aliases — keep old names so existing inline styles resolve to new values */
+  --card:#FFFFFF; --photo:#F2F1EF;
+  --tx1:#111110; --tx2:#6B6862; --tx3:#9B9793;
 }
 
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
 
-html,body { height:100%; overflow:hidden; background:#FFFFFF; color:var(--tx1); font-family:var(--font); -webkit-font-smoothing:antialiased; }
+html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--ink); font-family:var(--font); -webkit-font-smoothing:antialiased; }
 
 .lumen-app { display:flex; flex-direction:column; height:100vh; max-width:480px; margin:0 auto; position:relative; }
 
 /* HEADER */
-.l-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid #E5E5E5; background:#FFFFFF; flex-shrink:0; z-index:10; }
-.l-logo { font-family:'Fraunces',Georgia,serif; font-weight:700; font-size:22px; color:#111111; letter-spacing:-0.3px; display:flex; align-items:center; gap:0; }
-.l-dot { width:8px; height:8px; border-radius:50%; background:#E8490F; display:inline-block; margin-left:4px; flex-shrink:0; margin-bottom:2px; }
-.l-profile-btn { width:36px; height:36px; border-radius:50%; background:var(--card); border:1.5px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--tx2); }
+.l-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); background:var(--bg); flex-shrink:0; z-index:10; }
+.l-logo { font-family:var(--font-display); font-weight:700; font-size:22px; color:var(--ink); letter-spacing:-0.01em; display:flex; align-items:center; gap:0; }
+.l-dot { width:8px; height:8px; border-radius:50%; background:var(--accent); display:inline-block; margin-left:4px; flex-shrink:0; margin-bottom:2px; }
+.l-profile-btn { width:36px; height:36px; border-radius:50%; background:var(--surface); border:1.5px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--ink-soft); }
 
 /* CHAT */
-.l-chat { flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; padding:12px 0; padding-bottom:160px; scroll-behavior:smooth; background:#FFFFFF; }
+.l-chat { flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; padding:12px 0; padding-bottom:160px; scroll-behavior:smooth; background:var(--bg); }
 .l-chat::-webkit-scrollbar { display:none; }
 
 /* MESSAGES */
 .l-msg { display:flex; align-items:flex-end; gap:8px; padding:3px 16px; margin-bottom:2px; }
 .l-msg.ai { flex-direction:row; }
 .l-msg.user { flex-direction:row-reverse; }
-.l-av { width:28px; height:28px; border-radius:50%; background:var(--tx1); display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; margin-bottom:2px; }
-.l-av.user { background:#E8E8E8; }
+.l-av { width:28px; height:28px; border-radius:50%; background:var(--ink); display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-bottom:2px; color:#fff; }
+.l-av.user { background:var(--surface-warm); color:var(--ink-soft); }
 .l-bbl { max-width:78%; padding:10px 14px; border-radius:18px; font-size:14px; line-height:1.5; }
-.l-bbl.ai { background:var(--card); color:var(--tx1); border-bottom-left-radius:4px; }
-.l-bbl.user { background:var(--tx1); color:#fff; border-bottom-right-radius:4px; }
+.l-bbl.ai { background:var(--surface); color:var(--ink); border-bottom-left-radius:4px; box-shadow:var(--shadow-card); }
+.l-bbl.user { background:var(--ink); color:#fff; border-bottom-right-radius:4px; }
 
 /* CHIPS */
 .l-chips { display:flex; flex-wrap:wrap; gap:7px; padding:4px 16px 8px 52px; }
-.l-chip { padding:7px 14px; border-radius:20px; border:1.5px solid var(--border); background:var(--bg); font-size:13px; font-weight:500; color:var(--tx1); cursor:pointer; font-family:var(--font); transition:all 0.15s; white-space:nowrap; }
-.l-chip:active { background:var(--tx1); color:#fff; border-color:var(--tx1); }
+.l-chip { padding:7px 14px; border-radius:var(--radius-pill); border:1.5px solid var(--border); background:var(--bg); font-size:13px; font-weight:500; color:var(--ink); cursor:pointer; font-family:var(--font); transition:all 0.15s; white-space:nowrap; }
+.l-chip:active { background:var(--ink); color:#fff; border-color:var(--ink); }
 
 /* PRODUCT CARD ROW */
 .l-card-row { padding:8px 16px; display:flex; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; cursor:grab; user-select:none; }
@@ -51,32 +61,32 @@ html,body { height:100%; overflow:hidden; background:#FFFFFF; color:var(--tx1); 
 .l-card-row.dragging { cursor:grabbing; scroll-snap-type:none; }
 
 /* PRODUCT CARD */
-.l-card { flex-shrink:0; width:220px; border-radius:16px; border:1.5px solid var(--border); background:var(--bg); overflow:hidden; cursor:pointer; scroll-snap-align:start; box-shadow:0 2px 12px rgba(0,0,0,0.07); transition:transform 0.15s,box-shadow 0.15s; position:relative; }
+.l-card { flex-shrink:0; width:220px; border-radius:var(--radius-card); border:1px solid var(--border); background:var(--surface); overflow:hidden; cursor:pointer; scroll-snap-align:start; box-shadow:var(--shadow-card); transition:transform 0.15s,box-shadow 0.15s; position:relative; }
 .l-card:active { transform:scale(0.97); }
-.l-card-img { width:100%; height:200px; background:var(--photo); overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:40px; color:var(--tx3); }
+.l-card-img { width:100%; height:200px; background:var(--garment-bg); overflow:hidden; display:flex; align-items:center; justify-content:center; }
 .l-card-img img { width:100%; height:100%; object-fit:cover; }
 .l-card-body { padding:10px 12px 12px; }
-.l-card-brand { font-size:10px; font-weight:700; color:var(--tx3); text-transform:uppercase; letter-spacing:0.5px; }
-.l-card-name { font-size:13px; font-weight:600; color:var(--tx1); margin:2px 0 4px; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.l-card-brand { font-size:10px; font-weight:700; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.5px; }
+.l-card-name { font-size:13px; font-weight:600; color:var(--ink); margin:2px 0 4px; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 .l-card-price-row { display:flex; align-items:center; justify-content:space-between; }
-.l-card-price { font-size:15px; font-weight:700; color:var(--tx1); }
+.l-card-price { font-size:15px; font-weight:700; color:var(--ink); }
 .l-card-indicator { font-size:10px; padding:2px 6px; border-radius:10px; font-weight:600; }
 .l-card-indicator.LOW { background:#E8F5E9; color:#2E7D32; }
 .l-card-indicator.USUAL { background:#FFF8E1; color:#F57F17; }
 .l-card-indicator.HIGH { background:#FFEBEE; color:#C62828; }
-.l-card-source { font-size:11px; color:var(--tx3); margin-top:4px; }
-.l-card-stars { font-size:11px; color:var(--tx2); margin-top:2px; }
-.l-card-pin { position:absolute; top:8px; right:8px; width:32px; height:32px; border-radius:50%; background:white; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.15); }
-.l-card-pin.saved { background:var(--tx1); }
-.l-card-pin.saved svg { stroke:white; }
-.l-expert-badge { position:absolute; top:8px; left:8px; background:var(--accent); color:white; font-size:9px; font-weight:700; padding:3px 7px; border-radius:6px; text-transform:uppercase; letter-spacing:0.5px; }
+.l-card-source { font-size:11px; color:var(--ink-faint); margin-top:4px; }
+.l-card-stars { font-size:11px; color:var(--ink-soft); margin-top:2px; }
+.l-card-pin { position:absolute; top:8px; right:8px; width:32px; height:32px; border-radius:50%; background:var(--surface); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(17,17,16,0.12); }
+.l-card-pin.saved { background:var(--ink); }
+.l-card-pin.saved svg { stroke:#fff; }
+.l-expert-badge { position:absolute; top:8px; left:8px; background:var(--accent); color:#fff; font-size:9px; font-weight:700; padding:3px 7px; border-radius:6px; text-transform:uppercase; letter-spacing:0.5px; }
 
 /* INPUT BAR */
-.l-input-bar { position:fixed; bottom:0; left:0; right:0; width:100%; max-width:480px; margin:0 auto; padding:10px 12px; padding-bottom:calc(10px + env(safe-area-inset-bottom,16px)); background:#FFFFFF; border-top:1px solid #E5E5E5; display:flex; align-items:center; gap:8px; z-index:10; box-sizing:border-box; }
-.l-input { flex:1; padding:10px 16px; border-radius:24px; border:1.5px solid var(--border); background:var(--card); font-size:15px; font-family:var(--font); color:var(--tx1); outline:none; }
-.l-input:focus { border-color:var(--tx1); }
-.l-send-btn { width:40px; height:40px; border-radius:50%; background:var(--tx1); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.l-icon-btn { width:40px; height:40px; border-radius:50%; background:var(--card); border:1.5px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.l-input-bar { position:fixed; bottom:0; left:0; right:0; width:100%; max-width:480px; margin:0 auto; padding:10px 12px; padding-bottom:calc(10px + env(safe-area-inset-bottom,16px)); background:var(--bg); border-top:1px solid var(--border); display:flex; align-items:center; gap:8px; z-index:10; box-sizing:border-box; }
+.l-input { flex:1; padding:10px 16px; border-radius:var(--radius-pill); border:1.5px solid var(--border); background:var(--surface); font-size:15px; font-family:var(--font); color:var(--ink); outline:none; }
+.l-input:focus { border-color:var(--ink); }
+.l-send-btn { width:40px; height:40px; border-radius:50%; background:var(--ink); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.l-icon-btn { width:40px; height:40px; border-radius:50%; background:var(--surface); border:1.5px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 
 /* PROFILE SHEET */
 .l-profile-sheet { position:fixed; bottom:0; left:50%; transform:translateX(-50%) translateY(100%); width:100%; max-width:480px; background:var(--bg); border-radius:20px 20px 0 0; border-top:1px solid var(--border); padding:20px 20px calc(20px + env(safe-area-inset-bottom,0px)); transition:transform 0.35s cubic-bezier(0.32,0.72,0,1); z-index:100; }
@@ -88,33 +98,34 @@ html,body { height:100%; overflow:hidden; background:#FFFFFF; color:var(--tx1); 
 .l-deep-dive.open { transform:translateX(-50%) translateY(0); }
 
 /* OVERLAY */
-.l-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:99; opacity:0; pointer-events:none; transition:opacity 0.3s; }
+.l-overlay { position:fixed; inset:0; background:rgba(17,17,16,0.45); z-index:99; opacity:0; pointer-events:none; transition:opacity 0.3s; }
 .l-overlay.show { opacity:1; pointer-events:all; }
 
 /* Style quiz cards */
-.sq-card { display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:10px; border:1.5px solid var(--border); margin-bottom:8px; cursor:pointer; background:#fff; transition:all 0.15s; }
-.sq-card.sel { border-color:var(--tx1); background:var(--card); }
+.sq-card { display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:var(--radius-card); border:1.5px solid var(--border); margin-bottom:8px; cursor:pointer; background:var(--surface); transition:all 0.15s; }
+.sq-card.sel { border-color:var(--ink); background:var(--surface-warm); }
 
 /* Enrich loading */
 .enrich-progress { height:2px; background:var(--border); border-radius:1px; margin:10px 0 4px; overflow:hidden; }
-.enrich-progress-fill { height:100%; width:35%; background:var(--tx3); border-radius:1px; animation:enrichSlide 1.4s ease-in-out infinite; }
+.enrich-progress-fill { height:100%; width:35%; background:var(--ink-faint); border-radius:1px; animation:enrichSlide 1.4s ease-in-out infinite; }
 @keyframes enrichSlide { 0%{transform:translateX(-200%);} 100%{transform:translateX(500%);} }
 @keyframes shimmer { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
-.skel { background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite; }
-/* First-run onboarding */
-.ob-overlay { position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.6);display:flex;align-items:flex-end;justify-content:center; }
-.ob-sheet { width:100%;max-width:480px;background:#fff;border-radius:24px 24px 0 0;padding:32px 28px calc(32px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;text-align:center; }
-.ob-icon { font-size:64px;line-height:1;margin-bottom:20px; }
-.ob-title { font-size:22px;font-weight:700;color:#111;margin-bottom:10px;font-family:var(--font); }
-.ob-body { font-size:15px;color:#555;line-height:1.55;margin-bottom:28px;max-width:300px; }
-.ob-dots { display:flex;gap:6px;margin-bottom:28px; }
-.ob-dot { width:8px;height:8px;border-radius:50%;background:#E5E5E5;transition:background 0.2s; }
-.ob-dot.active { background:#111; }
-.ob-actions { display:flex;justify-content:space-between;align-items:center;width:100%; }
-.ob-skip { font-size:14px;color:#999;cursor:pointer;padding:4px;background:none;border:none;font-family:var(--font); }
-.ob-next { padding:14px 32px;background:#111;color:#fff;border:none;border-radius:100px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font); }
+.skel { background:linear-gradient(90deg,var(--surface-warm) 25%,var(--border) 50%,var(--surface-warm) 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite; }
 
-/* TABLET: un-fix input bar once viewport is wider than mobile */
+/* First-run onboarding */
+.ob-overlay { position:fixed;inset:0;z-index:3000;background:rgba(17,17,16,0.6);display:flex;align-items:flex-end;justify-content:center; }
+.ob-sheet { width:100%;max-width:480px;background:var(--bg);border-radius:24px 24px 0 0;padding:32px 28px calc(32px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;text-align:center; }
+.ob-icon { font-size:64px;line-height:1;margin-bottom:20px; }
+.ob-title { font-size:22px;font-weight:700;color:var(--ink);margin-bottom:10px;font-family:var(--font-display);letter-spacing:-0.01em; }
+.ob-body { font-size:15px;color:var(--ink-soft);line-height:1.55;margin-bottom:28px;max-width:300px; }
+.ob-dots { display:flex;gap:6px;margin-bottom:28px; }
+.ob-dot { width:8px;height:8px;border-radius:50%;background:var(--border);transition:background 0.2s; }
+.ob-dot.active { background:var(--ink); }
+.ob-actions { display:flex;justify-content:space-between;align-items:center;width:100%; }
+.ob-skip { font-size:14px;color:var(--ink-faint);cursor:pointer;padding:4px;background:none;border:none;font-family:var(--font); }
+.ob-next { padding:14px 32px;background:var(--ink);color:#fff;border:none;border-radius:var(--radius-pill);font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font); }
+
+/* TABLET */
 @media (min-width:481px) {
   .l-input-bar { position:sticky; bottom:0; left:auto; right:auto; width:100%; max-width:100%; }
 }
@@ -204,7 +215,14 @@ html,body { height:100%; overflow:hidden; background:#FFFFFF; color:var(--tx1); 
     }
   }
 </style>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+</script>
 </head>
 <body>
 
@@ -215,7 +233,7 @@ html,body { height:100%; overflow:hidden; background:#FFFFFF; color:var(--tx1); 
     <div class="l-logo">lumen<span class="l-dot" style="width:8px;height:8px;border-radius:50%;background:#E8490F;display:inline-block;margin-left:4px;flex-shrink:0;margin-bottom:2px"></span></div>
     <div style="display:flex;gap:8px;align-items:center">
       <button onclick="toggleCloset()" id="closetBtn" style="width:36px;height:36px;border-radius:50%;background:var(--card);border:1.5px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 18H3.62a1 1 0 0 1-.7-1.71L12 8l9.08 8.29A1 1 0 0 1 20.38 18z"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/></svg></button>
-      <div class="l-profile-btn" id="profileBtn" onclick="openProfile()">👤</div>
+      <div class="l-profile-btn" id="profileBtn" onclick="openProfile()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke-linecap="round"/></svg></div>
     </div>
   </div>
 
@@ -444,7 +462,7 @@ function addMessage(role, text, id) {
   const isAI  = role === 'ai';
   const idAttr = id ? ` id="${id}"` : '';
   const html = `<div class="l-msg ${isAI ? 'ai' : 'user'}"${idAttr}>` +
-    `<div class="l-av ${isAI ? '' : 'user'}">${isAI ? '✨' : '😊'}</div>` +
+    `<div class="l-av ${isAI ? '' : 'user'}">${isAI ? '<svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M10 2l1.5 4.5L16 8l-4.5 1.5L10 14l-1.5-4.5L4 8l4.5-1.5z"/></svg>' : '<svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M10 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-5 0-8 2.5-8 4v1h16v-1c0-1.5-3-4-8-4z"/></svg>'}</div>` +
     `<div class="l-bbl ${isAI ? 'ai' : 'user'}">${isAI ? parseMarkdown(text) : text}</div>` +
     `</div>`;
   const c = chat();
@@ -453,7 +471,7 @@ function addMessage(role, text, id) {
 
 function showTyping() {
   const id   = 'typ' + Date.now();
-  const html = `<div class="l-msg ai" id="${id}"><div class="l-av">✨</div><div class="l-bbl ai" style="color:var(--tx3);font-style:italic">Lumen is thinking…</div></div>`;
+  const html = `<div class="l-msg ai" id="${id}"><div class="l-av"><svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M10 2l1.5 4.5L16 8l-4.5 1.5L10 14l-1.5-4.5L4 8l4.5-1.5z"/></svg></div><div class="l-bbl ai" style="color:var(--tx3);font-style:italic">Lumen is thinking…</div></div>`;
   const c = chat();
   if (c) { c.insertAdjacentHTML('beforeend', html); scrollToLatest(); }
   return id;
@@ -516,7 +534,7 @@ function renderPaletteInChat(palette, season) {
   const c = chat();
   if (c) {
     c.insertAdjacentHTML('beforeend',
-      `<div class="l-msg ai"><div class="l-av">✨</div><div class="l-bbl ai"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:2px 0">${dots}${season ? `<span style="font-size:11px;font-weight:600;color:var(--tx3);margin-left:4px">${season}</span>` : ''}</div></div></div>`
+      `<div class="l-msg ai"><div class="l-av"><svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M10 2l1.5 4.5L16 8l-4.5 1.5L10 14l-1.5-4.5L4 8l4.5-1.5z"/></svg></div><div class="l-bbl ai"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:2px 0">${dots}${season ? `<span style="font-size:11px;font-weight:600;color:var(--tx3);margin-left:4px">${season}</span>` : ''}</div></div></div>`
     );
     scrollToLatest();
   }
@@ -535,7 +553,7 @@ function updateProfileDisplay() {
   if (se && currentUser) se.textContent = currentUser.email || '';
   // Profile button initials
   const pb = document.getElementById('profileBtn');
-  if (pb && currentUser?.email) pb.textContent = currentUser.email[0].toUpperCase();
+  if (pb && currentUser?.email) { pb.textContent = ''; pb.innerHTML = `<span style="font-size:12px;font-weight:700">${currentUser.email[0].toUpperCase()}</span>`; }
   updateSidebarSaved();
 }
 
@@ -546,7 +564,7 @@ function updateSidebarSaved() {
   if (!saved.length) { grid.innerHTML = '<div style="font-size:12px;color:var(--tx3)">Nothing saved yet</div>'; return; }
   grid.innerHTML = saved.map(p => p.img
     ? `<div style="aspect-ratio:1;border-radius:8px;overflow:hidden;cursor:pointer" onclick="openDeepDive(savedProducts.find(x=>x.id==${p.id}))"><img src="${p.img}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div>`
-    : `<div style="aspect-ratio:1;border-radius:8px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:18px">👟</div>`
+    : `<div style="aspect-ratio:1;border-radius:8px;background:var(--garment-bg);display:flex;align-items:center;justify-content:center;color:var(--ink-faint)"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.38 18H3.62a1 1 0 0 1-.7-1.71L12 8l9.08 8.29A1 1 0 0 1 20.38 18z"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/></svg></div>`
   ).join('');
 }
 
@@ -594,7 +612,7 @@ function renderProductsInline(prods, label) {
     const ind = p.priceIndicator || 'USUAL';
     card.innerHTML =
       (i === 0 ? '<div class="l-expert-badge">Expert Pick</div>' : '') +
-      `<div class="l-card-img">${p.img ? `<img src="${p.img}" onerror="this.style.display='none'">` : '<div style="display:flex;align-items:center;justify-content:center;font-size:40px;color:var(--tx3)">🛍️</div>'}</div>` +
+      `<div class="l-card-img">${p.img ? `<img src="${p.img}" onerror="this.style.display='none'">` : '<div style="display:flex;align-items:center;justify-content:center;color:var(--ink-faint)"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.35" aria-hidden="true"><path d="M20.38 18H3.62a1 1 0 0 1-.7-1.71L12 8l9.08 8.29A1 1 0 0 1 20.38 18z"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/></svg></div>'}</div>` +
       `<button class="l-card-pin${isPinned ? ' saved' : ''}" id="pin-${p.id}" onclick="event.stopPropagation();toggleSave(${p.id})">` +
         `<svg viewBox="0 0 24 24" width="14" height="14" fill="${isPinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>` +
       `</button>` +
@@ -642,14 +660,14 @@ function addTasteFeedback(prods) {
   label.textContent = 'These picks:';
   wrap.appendChild(label);
   const buttons = [
-    { emoji: '❤️', label: 'Love it', type: 'love' },
-    { emoji: '👍', label: 'Good', type: 'good' },
-    { emoji: '👎', label: 'Not for me', type: 'not_for_me' }
+    { emoji: '<svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M17.21 3.79a4.5 4.5 0 0 0-6.36 0L10 4.64l-.85-.85a4.5 4.5 0 0 0-6.36 6.36l.85.85L10 17.36l6.36-6.36.85-.85a4.5 4.5 0 0 0 0-6.36z"/></svg>', label: 'Love it', type: 'love' },
+    { emoji: '<svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 8.5V15a1 1 0 0 0 1 1h6a1 1 0 0 0 .97-.75l1.5-6A1 1 0 0 0 15.5 8h-4l.6-2.4A1 1 0 0 0 11.13 4.5L7 8.5zM4 9h1.5a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5H4a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1z"/></svg>', label: 'Good', type: 'good' },
+    { emoji: '<svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M13 11.5V5a1 1 0 0 0-1-1H6a1 1 0 0 0-.97.75l-1.5 6A1 1 0 0 0 4.5 12h4l-.6 2.4a1 1 0 0 0 .97 1.1L13 11.5zM16 11h-1.5a.5.5 0 0 1-.5-.5v-6a.5.5 0 0 1 .5-.5H16a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1z"/></svg>', label: 'Not for me', type: 'not_for_me' }
   ];
   buttons.forEach(b => {
     const btn = document.createElement('button');
     btn.style.cssText = 'padding:4px 10px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-size:13px;cursor:pointer;transition:all 0.15s';
-    btn.textContent = b.emoji + ' ' + b.label;
+    btn.innerHTML = b.emoji + ' ' + b.label;
     btn.onclick = () => {
       wrap.querySelectorAll('button').forEach(el => el.style.opacity = '0.4');
       btn.style.opacity = '1';
@@ -737,16 +755,16 @@ function openDeepDive(p) {
   // Product image (3:4 aspect ratio)
   const imgWrap = document.createElement('div');
   imgWrap.style.cssText =
-    'width:100%;background:var(--photo);aspect-ratio:3/4;' +
+    'width:100%;background:var(--garment-bg);aspect-ratio:3/4;' +
     'overflow:hidden;display:flex;align-items:center;justify-content:center';
   if (p.img) {
     const img = document.createElement('img');
     img.src = p.img;
     img.style.cssText = 'width:100%;height:100%;object-fit:cover';
-    img.onerror = () => { imgWrap.innerHTML = '<div style="font-size:48px">👗</div>'; };
+    img.onerror = () => { imgWrap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20.38 18H3.62a1 1 0 0 1-.7-1.71L12 8l9.08 8.29A1 1 0 0 1 20.38 18z"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/></svg></div>'; };
     imgWrap.appendChild(img);
   } else {
-    imgWrap.innerHTML = '<div style="font-size:48px">👗</div>';
+    imgWrap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20.38 18H3.62a1 1 0 0 1-.7-1.71L12 8l9.08 8.29A1 1 0 0 1 20.38 18z"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/></svg></div>';
   }
   dd.appendChild(imgWrap);
 
@@ -759,8 +777,7 @@ function openDeepDive(p) {
     '<div style="font-size:11px;font-weight:700;color:var(--tx3);' +
     'text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">' +
     (p.brand || '') + '</div>' +
-    '<div style="font-size:20px;font-weight:600;color:var(--tx1);' +
-    'line-height:1.3;margin-bottom:8px">' + (p.name || '') + '</div>' +
+    '<div style="font-size:20px;font-weight:600;color:var(--tx1);font-family:var(--font-display);letter-spacing:-0.01em;line-height:1.3;margin-bottom:8px">' + (p.name || '') + '</div>' +
     '<div style="font-size:24px;font-weight:700;color:var(--tx1);' +
     'margin-bottom:4px">$' + (p.price || '—') + '</div>' +
     '<div style="font-size:12px;color:var(--tx3);margin-bottom:20px">' +
@@ -788,9 +805,9 @@ function openDeepDive(p) {
   const statsRow = document.createElement('div');
   statsRow.style.cssText = 'display:flex;gap:12px;margin-bottom:20px';
   const indColors = {
-    LOW:   { bg:'#E8F5E9', color:'#2E7D32', label:'🟢 Good price' },
-    USUAL: { bg:'#FFF8E1', color:'#F57F17', label:'🟡 Usual price' },
-    HIGH:  { bg:'#FFEBEE', color:'#C62828', label:'🔴 High price' }
+    LOW:   { bg:'#E8F5E9', color:'#2E7D32', label:'Good price' },
+    USUAL: { bg:'#FFF8E1', color:'#F57F17', label:'Usual price' },
+    HIGH:  { bg:'#FFEBEE', color:'#C62828', label:'High price' }
   };
   const ind = indColors[p.priceIndicator] || indColors.USUAL;
   statsRow.innerHTML =
@@ -825,8 +842,7 @@ function openDeepDive(p) {
   enrichSection.id = 'dd-enrich-' + p.id;
   enrichSection.style.cssText = 'margin-bottom:20px';
   enrichSection.innerHTML =
-    '<div style="text-align:center;padding:16px;color:var(--tx3);font-size:13px">' +
-    '✨ Loading Lumen\'s take...</div>';
+    '<div style="text-align:center;padding:16px;color:var(--tx3);font-size:13px">Loading Lumen\'s take…</div>';
   content.appendChild(enrichSection);
 
   // Style It placeholder
@@ -946,7 +962,7 @@ function renderStyleItSection(p, container) {
   shopLookBtn.style.cssText =
     'width:100%;padding:12px;font-size:13px;margin-bottom:8px;' +
     'border-radius:10px;justify-content:center';
-  shopLookBtn.textContent = '🛍️ Shop the complete look';
+  shopLookBtn.textContent = 'Shop the complete look';
   shopLookBtn.onclick = () => {
     closeDeepDive();
     sendMessage('Build me a complete outfit around the ' + p.brand + ' ' + (p.name || '') + '. Find all the pieces.');
@@ -957,7 +973,7 @@ function renderStyleItSection(p, container) {
   similarBtn.className = 'l-chip';
   similarBtn.style.cssText =
     'width:100%;padding:12px;font-size:13px;border-radius:10px;justify-content:center';
-  similarBtn.textContent = '🔍 Find similar at lower price';
+  similarBtn.textContent = 'Find similar';
   similarBtn.onclick = () => {
     closeDeepDive();
     sendMessage('Find me something similar to ' + p.brand + ' ' + (p.name || '') + ' but at a lower price point');
@@ -1090,7 +1106,7 @@ function renderTryOnResult(resultUrl) {
 function renderTryOnError(msg) {
   document.getElementById('tryOnContent').innerHTML =
     `<div style="text-align:center;padding:32px 0">` +
-      `<div style="font-size:32px;margin-bottom:12px">⚠️</div>` +
+      `<div style="margin-bottom:12px;display:flex;justify-content:center"><svg viewBox="0 0 48 48" width="32" height="32" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" aria-hidden="true"><path d="M24 8L4 40h40L24 8z" stroke-linejoin="round"/><path d="M24 22v8" stroke-linecap="round"/><circle cx="24" cy="34" r="1.5" fill="var(--ink-soft)" stroke="none"/></svg></div>` +
       `<div style="font-size:15px;font-weight:600;color:var(--tx1);margin-bottom:8px">Try-on failed</div>` +
       `<div style="font-size:13px;color:var(--tx3);margin-bottom:20px">${msg}</div>` +
       `<button onclick="renderTryOnConfirm()" style="padding:12px 24px;background:var(--tx1);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer">Try Again</button>` +
@@ -1116,8 +1132,8 @@ function openProfile() {
         `<div style="font-size:14px;font-weight:600;margin-bottom:2px">${styleProfile.season || ''} Season</div>` +
         `<div style="font-size:12px;color:var(--tx3);margin-bottom:16px">Undertone: ${styleProfile.undertone || 'not analyzed'}</div>`
       : `<div style="font-size:13px;color:var(--tx3);margin-bottom:16px">Complete color analysis to see your palette</div>`) +
-    (userGender ? `<div style="font-size:13px;color:var(--tx2);margin-bottom:6px">👤 ${userGender}</div>` : '') +
-    (userAge    ? `<div style="font-size:13px;color:var(--tx2);margin-bottom:16px">📅 ${userAge}</div>` : '') +
+    (userGender ? `<div style="font-size:13px;color:var(--tx2);margin-bottom:6px">${userGender}</div>` : '') +
+    (userAge    ? `<div style="font-size:13px;color:var(--tx2);margin-bottom:16px">${userAge}</div>` : '') +
     `<div style="border-top:1px solid var(--border);padding-top:16px">` +
       `<button onclick="signOut()" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;background:transparent;font-size:14px;color:var(--tx2);font-family:var(--font);cursor:pointer">Sign out</button>` +
     `</div>`;
@@ -1168,7 +1184,7 @@ function renderOutfitCards(text) {
 
   outfitBlocks.forEach(outfit => {
     const card = document.createElement('div');
-    card.style.cssText = 'margin:6px 16px;border-radius:14px;border:1.5px solid var(--border);overflow:hidden;background:#fff;';
+    card.style.cssText = 'margin:6px 16px;border-radius:14px;border:1.5px solid var(--border);overflow:hidden;background:var(--surface);';
 
     const header = document.createElement('div');
     header.style.cssText = 'padding:12px 14px 8px;border-bottom:1px solid var(--border);';
@@ -1182,7 +1198,7 @@ function renderOutfitCards(text) {
 
     const actions = document.createElement('div');
     actions.style.cssText = 'padding:8px 14px 12px;display:flex;gap:6px;flex-wrap:wrap;';
-    ['🛍️ Shop this look', '📌 Save outfit'].forEach(label => {
+    ['Shop this look', 'Save outfit'].forEach(label => {
       const btn = document.createElement('button');
       btn.className = 'l-chip';
       btn.style.cssText = 'font-size:11px;padding:5px 10px;';
@@ -1203,9 +1219,9 @@ function renderOutfitCards(text) {
   setTimeout(() => {
     addMessage('ai', 'Want to find actual pieces for any of these looks?');
     renderChipGroup([
-      { label:'🛍️ Shop these looks',  msg:'Find clothes for my outfit formulas' },
-      { label:'✨ Refine my style',    msg:'Tell me more about my style and give me more outfits' },
-      { label:'📷 Visual search',      action:'camera' },
+      { label:'Shop these looks',  msg:'Find clothes for my outfit formulas' },
+      { label:'Refine my style',    msg:'Tell me more about my style and give me more outfits' },
+      { label:'Visual search',      action:'camera' },
     ], msg => sendMessage(msg));
     scrollToLatest();
   }, 400);
@@ -1241,8 +1257,7 @@ function renderClosetOutfitCard(cardData) {
 
   const card = document.createElement('div');
   card.style.cssText =
-    'margin:8px 16px;border-radius:20px;border:1.5px solid var(--border);' +
-    'overflow:hidden;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.06)';
+    'margin:8px 16px;border-radius:20px;border:1.5px solid var(--border);overflow:hidden;background:var(--surface);box-shadow:var(--shadow-card)';
 
   // Header
   const header = document.createElement('div');
@@ -1275,12 +1290,12 @@ function renderClosetOutfitCard(cardData) {
         cell.style.display = 'flex';
         cell.style.alignItems = 'center';
         cell.style.justifyContent = 'center';
-        cell.innerHTML = '<span style="font-size:28px">👗</span>';
+        cell.innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20.38 18H3.62a1 1 0 0 1-.7-1.71L12 8l9.08 8.29A1 1 0 0 1 20.38 18z"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/></svg>';
       };
       cell.appendChild(img);
     } else {
       cell.style.cssText += ';display:flex;align-items:center;justify-content:center';
-      cell.innerHTML = '<span style="font-size:28px">👗</span>';
+      cell.innerHTML = '<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20.38 18H3.62a1 1 0 0 1-.7-1.71L12 8l9.08 8.29A1 1 0 0 1 20.38 18z"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/></svg>';
     }
     grid.appendChild(cell);
   });
@@ -1292,7 +1307,7 @@ function renderClosetOutfitCard(cardData) {
     noteEl.style.cssText =
       'padding:10px 16px;border-top:1px solid var(--border);' +
       'font-size:13px;color:var(--tx2);line-height:1.5;font-style:italic';
-    noteEl.textContent = '✨ ' + note;
+    noteEl.textContent = note;
     card.appendChild(noteEl);
   }
 
@@ -1306,12 +1321,12 @@ function renderClosetOutfitCard(cardData) {
     btn.style.cssText =
       'padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);' +
       'background:var(--bg);font-size:13px;cursor:pointer;transition:all 0.15s;font-family:var(--font)';
-    btn.textContent = emoji + ' ' + label;
+    btn.innerHTML = emoji + ' ' + label;
     return btn;
   };
 
-  const likeBtn    = mkBtn('❤️', 'Love it');
-  const dislikeBtn = mkBtn('👎', 'Not for me');
+  const likeBtn    = mkBtn('<svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M17.21 3.79a4.5 4.5 0 0 0-6.36 0L10 4.64l-.85-.85a4.5 4.5 0 0 0-6.36 6.36l.85.85L10 17.36l6.36-6.36.85-.85a4.5 4.5 0 0 0 0-6.36z"/></svg>', 'Love it');
+  const dislikeBtn = mkBtn('<svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M13 11.5V5a1 1 0 0 0-1-1H6a1 1 0 0 0-.97.75l-1.5 6A1 1 0 0 0 4.5 12h4l-.6 2.4a1 1 0 0 0 .97 1.1L13 11.5zM16 11h-1.5a.5.5 0 0 1-.5-.5v-6a.5.5 0 0 1 .5-.5H16a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1z"/></svg>', 'Not for me');
 
   const sendSignal = (type) => {
     fetch('/api/taste-signal', {
@@ -1387,7 +1402,7 @@ async function handlePhotoUpload(e) {
       const preview = document.createElement('div');
       preview.className = 'l-msg user';
       preview.innerHTML =
-        '<div class="l-av user">😊</div>' +
+        '<div class="l-av user"><svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M10 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-5 0-8 2.5-8 4v1h16v-1c0-1.5-3-4-8-4z"/></svg></div>' +
         '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">' +
         `<img src="${dataUrl}" style="width:120px;height:120px;object-fit:cover;border-radius:12px;border:1.5px solid var(--border)">` +
         '<div class="l-bbl user" style="font-size:12px">Analyzing your photo...</div></div>';
@@ -1431,7 +1446,7 @@ async function handleOutfitCheck(file) {
     const preview = document.createElement('div');
     preview.className = 'l-msg user';
     preview.innerHTML =
-      '<div class="l-av user">😊</div>' +
+      '<div class="l-av user"><svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M10 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-5 0-8 2.5-8 4v1h16v-1c0-1.5-3-4-8-4z"/></svg></div>' +
       '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">' +
       '<img src="' + dataUrl + '" ' +
       'style="width:140px;height:180px;object-fit:cover;border-radius:16px;border:1.5px solid var(--border)">' +
@@ -1454,11 +1469,11 @@ async function handleOutfitCheck(file) {
       const chipRow = document.createElement('div');
       chipRow.className = 'l-chips chip-group';
       const occasions = [
-        { label: '☕ Casual day out',   occasion: 'casual day out' },
-        { label: '💼 Work / office',    occasion: 'work or office' },
-        { label: '🌙 Evening / dinner', occasion: 'evening or dinner out' },
-        { label: '🏃 Running errands',  occasion: 'running errands' },
-        { label: '⚡ Just tell me now', occasion: 'general' }
+        { label: 'Casual day out',   occasion: 'casual day out' },
+        { label: 'Work / office',    occasion: 'work or office' },
+        { label: 'Evening / dinner', occasion: 'evening or dinner out' },
+        { label: 'Running errands',  occasion: 'running errands' },
+        { label: 'Just tell me now', occasion: 'general' }
       ];
       occasions.forEach(c => {
         const btn = document.createElement('button');
@@ -1577,8 +1592,7 @@ function renderOutfitCheckResult(result, photoUrl) {
 
   const card = document.createElement('div');
   card.style.cssText =
-    'margin:4px 16px;border-radius:16px;' +
-    'border:1.5px solid var(--border);overflow:hidden;background:#fff;';
+    'margin:4px 16px;border-radius:16px;border:1.5px solid var(--border);overflow:hidden;background:var(--surface);';
 
   // Verdict header
   const header = document.createElement('div');
@@ -1613,7 +1627,7 @@ function renderOutfitCheckResult(result, photoUrl) {
   const findBtn = document.createElement('button');
   findBtn.className = 'l-chip';
   findBtn.style.cssText = 'font-size:12px;padding:6px 12px';
-  findBtn.textContent = '🛍️ Find this piece';
+  findBtn.textContent = 'Find this piece';
   findBtn.onclick = () => handleDirectSearch(
     'Find me: ' + (result.change_item || result.one_change || 'this item')
   );
@@ -1622,14 +1636,14 @@ function renderOutfitCheckResult(result, photoUrl) {
   const similarBtn = document.createElement('button');
   similarBtn.className = 'l-chip';
   similarBtn.style.cssText = 'font-size:12px;padding:6px 12px';
-  similarBtn.textContent = '👗 I have something similar';
+  similarBtn.textContent = 'I have something similar';
   similarBtn.onclick = () => {
     _outfitCheckMode = true;
     addMessage('ai', 'Show me what you have and I\'ll tell you if it works with your outfit.');
     setTimeout(() => {
       renderChipGroup([
-        { label: '📷 Take photo', action: 'camera' },
-        { label: '🖼️ From gallery', action: 'gallery' }
+        { label: 'Take photo', action: 'camera' },
+        { label: 'From gallery', action: 'gallery' }
       ], () => {});
       scrollToLatest();
     }, 300);
@@ -1645,16 +1659,16 @@ function renderOutfitCheckResult(result, photoUrl) {
     previewWrap.style.cssText =
       'margin:4px 16px;border-radius:12px;background:var(--card);padding:20px;' +
       'text-align:center;color:var(--tx3);font-size:13px;border:1.5px solid var(--border)';
-    previewWrap.textContent = '✨ Generating style preview...';
+    previewWrap.textContent = 'Generating style preview…';
     chatEl.appendChild(previewWrap);
   }
 
   // Follow-up chips
   setTimeout(() => {
     renderChipGroup([
-      { label: '✅ Love it, I\'m ready',  msg: 'This outfit works, thanks!' },
-      { label: '🔄 Try a different look', msg: 'Show me a completely different outfit direction' },
-      { label: '📷 Try another outfit',   action: 'camera' }
+      { label: 'Love it, I\'m ready',  msg: 'This outfit works, thanks!' },
+      { label: 'Try a different look', msg: 'Show me a completely different outfit direction' },
+      { label: 'Try another outfit',   action: 'camera' }
     ], (msg, action) => {
       if (action === 'camera') {
         _outfitCheckMode = true;
@@ -1684,7 +1698,7 @@ function renderVisionResults(analysis, originalImage) {
 
   items.slice(0, 3).forEach(item => {
     const card = document.createElement('div');
-    card.style.cssText = 'margin:4px 16px;border-radius:12px;border:1.5px solid var(--border);overflow:hidden;background:#fff;';
+    card.style.cssText = 'margin:4px 16px;border-radius:12px;border:1.5px solid var(--border);overflow:hidden;background:var(--surface);';
     card.innerHTML =
       `<div style="padding:12px 14px">` +
         `<div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px">${item.type || 'Item'}</div>` +
@@ -1692,17 +1706,17 @@ function renderVisionResults(analysis, originalImage) {
         `<div style="font-size:12px;color:var(--tx2)">${item.color}${item.brand_guess ? ' · ' + item.brand_guess : ''} · ${item.price_range || 'mid'} range</div>` +
       `</div>` +
       `<div style="padding:0 14px 12px;display:flex;gap:6px;flex-wrap:wrap">` +
-        `<button class="l-chip" style="font-size:11px;padding:5px 10px" onclick="searchVisionItem(${JSON.stringify(item.search_query)})">🛍️ Find this</button>` +
-        `<button class="l-chip" style="font-size:11px;padding:5px 10px" onclick="searchVisionItem(${JSON.stringify('similar to ' + item.search_query)})">🔍 Find similar</button>` +
+        `<button class="l-chip" style="font-size:11px;padding:5px 10px" onclick="searchVisionItem(${JSON.stringify(item.search_query)})">Find this</button>` +
+        `<button class="l-chip" style="font-size:11px;padding:5px 10px" onclick="searchVisionItem(${JSON.stringify('similar to ' + item.search_query)})">Find similar</button>` +
       `</div>`;
     c.appendChild(card);
   });
 
   setTimeout(() => {
     renderChipGroup([
-      { label:'🛍️ Find the key piece',  msg:'Find this for me: ' + keyPiece },
-      { label:'💰 Find cheaper similar', msg:'Find something similar but more affordable: ' + keyPiece },
-      { label:'✨ Does this suit me?',   msg:'Does this outfit work for my style and palette?' }
+      { label:'Find the key piece',  msg:'Find this for me: ' + keyPiece },
+      { label:'Find cheaper', msg:'Find something similar but more affordable: ' + keyPiece },
+      { label:'Does this suit me?',   msg:'Does this outfit work for my style and palette?' }
     ], msg => sendMessage(msg));
     scrollToLatest();
   }, 300);
@@ -1718,11 +1732,11 @@ function renderStyleQuiz() {
   if (!c) return;
 
   const styles = [
-    { id:'minimalist', emoji:'⬜', label:'Clean & minimal',   desc:'White tee, straight trousers, leather sneakers.' },
-    { id:'classic',    emoji:'🤎', label:'Timeless classic',  desc:'Blazer, tailored jeans, loafers. Polished, never trendy.' },
-    { id:'street',     emoji:'🖤', label:'Street & relaxed',  desc:'Oversized hoodie, cargo pants, chunky sneakers.' },
-    { id:'bohemian',   emoji:'🌿', label:'Boho & flowy',      desc:'Linen dress, woven bag, sandals. Effortless and earthy.' },
-    { id:'elevated',   emoji:'✨', label:'Elevated everyday', desc:'Silk shirt, wide leg pants, mules. Looks expensive, isn\'t.' },
+    { id:'minimalist', emoji:'<div style="width:16px;height:16px;border-radius:50%;background:#F5F5F5;border:1.5px solid #E0E0E0;flex-shrink:0"></div>', label:'Clean & minimal', desc:'White tee, straight trousers, leather sneakers.' },
+    { id:'classic',    emoji:'<div style="width:16px;height:16px;border-radius:50%;background:#795548;flex-shrink:0"></div>', label:'Timeless classic', desc:'Blazer, tailored jeans, loafers. Polished, never trendy.' },
+    { id:'street',     emoji:'<div style="width:16px;height:16px;border-radius:50%;background:#212121;flex-shrink:0"></div>', label:'Street & relaxed', desc:'Oversized hoodie, cargo pants, chunky sneakers.' },
+    { id:'bohemian',   emoji:'<div style="width:16px;height:16px;border-radius:50%;background:#4CAF50;flex-shrink:0"></div>', label:'Boho & flowy', desc:'Linen dress, woven bag, sandals. Effortless and earthy.' },
+    { id:'elevated',   emoji:'<div style="width:16px;height:16px;border-radius:50%;background:var(--accent);flex-shrink:0"></div>', label:'Elevated everyday', desc:'Silk shirt, wide leg pants, mules. Looks expensive, isn\'t.' },
   ];
 
   const selected = new Set();
@@ -1743,7 +1757,7 @@ function renderStyleQuiz() {
     const card = document.createElement('div');
     card.className = 'sq-card';
     card.innerHTML =
-      `<div style="font-size:20px;flex-shrink:0;line-height:1.3">${s.emoji}</div>` +
+      `<div style="flex-shrink:0;display:flex;align-items:center">${s.emoji}</div>` +
       `<div><div style="font-size:13px;font-weight:600">${s.label}</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">${s.desc}</div></div>`;
     card.onclick = () => {
       if (selected.has(s.id)) { selected.delete(s.id); card.classList.remove('sel'); }
@@ -1838,10 +1852,10 @@ async function handleDirectSearch(text) {
 
     setTimeout(() => {
       renderChipGroup([
-        { label: '💰 Lower budget',  msg: 'Find me cheaper: ' + text },
-        { label: '🏆 More premium',  msg: 'Find me premium version: ' + text },
-        { label: '🎨 Different color', msg: 'Find me different color: ' + text },
-        { label: '📷 Rate my outfit',  msg: 'I want feedback on my outfit' }
+        { label: 'Lower budget',  msg: 'Find me cheaper: ' + text },
+        { label: 'More premium',  msg: 'Find me premium version: ' + text },
+        { label: 'Different color', msg: 'Find me different color: ' + text },
+        { label: 'Rate my outfit',  msg: 'I want feedback on my outfit' }
       ], (msg) => sendMessage(msg));
       scrollToLatest();
     }, 300);
@@ -1885,8 +1899,7 @@ async function renderOccasionCard(palette, occasion) {
 
   const card = document.createElement('div');
   card.style.cssText =
-    'margin:8px 16px;border-radius:20px;border:1.5px solid var(--border);' +
-    'overflow:hidden;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.06)';
+    'margin:8px 16px;border-radius:20px;border:1.5px solid var(--border);overflow:hidden;background:var(--surface);box-shadow:var(--shadow-card)';
 
   // Header: occasion label + vibe + palette swatches
   const header = document.createElement('div');
@@ -1919,7 +1932,7 @@ async function renderOccasionCard(palette, occasion) {
 
     cell.innerHTML =
       '<div style="text-align:center;color:var(--tx3)">' +
-      '<div style="font-size:24px;margin-bottom:6px">✨</div>' +
+      '' +
       '<div style="font-size:10px">Generating...</div></div>';
 
     const labelEl = document.createElement('div');
@@ -1942,11 +1955,11 @@ async function renderOccasionCard(palette, occasion) {
 
     const likeBtn = document.createElement('button');
     likeBtn.style.cssText = btnStyle;
-    likeBtn.textContent = '❤️';
+    likeBtn.innerHTML = '<svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M17.21 3.79a4.5 4.5 0 0 0-6.36 0L10 4.64l-.85-.85a4.5 4.5 0 0 0-6.36 6.36l.85.85L10 17.36l6.36-6.36.85-.85a4.5 4.5 0 0 0 0-6.36z"/></svg>';
 
     const dislikeBtn = document.createElement('button');
     dislikeBtn.style.cssText = btnStyle;
-    dislikeBtn.textContent = '👎';
+    dislikeBtn.innerHTML = '<svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M13 11.5V5a1 1 0 0 0-1-1H6a1 1 0 0 0-.97.75l-1.5 6A1 1 0 0 0 4.5 12h4l-.6 2.4a1 1 0 0 0 .97 1.1L13 11.5zM16 11h-1.5a.5.5 0 0 1-.5-.5v-6a.5.5 0 0 1 .5-.5H16a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1z"/></svg>';
 
     likeBtn.onclick = (e) => { e.stopPropagation(); handleOutfitFeedback(outfit, 'positive', cell, likeBtn, dislikeBtn, occasion, palette); };
     dislikeBtn.onclick = (e) => { e.stopPropagation(); handleOutfitFeedback(outfit, 'negative', cell, likeBtn, dislikeBtn, occasion, palette); };
@@ -1974,11 +1987,11 @@ async function renderOccasionCard(palette, occasion) {
   const chips = document.createElement('div');
   chips.style.cssText = 'padding:12px 14px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border)';
   [
-    { label: '👔 Show men\'s looks',  msg: 'Show me men\'s outfit options for ' + occasion.occasion },
-    { label: '🎨 Different colors',   msg: 'Show different color palette for ' + occasion.occasion },
-    { label: '👗 More formal',        msg: 'Show more formal options for ' + occasion.occasion },
-    { label: '😎 More casual',        msg: 'Show more casual options for ' + occasion.occasion },
-    { label: '💬 Something else',     action: 'focus' }
+    { label: 'Men\'s looks',  msg: 'Show me men\'s outfit options for ' + occasion.occasion },
+    { label: 'Different colors',   msg: 'Show different color palette for ' + occasion.occasion },
+    { label: 'More formal',        msg: 'Show more formal options for ' + occasion.occasion },
+    { label: 'More casual',        msg: 'Show more casual options for ' + occasion.occasion },
+    { label: 'Something else',     action: 'focus' }
   ].forEach(c => {
     const btn = document.createElement('button');
     btn.className = 'l-chip';
@@ -2084,8 +2097,8 @@ async function sendMessage(text) {
     setTimeout(() => {
       addMessage('ai', 'Before I can style outfits for you, add a few items to your closet — I\'ll work with what you actually own. 👗');
       renderChipGroup([
-        { label:'📷 Add items now', action:'opencloset' },
-        { label:'💬 Just browse instead', msg: text }
+        { label:'Add items now', action:'opencloset' },
+        { label:'Browse instead', msg: text }
       ], (msg, action) => {
         if (action === 'opencloset') { toggleCloset(); return; }
         isLoading = false;
@@ -2160,9 +2173,9 @@ async function sendMessage(text) {
         if (hadPhoto && prof.palette?.length > 0) {
           setTimeout(() => {
             renderChipGroup([
-              { label:'👗 Build outfits for me', msg:'Based on my colors, give me 3 outfit formulas' },
-              { label:'🛍️ Shop my palette',     msg:'Find clothes in my color palette' },
-              { label:'✨ See my style quiz',    msg:null, action:'quiz' },
+              { label:'Build outfits for me', msg:'Based on my colors, give me 3 outfit formulas' },
+              { label:'Shop my palette',     msg:'Find clothes in my color palette' },
+              { label:'Style quiz',    msg:null, action:'quiz' },
             ], (msg, action) => { if (action === 'quiz') renderStyleQuiz(); else sendMessage(msg); });
             scrollToLatest();
           }, 400);
@@ -2254,10 +2267,10 @@ async function sendMessage(text) {
             : 'I found ' + products.length + ' options — here are your top picks:');
           renderProductsInline(products, 'Expert picks for you');
           renderChipGroup([
-            { label:'🔍 Compare these',    msg:'Compare the items shown' },
-            { label:'💰 Lower budget',     msg:'Show me lower budget options' },
-            { label:'🏆 More premium',     msg:'Show me more premium options' },
-            { label:'🎨 Specific color',   msg:'I want a specific color' },
+            { label:'Compare',    msg:'Compare the items shown' },
+            { label:'Lower budget',     msg:'Show me lower budget options' },
+            { label:'More premium',     msg:'Show me more premium options' },
+            { label:'Specific color',   msg:'I want a specific color' },
           ], msg => sendMessage(msg));
         } catch(e) {
           removeTyping(srchTypId);
@@ -2318,27 +2331,27 @@ function showOnboardingWelcome() {
   setTimeout(() => {
     renderChipGroup([
       {
-        label: '📷 Rate my outfit',
+        label: 'Rate my outfit',
         msg: 'I want honest feedback on my outfit'
       },
       {
-        label: '🎉 I have an event',
+        label: 'I have an event',
         msg: 'I have an event coming up and need help with what to wear'
       },
       {
-        label: '🛍️ Find something I saw',
+        label: 'Find something I saw',
         msg: 'I saw something I love and want to find it'
       },
       {
-        label: '👗 Help me plan what to wear',
+        label: 'Plan what to wear',
         msg: 'Help me figure out what to wear'
       },
       {
-        label: '✨ Just browsing',
+        label: 'Just browsing',
         msg: 'I\'m just browsing, what\'s trending right now?'
       },
       {
-        label: '💬 Something else',
+        label: 'Something else',
         action: 'focus'
       }
     ], (msg, action) => {
@@ -2357,8 +2370,8 @@ function showOnboardingWelcome() {
         );
         setTimeout(() => {
           renderChipGroup([
-            { label: '📷 Take photo now', action: 'camera' },
-            { label: '🖼️ Upload from gallery', action: 'gallery' }
+            { label: 'Take photo', action: 'camera' },
+            { label: 'Upload photo', action: 'gallery' }
           ], () => {});
           scrollToLatest();
         }, 400);
@@ -2372,9 +2385,9 @@ function showOnboardingWelcome() {
 
 // ── First-run onboarding (3-screen modal) ────────────────────────────────
 const OB_SLIDES = [
-  { icon:'👗', title:'Your wardrobe, elevated', body:'Add your clothes once. Lumen learns your style and builds outfits from what you actually own.' },
-  { icon:'✨', title:'Ask anything',             body:'"What do I wear to a wedding?" Lumen styles you from your closet — or finds what\'s missing.' },
-  { icon:'🛍️', title:'Shop smarter',             body:'When your wardrobe needs a gap filled, Lumen searches across stores to find the perfect piece.' }
+  { icon:'<svg viewBox="0 0 48 48" width="64" height="64" fill="none" stroke="var(--accent)" stroke-width="1.5" aria-hidden="true"><path d="M38 34H10a2 2 0 0 1-1.4-3.42L24 16l15.4 14.58A2 2 0 0 1 38 34z"/><path d="M24 16V11"/><circle cx="24" cy="9" r="2.5"/></svg>', title:'Your wardrobe, elevated', body:'Add your clothes once. Lumen learns your style and builds outfits from what you actually own.' },
+  { icon:'<svg viewBox="0 0 48 48" width="64" height="64" fill="none" stroke="var(--accent)" stroke-width="1.5" aria-hidden="true"><path d="M40 8H8a2 2 0 0 0-2 2v20a2 2 0 0 0 2 2h4v6l8-6h20a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2z"/><circle cx="16" cy="20" r="1.5" fill="var(--accent)"/><circle cx="24" cy="20" r="1.5" fill="var(--accent)"/><circle cx="32" cy="20" r="1.5" fill="var(--accent)"/></svg>', title:'Ask anything', body:'"What do I wear to a wedding?" Lumen styles you from your closet — or finds what\'s missing.' },
+  { icon:'<svg viewBox="0 0 48 48" width="64" height="64" fill="none" stroke="var(--accent)" stroke-width="1.5" aria-hidden="true"><path d="M12 14h24l-3 22H15L12 14z"/><path d="M19 14V11a5 5 0 0 1 10 0v3"/><circle cx="24" cy="26" r="3" fill="var(--accent)" stroke="none"/></svg>', title:'Shop smarter', body:'When your wardrobe needs a gap filled, Lumen searches across stores to find the perfect piece.' }
 ];
 
 function showFirstRunOnboarding(afterFn) {
@@ -2387,7 +2400,7 @@ function showFirstRunOnboarding(afterFn) {
     const isLast = idx === OB_SLIDES.length - 1;
     overlay.innerHTML =
       '<div class="ob-sheet">' +
-        '<div class="ob-icon">' + s.icon + '</div>' +
+        '<div class="ob-icon" style="display:flex;align-items:center;justify-content:center">' + s.icon + '</div>' +
         '<div class="ob-title">' + s.title + '</div>' +
         '<div class="ob-body">' + s.body + '</div>' +
         '<div class="ob-dots">' +
@@ -2426,7 +2439,7 @@ async function markOnboarded() {
 function showAuthScreen() {
   const el = document.createElement('div');
   el.id = 'auth-screen';
-  el.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;background:#fff;box-sizing:border-box;';
+  el.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;background:var(--bg);box-sizing:border-box;';
   el.innerHTML =
     '<div style="width:100%;max-width:380px">' +
       '<div style="font-size:28px;font-weight:700;margin-bottom:4px;text-align:center">Lumen</div>' +
@@ -2568,27 +2581,27 @@ async function loadUserGreeting() {
       setTimeout(() => {
         renderChipGroup([
           {
-            label: '📷 Rate my outfit today',
+            label: 'Rate my outfit today',
             msg: 'I want feedback on what I\'m wearing today'
           },
           {
-            label: '🎉 I have an event',
+            label: 'I have an event',
             msg: 'I have an event coming up and need help with what to wear'
           },
           {
-            label: '👗 What should I wear?',
+            label: 'What should I wear?',
             msg: 'Help me figure out what to wear today'
           },
           {
-            label: '🛍️ Find something',
+            label: 'Find something',
             msg: 'I want to find something specific'
           },
           {
-            label: '✨ Show me trends',
+            label: 'Show me trends',
             msg: 'Show me what\'s trending right now'
           },
           {
-            label: '💬 Something else',
+            label: 'Something else',
             action: 'focus'
           }
         ], (msg, action) => {
@@ -2605,8 +2618,8 @@ async function loadUserGreeting() {
             );
             setTimeout(() => {
               renderChipGroup([
-                { label: '📷 Take photo now', action: 'camera' },
-                { label: '🖼️ Upload from gallery', action: 'gallery' }
+                { label: 'Take photo', action: 'camera' },
+                { label: 'Upload photo', action: 'gallery' }
               ], () => {});
               scrollToLatest();
             }, 400);
@@ -2715,8 +2728,7 @@ function renderClosetGrid(category) {
       (item.image_url ?
         '<img src="' + item.image_url + '" ' +
         'style="width:100%;height:100%;object-fit:cover">' :
-        '<div style="display:flex;height:100%;align-items:center;' +
-        'justify-content:center;font-size:28px">👗</div>'
+        '<div style="display:flex;height:100%;align-items:center;justify-content:center;color:var(--ink-faint)"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20.38 18H3.62a1 1 0 0 1-.7-1.71L12 8l9.08 8.29A1 1 0 0 1 20.38 18z"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/></svg></div>'
       ) +
       '<div style="position:absolute;bottom:0;left:0;right:0;' +
       'padding:4px 6px 5px;background:rgba(255,255,255,0.93);' +
@@ -2871,8 +2883,7 @@ function showPhotoGuide() {
     '<div style="border:1.5px solid #E5E5E5;' +
     'border-radius:12px;padding:14px;' +
     'text-align:center">' +
-    '<div style="font-size:32px;' +
-    'margin-bottom:6px">👕</div>' +
+    '<div style="margin-bottom:8px;display:flex;justify-content:center"><svg viewBox="0 0 32 32" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 8l5-4h14l5 4-4 4V26H8V12L4 8z"/></svg></div>' +
     '<div style="font-size:12px;' +
     'font-weight:700;color:#111;' +
     'margin-bottom:2px">Flat on bed</div>' +
@@ -2884,8 +2895,7 @@ function showPhotoGuide() {
     '<div style="border:1.5px solid #E5E5E5;' +
     'border-radius:12px;padding:14px;' +
     'text-align:center">' +
-    '<div style="font-size:32px;' +
-    'margin-bottom:6px">🪝</div>' +
+    '<div style="margin-bottom:8px;display:flex;justify-content:center"><svg viewBox="0 0 32 32" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M26 22H6a1 1 0 0 1-.7-1.71L16 11l10.7 9.29A1 1 0 0 1 26 22z"/><path d="M16 11V8"/><circle cx="16" cy="7" r="1.5"/></svg></div>' +
     '<div style="font-size:12px;' +
     'font-weight:700;color:#111;' +
     'margin-bottom:2px">On a hanger</div>' +
@@ -2895,12 +2905,11 @@ function showPhotoGuide() {
     '</div>' +
     '</div>' +
 
-    '<div style="background:#FFF8E1;' +
+    '<div style="background:var(--surface-warm);' +
     'border-radius:10px;padding:10px 14px;' +
-    'font-size:12px;color:#F57F17;' +
+    'font-size:12px;color:var(--ink-soft);' +
     'margin-bottom:20px">' +
-    '💡 Avoid wearing the item — ' +
-    'lay it flat for the cleanest result</div>' +
+    'Tip: lay the item flat for the cleanest result</div>' +
 
     '<button onclick="openClosetUpload()" ' +
     'style="width:100%;padding:14px;' +
@@ -2954,7 +2963,7 @@ async function handleClosetUpload(e) {
       'display:flex;flex-direction:column;align-items:center;' +
       'justify-content:center;border:1.5px dashed var(--accent);gap:6px';
     loadingCell.innerHTML =
-      '<div style="font-size:22px">✨</div>' +
+      '<div class="enrich-progress" style="width:48px;margin-bottom:6px"><div class="enrich-progress-fill"></div></div>' +
       '<div style="font-size:9px;color:var(--accent);font-weight:700;' +
       'text-align:center;text-transform:uppercase;letter-spacing:0.5px">' +
       'Prettifying...</div>';
@@ -3003,7 +3012,7 @@ function showPrettifyError(grid, emptyEl) {
     'display:flex;flex-direction:column;align-items:center;justify-content:center;' +
     'padding:14px;border:1.5px dashed #ff3b30;gap:8px;text-align:center';
   errCell.innerHTML =
-    '<div style="font-size:28px">📷</div>' +
+    '<div style="display:flex;justify-content:center"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--ink-faint)" stroke-width="1.5" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>' +
     '<div style="font-size:11px;font-weight:600;color:var(--tx1);line-height:1.5">' +
       'That photo didn\'t work — try better lighting or lay the item flat' +
     '</div>' +
@@ -3085,7 +3094,7 @@ function renderDetailContent() {
     '<div style="position:relative">' +
       (item.image_url
         ? '<img src="' + item.image_url + '" style="width:100%;aspect-ratio:1/1;object-fit:cover;display:block">'
-        : '<div style="width:100%;aspect-ratio:1/1;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:64px">👗</div>'
+        : '<div style="width:100%;aspect-ratio:1/1;background:var(--garment-bg);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.35" aria-hidden="true"><path d="M20.38 18H3.62a1 1 0 0 1-.7-1.71L12 8l9.08 8.29A1 1 0 0 1 20.38 18z"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/></svg></div>'
       ) +
       (hasPrev ? '<button onclick="navigateDetail(-1)" style="position:absolute;left:0;top:0;bottom:0;width:52px;background:none;border:none;cursor:pointer;font-size:32px;color:rgba(255,255,255,0.9);text-shadow:0 1px 6px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center">‹</button>' : '') +
       (hasNext ? '<button onclick="navigateDetail(1)"  style="position:absolute;right:0;top:0;bottom:0;width:52px;background:none;border:none;cursor:pointer;font-size:32px;color:rgba(255,255,255,0.9);text-shadow:0 1px 6px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center">›</button>' : '') +
@@ -3108,8 +3117,8 @@ function renderDetailContent() {
       '<button id="detailSaveBtn" onclick="saveDetailEdit()" style="display:none;padding:10px;background:var(--tx1);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">Save changes</button>' +
     '</div>' +
     '<div style="padding:16px;display:flex;flex-direction:column;gap:10px">' +
-      '<button onclick="detailAction(\'style\')"  style="padding:14px 18px;background:var(--tx1);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);text-align:left">✨  Style this item</button>' +
-      '<button onclick="detailAction(\'cheaper\')" style="padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:var(--font);text-align:left;color:var(--tx1)">💰  Find this cheaper</button>' +
+      '<button onclick="detailAction(\'style\')"  style="padding:14px 18px;background:var(--tx1);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);text-align:left">Style this item</button>' +
+      '<button onclick="detailAction(\'cheaper\')" style="padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:var(--font);text-align:left;color:var(--tx1)">Find this cheaper</button>' +
       '<button onclick="detailAction(\'remove\')"  style="padding:14px 18px;background:none;border:1.5px solid #ff3b30;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:var(--font);color:#ff3b30;text-align:left">Remove from closet</button>' +
     '</div>' +
     '<div id="detailSimilarSection" style="padding:0 16px 32px">' +
@@ -3147,14 +3156,14 @@ async function loadSimilarItems(item) {
     grid.innerHTML = products.map((p, i) =>
       '<div style="border-radius:12px;overflow:hidden;border:1.5px solid var(--border);cursor:pointer;position:relative;background:var(--bg)" onclick="openSimilarProduct(' + i + ')">' +
         '<div style="aspect-ratio:1/1;background:#F0EEEC;overflow:hidden;display:flex;align-items:center;justify-content:center">' +
-          (p.image ? '<img src="' + p.image + '" style="width:100%;height:100%;object-fit:cover" loading="lazy">' : '<span style="font-size:32px">🛍️</span>') +
+          (p.image ? '<img src="' + p.image + '" style="width:100%;height:100%;object-fit:cover" loading="lazy">' : '<span style="color:var(--ink-faint)"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20.38 18H3.62a1 1 0 0 1-.7-1.71L12 8l9.08 8.29A1 1 0 0 1 20.38 18z"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/></svg></span>') +
         '</div>' +
         '<div style="padding:8px 10px 10px">' +
           '<div style="font-size:12px;font-weight:600;color:var(--tx1);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;line-height:1.3;margin-bottom:3px">' + p.title + '</div>' +
           '<div style="font-size:13px;font-weight:700;color:var(--tx1)">$' + (p.price || 0).toFixed(2) + '</div>' +
           '<div style="font-size:10px;color:var(--tx3);margin-top:1px">' + (p.merchant || '') + '</div>' +
         '</div>' +
-        '<button data-liked="0" onclick="event.stopPropagation();toggleSimilarLike(this,' + i + ')" style="position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.9);border:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;line-height:1">🤍</button>' +
+        '<button data-liked="0" onclick="event.stopPropagation();toggleSimilarLike(this,' + i + ')" style="position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.9);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-soft)"><svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M17.21 3.79a4.5 4.5 0 0 0-6.36 0L10 4.64l-.85-.85a4.5 4.5 0 0 0-6.36 6.36l.85.85L10 17.36l6.36-6.36.85-.85a4.5 4.5 0 0 0 0-6.36z"/></svg></button>' +
       '</div>'
     ).join('');
   } catch(e) {
@@ -3184,7 +3193,7 @@ function toggleSimilarLike(btn, idx) {
   if (!p) return;
   const liked = btn.dataset.liked === '1';
   btn.dataset.liked = liked ? '0' : '1';
-  btn.textContent   = liked ? '🤍' : '❤️';
+  btn.innerHTML     = liked ? '<svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M17.21 3.79a4.5 4.5 0 0 0-6.36 0L10 4.64l-.85-.85a4.5 4.5 0 0 0-6.36 6.36l.85.85L10 17.36l6.36-6.36.85-.85a4.5 4.5 0 0 0 0-6.36z"/></svg>' : '<svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M17.21 3.79a4.5 4.5 0 0 0-6.36 0L10 4.64l-.85-.85a4.5 4.5 0 0 0-6.36 6.36l.85.85L10 17.36l6.36-6.36.85-.85a4.5 4.5 0 0 0 0-6.36z"/></svg>';
   if (!liked && currentSession?.access_token) {
     fetch('/api/taste-signal', {
       method: 'POST',
@@ -3457,7 +3466,7 @@ function showMultiItemReview(items) {
     'display:flex;justify-content:space-between;align-items:center';
   header.innerHTML =
     '<div>' +
-      '<div style="font-size:16px;font-weight:700;color:var(--tx1)">' + items.length + ' items found</div>' +
+      '<div style="font-size:16px;font-weight:700;color:var(--tx1);font-family:var(--font-display);letter-spacing:-0.01em">' + items.length + ' items found</div>' +
       '<div style="font-size:12px;color:var(--tx3);margin-top:2px">Edit names, skip items you don\'t want, then tap Add</div>' +
     '</div>' +
     '<button onclick="cancelMultiReview()" style="font-size:22px;background:none;border:none;cursor:pointer;color:var(--tx2);padding:4px 8px;line-height:1">✕</button>';
@@ -3749,7 +3758,7 @@ async function confirmAddItem(item) {
   const brand = brandInput?.value?.trim() || item.brand || null;
 
   const confirmBtn = document.querySelector('#brand-confirm-card button');
-  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '✨ Saving…'; }
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = 'Saving…'; }
 
   try {
     const result = await fetch('/api/closet', {
@@ -3912,10 +3921,10 @@ checkSession();
 
     <!-- Empty state -->
     <div id="closetEmpty" style="grid-column:1/-1;text-align:center;padding:52px 24px 32px;display:flex;flex-direction:column;align-items:center">
-      <div style="font-size:72px;line-height:1;margin-bottom:20px">👗</div>
+      <div style="margin-bottom:20px"><svg viewBox="0 0 72 72" width="72" height="72" fill="none" stroke="var(--ink-faint)" stroke-width="1.5" aria-hidden="true"><path d="M56 52H16a2 2 0 0 1-1.4-3.42L36 29 57.4 48.58A2 2 0 0 1 56 52z"/><path d="M36 29V21"/><circle cx="36" cy="18.5" r="2.5"/></svg></div>
       <div style="font-size:17px;font-weight:700;color:var(--tx1);margin-bottom:8px">Your closet is empty</div>
       <div style="font-size:13px;color:var(--tx2);line-height:1.55;margin-bottom:24px;max-width:240px">Add your first item and Lumen will start building outfits from your own wardrobe</div>
-      <button onclick="showPhotoGuide()" style="padding:13px 28px;background:var(--tx1);color:#fff;border:none;border-radius:100px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">📷 Add my first item</button>
+      <button onclick="showPhotoGuide()" style="padding:13px 28px;background:var(--tx1);color:#fff;border:none;border-radius:100px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">Add my first item</button>
     </div>
   </div>
 
