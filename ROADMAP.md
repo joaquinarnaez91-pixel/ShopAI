@@ -9,7 +9,8 @@
 - [ ] 7. Item detail view: tap closet item → full-screen detail (image, editable name/brand, category, actions: Style this item / Find similar / Re-prettify / Remove)
 - [ ] 8. Share card: editorial card generator with background color picker (reuses composeEditorialCard)
 
-- [x] 9. Multi-garment detection and split on closet upload — Claude detects items in a photo, Gemini extracts each one separately, frontend shows a review list before saving
-- [ ] 10. Avatar / VTON — Gemini dresses a matched model, face-swap API (InsightFace-based, ~$0.01–0.05/image) stamps your face on as a post-process
+- [x] 9. Shop similar product grid in item detail view — auto-loaded 2-col grid below item fields; Claude generates search queries, SerpAPI fetches up to 8 products; ❤️ taste signal on like
+- [x] 10. Multi-garment detection and split on closet upload — Claude detects items in a photo, Gemini extracts each one separately, frontend shows a review list before saving
+- [ ] 11. Avatar / VTON — Gemini dresses a matched model, face-swap API (InsightFace-based, ~$0.01–0.05/image) stamps your face on as a post-process
 
 **MVP done when:** a friend can sign up, add 5 items photographed any way, and get a visual outfit suggestion from their own clothes that looks good enough to screenshot.
