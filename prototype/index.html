@@ -2754,19 +2754,61 @@ async function deleteClosetItem(id) {
   }
 }
 
+let _detailItems = [];
+let _detailIndex = 0;
+let _swipeInitialized = false;
+
+function initDetailSwipe() {
+  if (_swipeInitialized) return;
+  _swipeInitialized = true;
+  const sheet = document.getElementById('itemDetailSheet');
+  if (!sheet) return;
+  let sx = 0, sy = 0;
+  sheet.addEventListener('touchstart', e => {
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+  }, { passive: true });
+  sheet.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - sx;
+    const dy = e.changedTouches[0].clientY - sy;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 48) navigateDetail(dx < 0 ? 1 : -1);
+  }, { passive: true });
+}
+
 function openItemDetail(item) {
-  _detailItem = item;
+  initDetailSwipe();
+  const src = closetActiveCategory === 'all' ? closetItems : closetItems.filter(i => i.category === closetActiveCategory);
+  _detailItems = src.length ? src : [item];
+  _detailIndex = _detailItems.findIndex(i => i.id === item.id);
+  if (_detailIndex === -1) { _detailItems = [item]; _detailIndex = 0; }
+  _detailItem = _detailItems[_detailIndex];
+  renderDetailContent();
+  document.getElementById('itemDetailSheet').style.transform = 'translateX(-50%) translateY(0)';
+}
+
+function renderDetailContent() {
+  const item = _detailItem;
   const inner = document.getElementById('itemDetailInner');
   if (!inner) return;
+  inner.style.cssText = '';
+  const total = _detailItems.length, n = _detailIndex + 1;
+  const hasPrev = _detailIndex > 0, hasNext = _detailIndex < total - 1;
   inner.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:10">' +
-      '<div style="font-size:15px;font-weight:700;color:var(--tx1);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:280px">' + item.name + '</div>' +
-      '<button onclick="closeItemDetail()" style="font-size:22px;background:none;border:none;cursor:pointer;color:var(--tx2);padding:4px 8px">✕</button>' +
+      '<div style="min-width:0">' +
+        '<div style="font-size:15px;font-weight:700;color:var(--tx1);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:260px">' + item.name + '</div>' +
+        (total > 1 ? '<div style="font-size:11px;color:var(--tx3);margin-top:1px">' + n + ' of ' + total + '</div>' : '') +
+      '</div>' +
+      '<button onclick="closeItemDetail()" style="font-size:22px;background:none;border:none;cursor:pointer;color:var(--tx2);padding:4px 8px;flex-shrink:0">✕</button>' +
     '</div>' +
-    (item.image_url
-      ? '<img src="' + item.image_url + '" style="width:100%;aspect-ratio:1/1;object-fit:cover;display:block">'
-      : '<div style="width:100%;aspect-ratio:1/1;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:64px">👗</div>'
-    ) +
+    '<div style="position:relative">' +
+      (item.image_url
+        ? '<img src="' + item.image_url + '" style="width:100%;aspect-ratio:1/1;object-fit:cover;display:block">'
+        : '<div style="width:100%;aspect-ratio:1/1;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:64px">👗</div>'
+      ) +
+      (hasPrev ? '<button onclick="navigateDetail(-1)" style="position:absolute;left:0;top:0;bottom:0;width:52px;background:none;border:none;cursor:pointer;font-size:32px;color:rgba(255,255,255,0.9);text-shadow:0 1px 6px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center">‹</button>' : '') +
+      (hasNext ? '<button onclick="navigateDetail(1)"  style="position:absolute;right:0;top:0;bottom:0;width:52px;background:none;border:none;cursor:pointer;font-size:32px;color:rgba(255,255,255,0.9);text-shadow:0 1px 6px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center">›</button>' : '') +
+    '</div>' +
     '<div style="padding:16px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:10px">' +
       '<div>' +
         '<label style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px">Name</label>' +
@@ -2781,9 +2823,7 @@ function openItemDetail(item) {
           ' style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:var(--font);box-sizing:border-box;outline:none">' +
         '<div id="brandSuggestionsDetail" style="display:none;position:absolute;left:0;right:0;background:#fff;border:1.5px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow-y:auto;max-height:150px;z-index:200;box-shadow:0 6px 16px rgba(0,0,0,0.08)"></div>' +
       '</div>' +
-      '<div style="display:flex;align-items:center;gap:6px">' +
-        '<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:var(--card);border:1px solid var(--border);color:var(--tx2)">' + item.category + '</span>' +
-      '</div>' +
+      '<div><span style="font-size:11px;padding:3px 10px;border-radius:20px;background:var(--card);border:1px solid var(--border);color:var(--tx2)">' + item.category + '</span></div>' +
       '<button id="detailSaveBtn" onclick="saveDetailEdit()" style="display:none;padding:10px;background:var(--tx1);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">Save changes</button>' +
     '</div>' +
     '<div style="padding:16px;display:flex;flex-direction:column;gap:10px;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))">' +
@@ -2792,7 +2832,29 @@ function openItemDetail(item) {
       '<button onclick="detailAction(\'cheaper\')" style="padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:var(--font);text-align:left;color:var(--tx1)">💰  Find this cheaper</button>' +
       '<button onclick="detailAction(\'remove\')"  style="padding:14px 18px;background:none;border:1.5px solid #ff3b30;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:var(--font);color:#ff3b30;text-align:left">Remove from closet</button>' +
     '</div>';
-  document.getElementById('itemDetailSheet').style.transform = 'translateX(-50%) translateY(0)';
+}
+
+function navigateDetail(dir) {
+  const next = _detailIndex + dir;
+  if (next < 0 || next >= _detailItems.length) return;
+  const inner = document.getElementById('itemDetailInner');
+  if (!inner) return;
+  inner.style.transition = 'transform 0.18s ease, opacity 0.18s ease';
+  inner.style.transform   = 'translateX(' + (dir > 0 ? '-60px' : '60px') + ')';
+  inner.style.opacity     = '0';
+  setTimeout(() => {
+    _detailIndex = next;
+    _detailItem  = _detailItems[_detailIndex];
+    renderDetailContent();
+    inner.style.transition = 'none';
+    inner.style.transform  = 'translateX(' + (dir > 0 ? '60px' : '-60px') + ')';
+    inner.style.opacity    = '0';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      inner.style.transition = 'transform 0.18s ease, opacity 0.18s ease';
+      inner.style.transform  = 'translateX(0)';
+      inner.style.opacity    = '1';
+    }));
+  }, 180);
 }
 
 function closeItemDetail() {
