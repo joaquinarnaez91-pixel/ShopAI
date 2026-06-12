@@ -839,7 +839,7 @@ async function openDressingRoom() {
     showSuggestionChips('default');
     return;
   }
-  addMessage('ai', 'Your dressing room — everything you\'ve saved, ready when you are:');
+  addMessage('ai', 'Your dressing room — everything you\'ve saved, ready when you are. Tap the ★ on a piece to take it back off the rack.');
   if (savedProducts.length) renderProductsInline(savedProducts, 'Saved products', true);
   if (savedOutfits.length) {
     await ensureClosetLoaded();
@@ -872,7 +872,7 @@ function renderProductsInline(prods, label, noFeedback) {
     card.innerHTML =
       (i === 0 ? '<div class="l-expert-badge">Expert Pick</div>' : '') +
       `<div class="l-card-img">${p.img ? `<img src="${p.img}" onerror="this.style.display='none'">` : '<div style="display:flex;align-items:center;justify-content:center;color:var(--ink-faint)"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.35" aria-hidden="true"><path d="M20.38 18H3.62a1 1 0 0 1-.7-1.71L12 8l9.08 8.29A1 1 0 0 1 20.38 18z"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/></svg></div>'}</div>` +
-      `<button class="l-card-pin${isPinned ? ' saved' : ''}" id="pin-${p.id}" onclick="event.stopPropagation();toggleSave(${p.id})">` +
+      `<button class="l-card-pin${isPinned ? ' saved' : ''}" id="pin-${p.id}" title="${isPinned ? 'Remove from dressing room' : 'Save to dressing room'}" onclick="event.stopPropagation();${noFeedback ? `removeFromDressing(${p.id}, this)` : `toggleSave(${p.id})`}">` +
         `<svg viewBox="0 0 24 24" width="14" height="14" fill="${isPinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>` +
       `</button>` +
       `<div class="l-card-body">` +
@@ -988,6 +988,17 @@ function toggleSave(id) {
   updateSidebarSaved();
   if (adding && products.find(x => x.id === id)) updateShopperGuide();
   else if (document.getElementById('shopperGuide')) updateShopperGuide();
+}
+
+function removeFromDressing(id, btnEl) {
+  toggleSave(id);
+  const card = btnEl.closest('.l-card');
+  if (card) {
+    card.style.transition = 'opacity 0.25s, transform 0.25s';
+    card.style.opacity = '0';
+    card.style.transform = 'scale(0.9)';
+    setTimeout(() => card.remove(), 250);
+  }
 }
 
 function updateDressingBadge() {
