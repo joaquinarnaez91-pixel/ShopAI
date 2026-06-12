@@ -95,7 +95,7 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--ink)
 .l-profile-sheet.open { transform:translateX(-50%) translateY(0); }
 
 /* DEEP DIVE */
-.l-deep-dive { position:fixed; bottom:0; left:50%; transform:translateX(-50%) translateY(100%); width:100%; max-width:480px; height:85vh; background:var(--bg); border-radius:20px 20px 0 0; overflow-y:auto; transition:transform 0.35s cubic-bezier(0.32,0.72,0,1); z-index:200; }
+.l-deep-dive { position:fixed; bottom:0; left:50%; transform:translateX(-50%) translateY(100%); width:100%; max-width:480px; height:85vh; height:85dvh; background:var(--bg); border-radius:20px 20px 0 0; overflow-y:auto; transition:transform 0.35s cubic-bezier(0.32,0.72,0,1); z-index:200; }
 .l-deep-dive::-webkit-scrollbar { display:none; }
 .l-deep-dive.open { transform:translateX(-50%) translateY(0); }
 
@@ -1109,9 +1109,9 @@ function openDeepDive(p) {
   }
   dd.appendChild(imgWrap);
 
-  // Main content
+  // Main content — extra bottom padding so the last buttons clear the phone's bottom chrome
   const content = document.createElement('div');
-  content.style.cssText = 'padding:20px 16px';
+  content.style.cssText = 'padding:20px 16px calc(72px + env(safe-area-inset-bottom))';
 
   // Brand / name / price / retailer
   content.innerHTML =
