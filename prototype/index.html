@@ -11,18 +11,37 @@
 <title>Lumen — Your Personal Style Guide</title>
 <style>
 :root {
-  /* Design tokens */
-  --bg:#FAF9F7; --surface:#FFFFFF; --surface-warm:#F0EEEC;
-  --ink:#111110; --ink-soft:#6B6862; --ink-faint:#9B9793;
-  --accent:#E8490F; --border:#E8E6E1; --garment-bg:#F2F1EF;
-  --radius-card:16px; --radius-pill:999px;
-  --shadow-card:0 2px 12px rgba(17,17,16,0.06);
+  /* Design tokens — editorial luxury: ink on ivory, hairlines, accent used sparingly */
+  --bg:#FAF9F6; --surface:#FFFFFF; --surface-warm:#F1EEE9;
+  --ink:#141412; --ink-soft:#6E6A63; --ink-faint:#A09B94;
+  --on-ink:#FFFFFF;
+  --accent:#D6430E; --border:#E7E4DE; --garment-bg:#F2F0EC;
+  --good:#3E6B4D; --warn:#A07A2D; --bad:#A03A2E;
+  --radius-card:8px; --radius-pill:999px;
+  --shadow-card:0 1px 6px rgba(20,20,18,0.05);
   --font-display:'Fraunces',Georgia,serif;
   --font:-apple-system,"SF Pro Display","Helvetica Neue",Arial,sans-serif;
   /* Legacy aliases — keep old names so existing inline styles resolve to new values */
-  --card:#FFFFFF; --photo:#F2F1EF;
-  --tx1:#111110; --tx2:#6B6862; --tx3:#9B9793;
+  --card:var(--surface); --photo:var(--garment-bg);
+  --tx1:var(--ink); --tx2:var(--ink-soft); --tx3:var(--ink-faint);
 }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#161513; --surface:#1F1D1A; --surface-warm:#262421;
+    --ink:#F2F0EC; --ink-soft:#A6A29B; --ink-faint:#737069;
+    --on-ink:#161513;
+    --border:#2E2C28; --garment-bg:#23211E;
+    --shadow-card:0 1px 6px rgba(0,0,0,0.4);
+  }
+}
+
+/* Editorial micro-label */
+.l-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--ink-faint); font-family:var(--font); }
+
+/* Soft entrance choreography */
+@keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+.fade-up { animation:fadeUp 0.35s ease-out both; }
 
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
 
@@ -31,64 +50,67 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--ink)
 .lumen-app { display:flex; flex-direction:column; height:100vh; max-width:480px; margin:0 auto; position:relative; }
 
 /* HEADER */
-.l-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); background:var(--bg); flex-shrink:0; z-index:10; }
-.l-logo { font-family:var(--font-display); font-weight:700; font-size:22px; color:var(--ink); letter-spacing:-0.01em; display:flex; align-items:center; gap:0; }
-.l-dot { width:8px; height:8px; border-radius:50%; background:var(--accent); display:inline-block; margin-left:4px; flex-shrink:0; margin-bottom:2px; }
-.l-profile-btn { width:36px; height:36px; border-radius:50%; background:var(--surface); border:1.5px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--ink-soft); }
+.l-header { display:flex; align-items:center; justify-content:space-between; padding:16px 16px 12px; border-bottom:1px solid var(--border); background:var(--bg); flex-shrink:0; z-index:10; }
+.l-logo { font-family:var(--font-display); font-weight:600; font-size:19px; color:var(--ink); letter-spacing:0.18em; text-transform:uppercase; display:flex; align-items:center; gap:0; }
+.l-dot { width:7px; height:7px; border-radius:50%; background:var(--accent); display:inline-block; margin-left:5px; flex-shrink:0; margin-bottom:2px; }
+.l-profile-btn { width:36px; height:36px; border-radius:50%; background:transparent; border:1px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--ink-soft); }
 
 /* CHAT */
-.l-chat { flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; padding:12px 0; padding-bottom:160px; scroll-behavior:smooth; background:var(--bg); }
+.l-chat { flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; padding:16px 0; padding-bottom:160px; scroll-behavior:smooth; background:var(--bg); }
 .l-chat::-webkit-scrollbar { display:none; }
 
-/* MESSAGES */
-.l-msg { display:flex; align-items:flex-end; gap:8px; padding:3px 16px; margin-bottom:2px; }
-.l-msg.ai { flex-direction:row; }
+/* MESSAGES — stylist's voice sits directly on the page; user gets a quiet ink block */
+.l-msg { display:flex; align-items:flex-end; gap:0; padding:4px 20px; margin-bottom:6px; animation:fadeUp 0.35s ease-out both; }
+.l-msg.ai { flex-direction:column; align-items:flex-start; }
 .l-msg.user { flex-direction:row-reverse; }
-.l-av { width:28px; height:28px; border-radius:50%; background:var(--ink); display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-bottom:2px; color:#fff; }
-.l-av.user { background:var(--surface-warm); color:var(--ink-soft); }
-.l-bbl { max-width:78%; padding:10px 14px; border-radius:18px; font-size:14px; line-height:1.5; }
-.l-bbl.ai { background:var(--surface); color:var(--ink); border-bottom-left-radius:4px; box-shadow:var(--shadow-card); }
-.l-bbl.user { background:var(--ink); color:#fff; border-bottom-right-radius:4px; }
+.l-av { display:none; }
+.l-av.user { display:none; }
+.l-msg.ai::before { content:'LUMEN'; font-size:9px; font-weight:700; letter-spacing:0.18em; color:var(--ink-faint); margin-bottom:4px; }
+.l-bbl { max-width:86%; font-size:14px; line-height:1.6; }
+.l-bbl.ai { background:none; color:var(--ink); padding:0; border-radius:0; box-shadow:none; }
+.l-bbl.user { max-width:78%; background:var(--ink); color:var(--on-ink); padding:10px 14px; border-radius:14px; border-bottom-right-radius:4px; }
 
-/* CHIPS */
-.l-chips { display:flex; flex-wrap:wrap; gap:7px; padding:4px 16px 8px 52px; }
-.l-chip { padding:8px 15px; border-radius:var(--radius-pill); border:1px solid var(--border); background:var(--surface); font-size:13px; font-weight:600; color:var(--ink); cursor:pointer; font-family:var(--font); transition:all 0.15s; white-space:nowrap; box-shadow:0 1px 4px rgba(0,0,0,0.07); }
-.l-chip:active { background:var(--ink); color:#fff; border-color:var(--ink); }
-.l-sgst-chip { padding:9px 16px; border-radius:var(--radius-pill); border:1px solid var(--border); background:var(--surface); font-size:13px; font-weight:600; color:var(--ink); cursor:pointer; font-family:var(--font); white-space:nowrap; flex-shrink:0; box-shadow:0 1px 4px rgba(0,0,0,0.07); transition:all 0.15s; }
-.l-sgst-chip:active { background:var(--ink); color:#fff; border-color:var(--ink); }
+/* CHIPS — ghost: hairline border, no fill, no shadow */
+.l-chips { display:flex; flex-wrap:wrap; gap:7px; padding:4px 20px 8px; }
+.l-chip { padding:8px 15px; border-radius:var(--radius-pill); border:1px solid var(--border); background:transparent; font-size:13px; font-weight:500; color:var(--ink); cursor:pointer; font-family:var(--font); transition:all 0.15s; white-space:nowrap; }
+.l-chip:active { background:var(--ink); color:var(--on-ink); border-color:var(--ink); }
+.l-sgst-chip { padding:9px 16px; border-radius:var(--radius-pill); border:1px solid var(--border); background:transparent; font-size:13px; font-weight:500; color:var(--ink); cursor:pointer; font-family:var(--font); white-space:nowrap; flex-shrink:0; transition:all 0.15s; }
+.l-sgst-chip:active { background:var(--ink); color:var(--on-ink); border-color:var(--ink); }
 
 /* PRODUCT CARD ROW */
 .l-card-row { padding:8px 16px; display:flex; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; cursor:grab; user-select:none; }
 .l-card-row::-webkit-scrollbar { display:none; }
 .l-card-row.dragging { cursor:grabbing; scroll-snap-type:none; }
 
-/* PRODUCT CARD */
-.l-card { flex-shrink:0; width:220px; border-radius:var(--radius-card); border:1px solid var(--border); background:var(--surface); overflow:hidden; cursor:pointer; scroll-snap-align:start; box-shadow:var(--shadow-card); transition:transform 0.15s,box-shadow 0.15s; position:relative; }
-.l-card:active { transform:scale(0.97); }
-.l-card-img { width:100%; height:200px; background:var(--garment-bg); overflow:hidden; display:flex; align-items:center; justify-content:center; }
+/* PRODUCT CARD — hairline, square-ish, image breathes */
+.l-card { flex-shrink:0; width:220px; border-radius:var(--radius-card); border:1px solid var(--border); background:var(--surface); overflow:hidden; cursor:pointer; scroll-snap-align:start; transition:transform 0.15s,box-shadow 0.15s; position:relative; }
+.l-card:active { transform:scale(0.98); box-shadow:var(--shadow-card); }
+.l-card-img { width:100%; height:210px; background:var(--garment-bg); overflow:hidden; display:flex; align-items:center; justify-content:center; }
 .l-card-img img { width:100%; height:100%; object-fit:cover; }
-.l-card-body { padding:10px 12px 12px; }
-.l-card-brand { font-size:10px; font-weight:700; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.5px; }
-.l-card-name { font-size:13px; font-weight:600; color:var(--ink); margin:2px 0 4px; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.l-card-body { padding:12px 12px 14px; }
+.l-card-brand { font-size:10px; font-weight:700; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.12em; }
+.l-card-name { font-size:13px; font-weight:500; color:var(--ink); margin:3px 0 5px; line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 .l-card-price-row { display:flex; align-items:center; justify-content:space-between; }
-.l-card-price { font-size:15px; font-weight:700; color:var(--ink); }
-.l-card-indicator { font-size:10px; padding:2px 6px; border-radius:10px; font-weight:600; }
-.l-card-indicator.LOW { background:#E8F5E9; color:#2E7D32; }
-.l-card-indicator.USUAL { background:#FFF8E1; color:#F57F17; }
-.l-card-indicator.HIGH { background:#FFEBEE; color:#C62828; }
+.l-card-price { font-size:14px; font-weight:500; color:var(--ink); }
+.l-card-indicator { font-size:10px; font-weight:600; letter-spacing:0.04em; display:flex; align-items:center; gap:4px; background:none; padding:0; }
+.l-card-indicator::before { content:''; width:6px; height:6px; border-radius:50%; display:inline-block; }
+.l-card-indicator.LOW { color:var(--good); } .l-card-indicator.LOW::before { background:var(--good); }
+.l-card-indicator.USUAL { color:var(--ink-faint); } .l-card-indicator.USUAL::before { background:var(--ink-faint); }
+.l-card-indicator.HIGH { color:var(--bad); } .l-card-indicator.HIGH::before { background:var(--bad); }
 .l-card-source { font-size:11px; color:var(--ink-faint); margin-top:4px; }
 .l-card-stars { font-size:11px; color:var(--ink-soft); margin-top:2px; }
-.l-card-pin { position:absolute; top:8px; right:8px; width:32px; height:32px; border-radius:50%; background:var(--surface); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(17,17,16,0.12); }
-.l-card-pin.saved { background:var(--ink); }
-.l-card-pin.saved svg { stroke:#fff; }
-.l-expert-badge { position:absolute; top:8px; left:8px; background:var(--accent); color:#fff; font-size:9px; font-weight:700; padding:3px 7px; border-radius:6px; text-transform:uppercase; letter-spacing:0.5px; }
+.l-card-pin { position:absolute; top:8px; right:8px; width:32px; height:32px; border-radius:50%; background:var(--surface); border:1px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.l-card-pin.saved { background:var(--ink); border-color:var(--ink); }
+.l-card-pin.saved svg { stroke:var(--on-ink); }
+.l-expert-badge { position:absolute; top:8px; left:8px; background:var(--ink); color:var(--on-ink); font-size:9px; font-weight:700; padding:4px 8px; border-radius:2px; text-transform:uppercase; letter-spacing:0.12em; }
 
 /* INPUT BAR */
 .l-input-bar { position:fixed; bottom:0; left:0; right:0; width:100%; max-width:480px; margin:0 auto; padding:10px 12px; padding-bottom:calc(10px + env(safe-area-inset-bottom,16px)); background:var(--bg); border-top:1px solid var(--border); display:flex; align-items:center; gap:8px; z-index:10; box-sizing:border-box; }
-.l-input { flex:1; padding:10px 16px; border-radius:var(--radius-pill); border:1.5px solid var(--border); background:var(--surface); font-size:15px; font-family:var(--font); color:var(--ink); outline:none; }
+.l-input { flex:1; padding:10px 16px; border-radius:var(--radius-pill); border:1px solid var(--border); background:transparent; font-size:15px; font-family:var(--font); color:var(--ink); outline:none; }
+.l-input::placeholder { color:var(--ink-faint); }
 .l-input:focus { border-color:var(--ink); }
-.l-send-btn { width:40px; height:40px; border-radius:50%; background:var(--ink); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.l-icon-btn { width:40px; height:40px; border-radius:50%; background:var(--surface); border:1.5px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.l-send-btn { width:40px; height:40px; border-radius:50%; background:var(--ink); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--on-ink); }
+.l-icon-btn { width:40px; height:40px; border-radius:50%; background:transparent; border:1px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--ink-soft); }
 
 /* PROFILE SHEET */
 .l-profile-sheet { position:fixed; bottom:0; left:50%; transform:translateX(-50%) translateY(100%); width:100%; max-width:480px; background:var(--bg); border-radius:20px 20px 0 0; border-top:1px solid var(--border); padding:20px 20px calc(20px + env(safe-area-inset-bottom,0px)); transition:transform 0.35s cubic-bezier(0.32,0.72,0,1); z-index:100; }
@@ -117,15 +139,15 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--ink)
 /* First-run onboarding */
 .ob-overlay { position:fixed;inset:0;z-index:3000;background:rgba(17,17,16,0.6);display:flex;align-items:flex-end;justify-content:center; }
 .ob-sheet { width:100%;max-width:480px;background:var(--bg);border-radius:24px 24px 0 0;padding:32px 28px calc(32px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;text-align:center; }
-.ob-icon { font-size:64px;line-height:1;margin-bottom:20px; }
-.ob-title { font-size:22px;font-weight:700;color:var(--ink);margin-bottom:10px;font-family:var(--font-display);letter-spacing:-0.01em; }
-.ob-body { font-size:15px;color:var(--ink-soft);line-height:1.55;margin-bottom:28px;max-width:300px; }
+.ob-icon { font-size:64px;line-height:1;margin-bottom:24px;color:var(--ink); }
+.ob-title { font-size:26px;font-weight:600;color:var(--ink);margin-bottom:12px;font-family:var(--font-display);letter-spacing:-0.01em;line-height:1.2; }
+.ob-body { font-size:15px;color:var(--ink-soft);line-height:1.6;margin-bottom:28px;max-width:300px; }
 .ob-dots { display:flex;gap:6px;margin-bottom:28px; }
-.ob-dot { width:8px;height:8px;border-radius:50%;background:var(--border);transition:background 0.2s; }
+.ob-dot { width:6px;height:6px;border-radius:50%;background:var(--border);transition:background 0.2s; }
 .ob-dot.active { background:var(--ink); }
 .ob-actions { display:flex;justify-content:space-between;align-items:center;width:100%; }
-.ob-skip { font-size:14px;color:var(--ink-faint);cursor:pointer;padding:4px;background:none;border:none;font-family:var(--font); }
-.ob-next { padding:14px 32px;background:var(--ink);color:#fff;border:none;border-radius:var(--radius-pill);font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font); }
+.ob-skip { font-size:13px;color:var(--ink-faint);cursor:pointer;padding:4px;background:none;border:none;font-family:var(--font);letter-spacing:0.06em;text-transform:uppercase; }
+.ob-next { padding:14px 36px;background:var(--ink);color:var(--on-ink);border:none;border-radius:var(--radius-pill);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);letter-spacing:0.04em; }
 
 /* TABLET */
 @media (min-width:481px) {
@@ -217,13 +239,20 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--ink)
     }
   }
 </style>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   });
 }
+// Keep the browser chrome color in sync with the active theme
+(function() {
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  const apply = () => document.querySelector('meta[name="theme-color"]')?.setAttribute('content', mq.matches ? '#161513' : '#FAF9F6');
+  if (mq.addEventListener) mq.addEventListener('change', apply);
+  apply();
+})();
 </script>
 </head>
 <body>
@@ -232,10 +261,10 @@ if ('serviceWorker' in navigator) {
 
   <!-- HEADER -->
   <div class="l-header">
-    <div class="l-logo">lumen<span class="l-dot" style="width:8px;height:8px;border-radius:50%;background:#E8490F;display:inline-block;margin-left:4px;flex-shrink:0;margin-bottom:2px"></span></div>
+    <div class="l-logo">lumen<span class="l-dot"></span></div>
     <div style="display:flex;gap:8px;align-items:center">
-      <button onclick="openDressingRoom()" id="dressingBtn" title="My dressing room" style="position:relative;width:36px;height:36px;border-radius:50%;background:var(--card);border:1.5px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span id="dressingCount" style="position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:#E8490F;color:#fff;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px;line-height:1"></span></button>
-      <button onclick="toggleCloset()" id="closetBtn" style="width:36px;height:36px;border-radius:50%;background:var(--card);border:1.5px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 18H3.62a1 1 0 0 1-.7-1.71L12 8l9.08 8.29A1 1 0 0 1 20.38 18z"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/></svg></button>
+      <button onclick="openDressingRoom()" id="dressingBtn" title="My dressing room" style="position:relative;width:36px;height:36px;border-radius:50%;background:transparent;border:1px solid var(--border);color:var(--ink-soft);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span id="dressingCount" style="position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px;line-height:1"></span></button>
+      <button onclick="toggleCloset()" id="closetBtn" style="width:36px;height:36px;border-radius:50%;background:transparent;border:1px solid var(--border);color:var(--ink-soft);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 18H3.62a1 1 0 0 1-.7-1.71L12 8l9.08 8.29A1 1 0 0 1 20.38 18z"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/></svg></button>
       <div class="l-profile-btn" id="profileBtn" onclick="openProfile()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke-linecap="round"/></svg></div>
     </div>
   </div>
@@ -283,7 +312,7 @@ if ('serviceWorker' in navigator) {
       </div>
       <input class="l-input" id="lumenInput" type="text" placeholder="Ask Lumen anything about style…">
       <button class="l-send-btn" id="lumenSend">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
         </svg>
       </button>
@@ -895,7 +924,7 @@ function renderProductsInline(prods, label, noFeedback) {
       'border:1.5px solid var(--border);font-size:13px;font-weight:500;color:var(--tx1);' +
       'display:flex;align-items:center;gap:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06)';
     hint.innerHTML =
-      '<svg viewBox="0 0 24 24" width="22" height="22" fill="#E8490F" stroke="#E8490F" stroke-width="1" style="flex-shrink:0" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
+      '<svg viewBox="0 0 24 24" width="22" height="22" fill="var(--accent)" stroke="var(--accent)" stroke-width="1" style="flex-shrink:0" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
       '<span>Tap <b>★</b> on anything you like to save it to your <b>dressing room</b> — pick piece by piece, then review your picks from the ★ button up top.</span>';
     c.appendChild(hint);
   }
@@ -1131,7 +1160,7 @@ function openDeepDive(p) {
   buyBtn.target = '_blank';
   buyBtn.style.cssText =
     'display:block;text-align:center;padding:16px;background:var(--tx1);' +
-    'color:#fff;border-radius:12px;font-size:15px;font-weight:600;' +
+    'color:var(--on-ink);border-radius:12px;font-size:15px;font-weight:600;' +
     'text-decoration:none;margin-bottom:10px;letter-spacing:0.3px';
   buyBtn.textContent = 'Shop at ' + (p.source || 'Store') + ' →';
   buyBtn.addEventListener('click', () => logLinkClick(p.name, p.price, p.source, p.link || '', 'chat'));
@@ -1162,19 +1191,17 @@ function openDeepDive(p) {
   const statsRow = document.createElement('div');
   statsRow.style.cssText = 'display:flex;gap:12px;margin-bottom:20px';
   const indColors = {
-    LOW:   { bg:'#E8F5E9', color:'#2E7D32', label:'Good price' },
-    USUAL: { bg:'#FFF8E1', color:'#F57F17', label:'Usual price' },
-    HIGH:  { bg:'#FFEBEE', color:'#C62828', label:'High price' }
+    LOW:   { color:'var(--good)',      label:'Good price' },
+    USUAL: { color:'var(--ink-faint)', label:'Usual price' },
+    HIGH:  { color:'var(--bad)',       label:'High price' }
   };
   const ind = indColors[p.priceIndicator] || indColors.USUAL;
   statsRow.innerHTML =
-    '<div style="flex:1;padding:12px;border-radius:10px;background:' + ind.bg + ';text-align:center">' +
-    '<div style="font-size:10px;font-weight:700;color:' + ind.color +
-    ';text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Price</div>' +
-    '<div style="font-size:13px;font-weight:600;color:' + ind.color + '">' + ind.label + '</div></div>' +
-    '<div style="flex:1;padding:12px;border-radius:10px;background:var(--card);text-align:center">' +
-    '<div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;' +
-    'letter-spacing:1px;margin-bottom:4px">Rating</div>' +
+    '<div style="flex:1;padding:12px;border-radius:8px;border:1px solid var(--border);text-align:center">' +
+    '<div class="l-label" style="margin-bottom:4px">Price</div>' +
+    '<div style="font-size:13px;font-weight:600;color:' + ind.color + '">● ' + ind.label + '</div></div>' +
+    '<div style="flex:1;padding:12px;border-radius:8px;border:1px solid var(--border);text-align:center">' +
+    '<div class="l-label" style="margin-bottom:4px">Rating</div>' +
     '<div style="font-size:13px;font-weight:600;color:var(--tx1)">★ ' + (p.rating || '—') +
     ' <span style="color:var(--tx3);font-weight:400">(' +
     (p.reviews || 0).toLocaleString() + ')</span></div></div>';
@@ -1280,7 +1307,7 @@ function renderEnrichSection(data, p) {
     '<div style="flex:1;padding:12px;background:#F0FFF4;border-radius:10px">' +
     '<div style="font-size:10px;font-weight:700;color:#2E7D32;margin-bottom:4px">✓ PROS</div>' +
     '<div style="font-size:12px;color:var(--tx1);line-height:1.4">' + (data.prosSummary || '') + '</div></div>' +
-    '<div style="flex:1;padding:12px;background:#FFF8E1;border-radius:10px">' +
+    '<div style="flex:1;padding:12px;background:var(--surface-warm);border-radius:10px">' +
     '<div style="font-size:10px;font-weight:700;color:#F57F17;margin-bottom:4px">→ CONSIDER</div>' +
     '<div style="font-size:12px;color:var(--tx1);line-height:1.4">' + (data.consSummary || '') + '</div></div>' +
     '</div>' +
@@ -1403,7 +1430,7 @@ function renderTryOnConfirm() {
         (p && p.img ? `<img src="${p.img}" style="width:80px;height:80px;object-fit:cover;border-radius:8px">` : '') +
       `</div>` +
     `</div>` +
-    `<button onclick="startTryOn()" style="display:block;width:100%;padding:14px;background:var(--tx1);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px">Try It On →</button>` +
+    `<button onclick="startTryOn()" style="display:block;width:100%;padding:14px;background:var(--tx1);color:var(--on-ink);border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px">Try It On →</button>` +
     `<button onclick="renderTryOnUpload()" style="display:block;width:100%;padding:12px;background:var(--card);color:var(--tx2);border:1.5px solid var(--border);border-radius:12px;font-size:14px;cursor:pointer">Choose different photo</button>`;
 }
 
@@ -1464,7 +1491,7 @@ function renderTryOnProcessing(statusText) {
 function renderTryOnResult(resultUrl) {
   document.getElementById('tryOnContent').innerHTML =
     `<img src="${resultUrl}" style="width:100%;border-radius:16px;margin-bottom:16px;display:block">` +
-    `<button onclick="closeTryOn()" style="display:block;width:100%;padding:14px;background:var(--tx1);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px">Done</button>` +
+    `<button onclick="closeTryOn()" style="display:block;width:100%;padding:14px;background:var(--tx1);color:var(--on-ink);border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px">Done</button>` +
     `<a href="${resultUrl}" download="tryon.jpg" style="display:block;text-align:center;padding:12px;background:var(--card);color:var(--tx2);border:1.5px solid var(--border);border-radius:12px;font-size:14px;text-decoration:none">Save Image</a>`;
 }
 
@@ -1474,7 +1501,7 @@ function renderTryOnError(msg) {
       `<div style="margin-bottom:12px;display:flex;justify-content:center"><svg viewBox="0 0 48 48" width="32" height="32" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" aria-hidden="true"><path d="M24 8L4 40h40L24 8z" stroke-linejoin="round"/><path d="M24 22v8" stroke-linecap="round"/><circle cx="24" cy="34" r="1.5" fill="var(--ink-soft)" stroke="none"/></svg></div>` +
       `<div style="font-size:15px;font-weight:600;color:var(--tx1);margin-bottom:8px">Try-on failed</div>` +
       `<div style="font-size:13px;color:var(--tx3);margin-bottom:20px">${msg}</div>` +
-      `<button onclick="renderTryOnConfirm()" style="padding:12px 24px;background:var(--tx1);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer">Try Again</button>` +
+      `<button onclick="renderTryOnConfirm()" style="padding:12px 24px;background:var(--tx1);color:var(--on-ink);border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer">Try Again</button>` +
     `</div>`;
 }
 
@@ -2008,7 +2035,7 @@ function renderOutfitCheckResult(result, photoUrl) {
 
   // One change
   const change = document.createElement('div');
-  change.style.cssText = 'padding:10px 16px;border-bottom:1px solid var(--border);background:#FFF8E1';
+  change.style.cssText = 'padding:10px 16px;border-bottom:1px solid var(--border);background:var(--surface-warm)';
   change.innerHTML =
     '<div style="font-size:10px;font-weight:700;color:#F57F17;margin-bottom:2px">→ ONE CHANGE</div>' +
     '<div style="font-size:13px;color:var(--tx1)">' + (result.one_change || '') + '</div>';
@@ -2144,7 +2171,7 @@ function renderStyleQuiz() {
 
   const confirmBtn = document.createElement('button');
   confirmBtn.className = 'l-chip';
-  confirmBtn.style.cssText = 'display:none;width:100%;border-radius:10px;height:44px;margin-top:4px;font-size:14px;font-weight:600;background:var(--tx1);color:#fff;border:none;font-family:var(--font);cursor:pointer;';
+  confirmBtn.style.cssText = 'display:none;width:100%;border-radius:10px;height:44px;margin-top:4px;font-size:14px;font-weight:600;background:var(--tx1);color:var(--on-ink);border:none;font-family:var(--font);cursor:pointer;';
   confirmBtn.textContent = 'This is me →';
 
   styles.forEach(s => {
@@ -2440,9 +2467,9 @@ async function generateOutfitImages(outfitEls, occasion, palette) {
 
 async function handleOutfitFeedback(outfit, signal, cell, likeBtn, dislikeBtn, occasion, palette) {
   if (signal === 'positive') {
-    likeBtn.style.background = '#E8490F';
+    likeBtn.style.background = 'var(--accent)';
     likeBtn.style.color = 'white';
-    cell.style.outline = '2px solid #E8490F';
+    cell.style.outline = '2px solid var(--accent)';
   } else {
     dislikeBtn.style.background = '#111';
     dislikeBtn.style.color = 'white';
@@ -2861,12 +2888,12 @@ function showAuthScreen() {
       '<div style="font-size:28px;font-weight:700;margin-bottom:4px;text-align:center">Lumen</div>' +
       '<div style="font-size:13px;color:var(--tx3);margin-bottom:40px;text-align:center">Your personal style guide</div>' +
       '<div id="auth-tabs" style="display:flex;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px">' +
-        '<button id="tab-login" onclick="showAuthTab(\'login\')" style="flex:1;padding:10px;border:none;background:var(--tx1);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">' + t('auth_signin') + '</button>' +
+        '<button id="tab-login" onclick="showAuthTab(\'login\')" style="flex:1;padding:10px;border:none;background:var(--tx1);color:var(--on-ink);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">' + t('auth_signin') + '</button>' +
         '<button id="tab-signup" onclick="showAuthTab(\'signup\')" style="flex:1;padding:10px;border:none;background:#fff;color:var(--tx2);font-size:13px;cursor:pointer;font-family:var(--font)">' + t('auth_signup') + '</button>' +
       '</div>' +
       '<input id="auth-email" type="email" placeholder="' + t('auth_email_ph') + '" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;margin-bottom:12px;box-sizing:border-box;font-family:var(--font);outline:none">' +
       '<input id="auth-password" type="password" placeholder="' + t('auth_pass_ph') + '" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;margin-bottom:20px;box-sizing:border-box;font-family:var(--font);outline:none">' +
-      '<button onclick="submitAuth()" style="width:100%;padding:14px;background:var(--tx1);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font)">' + t('auth_continue') + '</button>' +
+      '<button onclick="submitAuth()" style="width:100%;padding:14px;background:var(--tx1);color:var(--on-ink);border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font)">' + t('auth_continue') + '</button>' +
       '<div style="display:flex;align-items:center;gap:12px;margin:16px 0">' +
         '<div style="flex:1;height:1px;background:var(--border)"></div>' +
         '<div style="font-size:12px;color:var(--tx3)">or</div>' +
@@ -2876,7 +2903,7 @@ function showAuthScreen() {
         '<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>' +
         t('auth_google') +
       '</button>' +
-      '<div id="auth-error" style="color:#E8490F;font-size:12px;margin-top:12px;text-align:center"></div>' +
+      '<div id="auth-error" style="color:var(--accent);font-size:12px;margin-top:12px;text-align:center"></div>' +
     '</div>';
   document.body.appendChild(el);
   el.querySelector('#auth-password').addEventListener('keydown', e => { if (e.key === 'Enter') submitAuth(); });
@@ -3475,7 +3502,7 @@ function showPrettifyError(grid, emptyEl) {
       'That photo didn\'t work — try better lighting or lay the item flat' +
     '</div>' +
     '<button onclick="this.closest(\'[style]\').remove();showPhotoGuide()" ' +
-      'style="margin-top:4px;padding:7px 14px;background:var(--tx1);color:#fff;' +
+      'style="margin-top:4px;padding:7px 14px;background:var(--tx1);color:var(--on-ink);' +
       'border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font)">' +
       'Try again' +
     '</button>';
@@ -3572,10 +3599,10 @@ function renderDetailContent() {
         '<div id="brandSuggestionsDetail" style="display:none;position:absolute;left:0;right:0;background:#fff;border:1.5px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow-y:auto;max-height:150px;z-index:200;box-shadow:0 6px 16px rgba(0,0,0,0.08)"></div>' +
       '</div>' +
       '<div><span style="font-size:11px;padding:3px 10px;border-radius:20px;background:var(--card);border:1px solid var(--border);color:var(--tx2)">' + item.category + '</span></div>' +
-      '<button id="detailSaveBtn" onclick="saveDetailEdit()" style="display:none;padding:10px;background:var(--tx1);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">' + t('detail_save') + '</button>' +
+      '<button id="detailSaveBtn" onclick="saveDetailEdit()" style="display:none;padding:10px;background:var(--tx1);color:var(--on-ink);border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">' + t('detail_save') + '</button>' +
     '</div>' +
     '<div style="padding:16px;display:flex;flex-direction:column;gap:10px">' +
-      '<button onclick="detailAction(\'style\')"  style="padding:14px 18px;background:var(--tx1);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);text-align:left">' + t('detail_style') + '</button>' +
+      '<button onclick="detailAction(\'style\')"  style="padding:14px 18px;background:var(--tx1);color:var(--on-ink);border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);text-align:left">' + t('detail_style') + '</button>' +
       '<button onclick="detailAction(\'cheaper\')" style="padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:var(--font);text-align:left;color:var(--tx1)">' + t('detail_cheaper') + '</button>' +
       '<button onclick="detailAction(\'remove\')"  style="padding:14px 18px;background:none;border:1.5px solid #ff3b30;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:var(--font);color:#ff3b30;text-align:left">' + t('detail_remove') + '</button>' +
     '</div>' +
@@ -3837,7 +3864,7 @@ function showEditItemCard(item) {
       '</div>' +
     '</div>' +
     '<div style="display:flex;gap:8px;padding:12px 14px">' +
-      '<button onclick="saveEditItem(\'' + item.id + '\')" style="flex:1;padding:11px;background:var(--tx1);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">Save changes</button>' +
+      '<button onclick="saveEditItem(\'' + item.id + '\')" style="flex:1;padding:11px;background:var(--tx1);color:var(--on-ink);border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">Save changes</button>' +
       '<button onclick="document.getElementById(\'edit-item-card\')?.remove()" style="padding:11px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-size:14px;cursor:pointer;font-family:var(--font)">Cancel</button>' +
     '</div>';
   grid.insertBefore(card, grid.firstChild);
@@ -3945,7 +3972,7 @@ function showMultiItemReview(items) {
   const addBtn = document.createElement('button');
   addBtn.id = 'multi-add-btn';
   addBtn.style.cssText =
-    'flex:1;padding:14px;background:var(--tx1);color:#fff;border:none;border-radius:12px;' +
+    'flex:1;padding:14px;background:var(--tx1);color:var(--on-ink);border:none;border-radius:12px;' +
     'font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font)';
   addBtn.textContent = 'Add ' + items.length + ' items to closet';
   addBtn.onclick = saveAllMultiItems;
@@ -4170,7 +4197,7 @@ function showBrandConfirmation(item) {
       '<div id="brandSuggestions" style="display:none;position:absolute;left:14px;right:14px;background:#fff;border:1.5px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow-y:auto;max-height:180px;z-index:200;box-shadow:0 6px 16px rgba(0,0,0,0.08)"></div>' +
     '</div>' +
     '<div style="display:flex;gap:8px;padding:12px 14px">' +
-      '<button onclick="confirmAddItem(' + safeItem + ')" style="flex:1;padding:11px;background:var(--tx1);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">' + t('add_save_closet') + '</button>' +
+      '<button onclick="confirmAddItem(' + safeItem + ')" style="flex:1;padding:11px;background:var(--tx1);color:var(--on-ink);border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">' + t('add_save_closet') + '</button>' +
       '<button onclick="cancelAddItem()" style="padding:11px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-size:14px;cursor:pointer;font-family:var(--font)">' + t('add_cancel') + '</button>' +
     '</div>';
 
@@ -4385,7 +4412,7 @@ checkSession();
       <div style="margin-bottom:20px"><svg viewBox="0 0 72 72" width="72" height="72" fill="none" stroke="var(--ink-faint)" stroke-width="1.5" aria-hidden="true"><path d="M56 52H16a2 2 0 0 1-1.4-3.42L36 29 57.4 48.58A2 2 0 0 1 56 52z"/><path d="M36 29V21"/><circle cx="36" cy="18.5" r="2.5"/></svg></div>
       <div id="closetEmptyTitle" style="font-size:17px;font-weight:700;color:var(--tx1);margin-bottom:8px">Your closet is empty</div>
       <div id="closetEmptyBody" style="font-size:13px;color:var(--tx2);line-height:1.55;margin-bottom:24px;max-width:240px">Add your first item and Lumen will start building outfits from your own wardrobe</div>
-      <button id="closetAddFirstBtn" onclick="showPhotoGuide()" style="padding:13px 28px;background:var(--tx1);color:#fff;border:none;border-radius:100px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">Add my first item</button>
+      <button id="closetAddFirstBtn" onclick="showPhotoGuide()" style="padding:13px 28px;background:var(--tx1);color:var(--on-ink);border:none;border-radius:100px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)">Add my first item</button>
     </div>
   </div>
 
@@ -4404,7 +4431,7 @@ checkSession();
       style="display:flex;width:100%;
       align-items:center;justify-content:center;
       gap:8px;padding:14px;
-      background:var(--tx1);color:#fff;
+      background:var(--tx1);color:var(--on-ink);
       border:none;border-radius:12px;
       font-size:15px;font-weight:600;
       cursor:pointer;font-family:var(--font)">
