@@ -372,6 +372,13 @@ const STRINGS = {
     chip_outfit_closet:  'Build an outfit from my closet',
     chip_trending:       'What\'s trending this season?',
     chip_find_item:      'Find something I saw',
+    chip_rate_outfit:    'Rate my outfit',
+    chip_event:          'I have an event',
+    chip_browsing:       'Just browsing',
+    chip_lower_budget:   'Lower budget options',
+    chip_diff_styles:    'Show different styles',
+    chip_another_outfit: 'Another outfit idea',
+    chip_shop_pieces:    'Shop pieces like these',
   },
   es: {
     chat_placeholder:    'Pregúntale a Lumen sobre tu estilo…',
@@ -418,6 +425,13 @@ const STRINGS = {
     chip_outfit_closet:  'Crear outfit de mi guardarropa',
     chip_trending:       '¿Qué está de moda esta temporada?',
     chip_find_item:      'Encontrar algo que vi',
+    chip_rate_outfit:    'Califica mi outfit',
+    chip_event:          'Tengo un evento',
+    chip_browsing:       'Solo mirando',
+    chip_lower_budget:   'Opciones más económicas',
+    chip_diff_styles:    'Ver otros estilos',
+    chip_another_outfit: 'Otra idea de outfit',
+    chip_shop_pieces:    'Comprar prendas similares',
   }
 };
 let currentLang = localStorage.getItem('lumen_lang') || 'en';
@@ -442,18 +456,41 @@ function applyLang() {
   renderSuggestionChips();
 }
 
-// ── Suggestion chips (above input, visible when chat is empty) ────────────
+// ── Suggestion chips (above input — hide while Lumen types, reappear after every reply) ──
 let _suggestionsHidden = false;
+let _chipSet = 'onboarding';
+const SUGGESTION_SETS = {
+  onboarding: [
+    { key: 'chip_rate_outfit',  action: 'rateOutfit' },
+    { key: 'chip_event',        msg: () => currentLang === 'es' ? 'Tengo un evento y necesito ayuda con qué ponerme' : 'I have an event coming up and need help with what to wear' },
+    { key: 'chip_wear_today',   msg: () => currentLang === 'es' ? '¿Qué me pongo hoy?' : 'What should I wear today?' },
+    { key: 'chip_find_item',    msg: () => currentLang === 'es' ? 'Quiero encontrar algo que vi' : 'I saw something I love — help me find it' },
+    { key: 'chip_browsing',     msg: () => currentLang === 'es' ? 'Solo estoy mirando, ¿qué está de moda?' : "I'm just browsing, what's trending right now?" },
+  ],
+  default: [
+    { key: 'chip_wear_today',    msg: () => currentLang === 'es' ? '¿Qué me pongo hoy?' : 'What should I wear today?' },
+    { key: 'chip_rate_outfit',   action: 'rateOutfit' },
+    { key: 'chip_outfit_closet', msg: () => currentLang === 'es' ? 'Crea un outfit con mi guardarropa' : 'Build an outfit from my closet' },
+    { key: 'chip_trending',      msg: () => currentLang === 'es' ? '¿Qué está de moda esta temporada?' : "What's trending this season?" },
+    { key: 'chip_find_item',     msg: () => currentLang === 'es' ? 'Quiero encontrar algo que vi' : 'I saw something I love — help me find it' },
+  ],
+  products: [
+    { key: 'chip_lower_budget', msg: () => currentLang === 'es' ? 'Muéstrame opciones más económicas' : 'Show me lower budget options' },
+    { key: 'chip_diff_styles',  msg: () => currentLang === 'es' ? 'Muéstrame otros estilos' : 'Show me different styles' },
+    { key: 'chip_wear_today',   msg: () => currentLang === 'es' ? '¿Qué me pongo hoy?' : 'What should I wear today?' },
+    { key: 'chip_rate_outfit',  action: 'rateOutfit' },
+  ],
+  outfit: [
+    { key: 'chip_another_outfit', msg: () => currentLang === 'es' ? 'Dame otra idea de outfit' : 'Give me another outfit idea' },
+    { key: 'chip_shop_pieces',    msg: () => currentLang === 'es' ? 'Quiero comprar prendas como estas' : 'I want to shop pieces like these' },
+    { key: 'chip_rate_outfit',    action: 'rateOutfit' },
+  ],
+};
 function renderSuggestionChips() {
   const wrap = document.getElementById('chatSuggestions');
   if (!wrap || _suggestionsHidden) return;
   wrap.innerHTML = '';
-  [
-    { key: 'chip_wear_today',    msg: () => currentLang === 'es' ? '¿Qué me pongo hoy?' : 'What should I wear today?' },
-    { key: 'chip_outfit_closet', msg: () => currentLang === 'es' ? 'Crea un outfit con mi guardarropa' : 'Build an outfit from my closet' },
-    { key: 'chip_trending',      msg: () => currentLang === 'es' ? '¿Qué está de moda esta temporada?' : "What's trending this season?" },
-    { key: 'chip_find_item',     msg: () => currentLang === 'es' ? 'Quiero encontrar algo que vi' : 'I saw something I love — help me find it' },
-  ].forEach(({ key, msg }) => {
+  (SUGGESTION_SETS[_chipSet] || SUGGESTION_SETS.default).forEach(({ key, msg, action }) => {
     const btn = document.createElement('button');
     btn.textContent = t(key);
     btn.style.cssText =
@@ -462,6 +499,7 @@ function renderSuggestionChips() {
       'font-family:var(--font);white-space:nowrap;transition:all 0.15s';
     btn.addEventListener('click', () => {
       hideSuggestionChips();
+      if (action === 'rateOutfit') { startOutfitCheck(); return; }
       sendMessage(msg());
     });
     wrap.appendChild(btn);
@@ -473,9 +511,23 @@ function hideSuggestionChips() {
   const wrap = document.getElementById('chatSuggestions');
   if (wrap) wrap.style.display = 'none';
 }
-function showSuggestionChips() {
+function showSuggestionChips(setName) {
+  if (setName) _chipSet = setName;
   _suggestionsHidden = false;
   renderSuggestionChips();
+}
+function startOutfitCheck() {
+  _outfitCheckMode = true;
+  addMessage('ai', currentLang === 'es'
+    ? 'Perfecto. Muéstrame lo que llevas puesto y te doy mi opinión honesta — qué funciona, qué no, y una cosa específica para mejorarlo.'
+    : 'Love it. Show me what you\'re wearing and I\'ll give you my honest take — what works, what doesn\'t, and one specific thing to make it better.');
+  setTimeout(() => {
+    renderChipGroup([
+      { label: currentLang === 'es' ? 'Tomar foto' : 'Take photo',   action: 'camera' },
+      { label: currentLang === 'es' ? 'Subir foto' : 'Upload photo', action: 'gallery' }
+    ], () => {});
+    scrollToLatest();
+  }, 400);
 }
 
 // ── State ─────────────────────────────────────────────────────────────────
@@ -2399,6 +2451,7 @@ async function sendMessage(text) {
         console.log('[occasion] rendering card for:', occasionJson.occasion);
         setTimeout(() => renderOccasionCard(paletteJson, occasionJson), 300);
       }
+      _chipSet = 'outfit';
 
     } else {
       // No occasion tokens — check OUTFIT_CARD, SEARCH_MODELS, or plain text
@@ -2417,6 +2470,7 @@ async function sendMessage(text) {
             renderClosetOutfitCard(cardData);
           }, 300);
         } catch(e) { console.error('[outfit_card] parse error:', e.message); }
+        _chipSet = 'outfit';
       } else if (tokMatch) {
         const displayText = content.slice(0, content.indexOf('SEARCH_MODELS:')).replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '').replace(/\s*```[a-z]*\s*$/g, '').trim();
         if (displayText) addMessage('ai', displayText);
@@ -2426,13 +2480,13 @@ async function sendMessage(text) {
 
         let modelData;
         try { modelData = JSON.parse(tokMatch[1]); }
-        catch(e) { addMessage('ai', 'Let me search for the best options for you…'); isLoading = false; return; }
+        catch(e) { addMessage('ai', 'Let me search for the best options for you…'); isLoading = false; showSuggestionChips('default'); return; }
 
         const srchTypId = showTyping();
         try {
           const found = await apiFetch('/api/search', { models:modelData.models || [], userProfile });
           removeTyping(srchTypId);
-          if (!found.length) { addMessage('ai', "I couldn't find exact matches right now. Could you try rephrasing?"); isLoading = false; return; }
+          if (!found.length) { addMessage('ai', "I couldn't find exact matches right now. Could you try rephrasing?"); isLoading = false; showSuggestionChips('default'); return; }
           products = found;
           const useCase = (products[0]?.category) || 'your needs';
           addMessage('ai', products[0]?.why
@@ -2445,6 +2499,7 @@ async function sendMessage(text) {
             { label:'More premium',     msg:'Show me more premium options' },
             { label:'Specific color',   msg:'I want a specific color' },
           ], msg => sendMessage(msg));
+          _chipSet = 'products';
         } catch(e) {
           removeTyping(srchTypId);
           addMessage('ai', 'I had trouble searching right now. Please try again in a moment.');
@@ -2456,6 +2511,7 @@ async function sendMessage(text) {
         addMessage('ai', displayContent);
         renderOutfitCards(displayContent);
         if (onboardingActive && onboardingStep === 3) onboardingActive = false;
+        _chipSet = 'default';
       }
     }
 
@@ -2467,6 +2523,7 @@ async function sendMessage(text) {
   }
 
   isLoading = false;
+  showSuggestionChips();
 }
 
 // ── Input wiring ──────────────────────────────────────────────────────────
@@ -2499,62 +2556,8 @@ function showOnboardingWelcome() {
     'the style that\'s completely yours.\n\n' +
     'What\'s on your mind?'
   );
-  showSuggestionChips();
-
-  // Entry chips after short delay
-  setTimeout(() => {
-    renderChipGroup([
-      {
-        label: 'Rate my outfit',
-        msg: 'I want honest feedback on my outfit'
-      },
-      {
-        label: 'I have an event',
-        msg: 'I have an event coming up and need help with what to wear'
-      },
-      {
-        label: 'Find something I saw',
-        msg: 'I saw something I love and want to find it'
-      },
-      {
-        label: 'Plan what to wear',
-        msg: 'Help me figure out what to wear'
-      },
-      {
-        label: 'Just browsing',
-        msg: 'I\'m just browsing, what\'s trending right now?'
-      },
-      {
-        label: 'Something else',
-        action: 'focus'
-      }
-    ], (msg, action) => {
-      if (action === 'focus') {
-        document.getElementById('lumenInput')?.focus();
-        return;
-      }
-      if (msg === 'I want honest feedback on my outfit') {
-        _outfitCheckMode = true;
-        console.log('[outfit] mode set to true');
-        addMessage('ai',
-          'Love it. Show me what you\'re wearing ' +
-          'and I\'ll give you my honest take — ' +
-          'what works, what doesn\'t, and one ' +
-          'specific thing to make it better.'
-        );
-        setTimeout(() => {
-          renderChipGroup([
-            { label: 'Take photo', action: 'camera' },
-            { label: 'Upload photo', action: 'gallery' }
-          ], () => {});
-          scrollToLatest();
-        }, 400);
-      } else {
-        sendMessage(msg);
-      }
-    });
-    scrollToLatest();
-  }, 500);
+  showSuggestionChips('onboarding');
+  scrollToLatest();
 }
 
 // ── First-run onboarding (3-screen modal) ────────────────────────────────
@@ -2756,59 +2759,9 @@ async function loadUserGreeting() {
         'Welcome back' + (name ? ', ' + name : '') + '! 👋\n\n' +
         'What\'s on your mind today?'
       );
-      showSuggestionChips();
-      setTimeout(() => {
-        renderChipGroup([
-          {
-            label: 'Rate my outfit today',
-            msg: 'I want feedback on what I\'m wearing today'
-          },
-          {
-            label: 'I have an event',
-            msg: 'I have an event coming up and need help with what to wear'
-          },
-          {
-            label: 'What should I wear?',
-            msg: 'Help me figure out what to wear today'
-          },
-          {
-            label: 'Find something',
-            msg: 'I want to find something specific'
-          },
-          {
-            label: 'Show me trends',
-            msg: 'Show me what\'s trending right now'
-          },
-          {
-            label: 'Something else',
-            action: 'focus'
-          }
-        ], (msg, action) => {
-          if (action === 'focus') {
-            document.getElementById('lumenInput')?.focus();
-            return;
-          }
-          if (msg === 'I want feedback on what I\'m wearing today') {
-            _outfitCheckMode = true;
-            console.log('[outfit] mode set to true (returning user)');
-            addMessage('ai',
-              'Show me what you\'re wearing and I\'ll give you my honest take — ' +
-              'what works, what doesn\'t, and one specific thing to make it better.'
-            );
-            setTimeout(() => {
-              renderChipGroup([
-                { label: 'Take photo', action: 'camera' },
-                { label: 'Upload photo', action: 'gallery' }
-              ], () => {});
-              scrollToLatest();
-            }, 400);
-          } else {
-            sendMessage(msg);
-          }
-        });
-        scrollToLatest();
-        if (wardrobeCount < 3) setTimeout(() => toggleCloset(), 500);
-      }, 400);
+      showSuggestionChips('onboarding');
+      scrollToLatest();
+      if (wardrobeCount < 3) setTimeout(() => toggleCloset(), 500);
     } else {
       showOnboardingWelcome();
       if (wardrobeCount < 3) setTimeout(() => toggleCloset(), 500);
