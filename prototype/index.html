@@ -2819,9 +2819,24 @@ function showFirstRunOnboarding(afterFn) {
   window.nextObSlide  = () => { idx = Math.min(idx + 1, getObSlides().length - 1); render(); };
   window.finishOnboarding = () => {
     overlay.remove();
+    localStorage.setItem('lumen_onboarded', '1');
     markOnboarded();
     if (afterFn) afterFn();
   };
+
+  // Swipe left/right to move between slides
+  let obTouchX = 0, obTouchY = 0;
+  overlay.addEventListener('touchstart', e => {
+    obTouchX = e.touches[0].clientX;
+    obTouchY = e.touches[0].clientY;
+  }, { passive: true });
+  overlay.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - obTouchX;
+    const dy = Math.abs(e.changedTouches[0].clientY - obTouchY);
+    if (Math.abs(dx) < 50 || dy > Math.abs(dx)) return;
+    if (dx < 0) window.nextObSlide();
+    else { idx = Math.max(idx - 1, 0); render(); }
+  }, { passive: true });
 
   render();
   document.body.appendChild(overlay);
@@ -2965,7 +2980,12 @@ async function loadUserGreeting() {
     const hasProfile = profile.color_season || profile.gender;
     const wardrobeCount = context?.wardrobe?.length ?? 0;
 
-    if (!profile.has_onboarded) {
+    // Intro carousel: only while the user is new — server flag, local done-flag,
+    // or 3 views max (server flag alone wasn't persisting, causing it on every reload)
+    const obViews = parseInt(localStorage.getItem('lumen_ob_views') || '0', 10);
+    const obDoneLocally = localStorage.getItem('lumen_onboarded') === '1';
+    if (!profile.has_onboarded && !obDoneLocally && obViews < 3) {
+      localStorage.setItem('lumen_ob_views', String(obViews + 1));
       showFirstRunOnboarding(() => {
         if (hasProfile) {
           addMessage('ai', 'Welcome back' + (name ? ', ' + name : '') + '! 👋\n\nWhat\'s on your mind today?');
