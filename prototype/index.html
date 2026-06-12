@@ -113,7 +113,7 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--ink)
 .l-icon-btn { width:40px; height:40px; border-radius:50%; background:transparent; border:1px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--ink-soft); }
 
 /* PROFILE SHEET */
-.l-profile-sheet { position:fixed; bottom:0; left:50%; transform:translateX(-50%) translateY(100%); width:100%; max-width:480px; background:var(--bg); border-radius:20px 20px 0 0; border-top:1px solid var(--border); padding:20px 20px calc(20px + env(safe-area-inset-bottom,0px)); transition:transform 0.35s cubic-bezier(0.32,0.72,0,1); z-index:100; }
+.l-profile-sheet { position:fixed; bottom:0; left:50%; transform:translateX(-50%) translateY(100%); width:100%; max-width:480px; background:var(--bg); border-radius:20px 20px 0 0; border-top:1px solid var(--border); padding:20px 20px calc(56px + env(safe-area-inset-bottom,16px)); max-height:80vh; max-height:80dvh; overflow-y:auto; transition:transform 0.35s cubic-bezier(0.32,0.72,0,1); z-index:100; }
 .l-profile-sheet.open { transform:translateX(-50%) translateY(0); }
 
 /* DEEP DIVE */
