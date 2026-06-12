@@ -113,16 +113,16 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--ink)
 .l-icon-btn { width:40px; height:40px; border-radius:50%; background:transparent; border:1px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--ink-soft); }
 
 /* PROFILE SHEET */
-.l-profile-sheet { position:fixed; bottom:0; left:50%; transform:translateX(-50%) translateY(100%); width:100%; max-width:480px; background:var(--bg); border-radius:20px 20px 0 0; border-top:1px solid var(--border); padding:20px 20px calc(56px + env(safe-area-inset-bottom,16px)); max-height:80vh; max-height:80dvh; overflow-y:auto; transition:transform 0.35s cubic-bezier(0.32,0.72,0,1); z-index:100; }
+.l-profile-sheet { position:fixed; bottom:0; left:50%; transform:translateX(-50%) translateY(100%); width:100%; max-width:480px; background:var(--bg); border-radius:20px 20px 0 0; border-top:1px solid var(--border); padding:20px 20px calc(56px + env(safe-area-inset-bottom,16px)); max-height:80vh; max-height:80dvh; overflow-y:auto; transition:transform 0.35s cubic-bezier(0.32,0.72,0,1); z-index:1001; }
 .l-profile-sheet.open { transform:translateX(-50%) translateY(0); }
 
 /* DEEP DIVE */
-.l-deep-dive { position:fixed; bottom:0; left:50%; transform:translateX(-50%) translateY(100%); width:100%; max-width:480px; height:85vh; height:85dvh; background:var(--bg); border-radius:20px 20px 0 0; overflow-y:auto; transition:transform 0.35s cubic-bezier(0.32,0.72,0,1); z-index:200; }
+.l-deep-dive { position:fixed; bottom:0; left:50%; transform:translateX(-50%) translateY(100%); width:100%; max-width:480px; height:85vh; height:85dvh; background:var(--bg); border-radius:20px 20px 0 0; overflow-y:auto; transition:transform 0.35s cubic-bezier(0.32,0.72,0,1); z-index:1001; }
 .l-deep-dive::-webkit-scrollbar { display:none; }
 .l-deep-dive.open { transform:translateX(-50%) translateY(0); }
 
 /* OVERLAY */
-.l-overlay { position:fixed; inset:0; background:rgba(17,17,16,0.45); z-index:99; opacity:0; pointer-events:none; transition:opacity 0.3s; }
+.l-overlay { position:fixed; inset:0; background:rgba(17,17,16,0.45); z-index:1000; opacity:0; pointer-events:none; transition:opacity 0.3s; }
 .l-overlay.show { opacity:1; pointer-events:all; }
 
 /* Style quiz cards */
@@ -332,7 +332,7 @@ if ('serviceWorker' in navigator) {
   <div class="l-overlay" id="overlay" onclick="handleOverlayClick()"></div>
 
   <!-- VIRTUAL TRY-ON MODAL -->
-  <div id="tryOnModal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.72);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center">
+  <div id="tryOnModal" style="display:none;position:fixed;inset:0;z-index:1004;background:rgba(0,0,0,0.72);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center">
     <div style="width:100%;max-width:480px;background:var(--bg);border-radius:20px 20px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom,0px));max-height:90vh;overflow-y:auto">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
         <div style="font-size:17px;font-weight:700">Virtual Try-On</div>
