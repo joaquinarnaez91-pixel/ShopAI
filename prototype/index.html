@@ -2543,10 +2543,7 @@ async function sendMessage(text) {
           removeTyping(srchTypId);
           if (!found.length) { addMessage('ai', "I couldn't find exact matches right now. Could you try rephrasing?"); isLoading = false; showSuggestionChips('default'); return; }
           products = found;
-          const useCase = (products[0]?.category) || 'your needs';
-          addMessage('ai', products[0]?.why
-            ? 'Here are my picks for you — each selected for ' + useCase + '. Real prices across retailers.'
-            : 'I found ' + products.length + ' options — here are your top picks:');
+          if (!displayText) addMessage('ai', currentLang === 'es' ? 'Aquí están mis mejores opciones:' : 'Here are my top picks:');
           renderProductsInline(products, 'Expert picks for you');
           renderChipGroup([
             { label:'Compare',    msg:'Compare the items shown' },
