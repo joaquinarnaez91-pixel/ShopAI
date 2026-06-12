@@ -52,8 +52,10 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--ink)
 
 /* CHIPS */
 .l-chips { display:flex; flex-wrap:wrap; gap:7px; padding:4px 16px 8px 52px; }
-.l-chip { padding:7px 14px; border-radius:var(--radius-pill); border:1.5px solid var(--border); background:var(--bg); font-size:13px; font-weight:500; color:var(--ink); cursor:pointer; font-family:var(--font); transition:all 0.15s; white-space:nowrap; }
+.l-chip { padding:8px 15px; border-radius:var(--radius-pill); border:1px solid var(--border); background:var(--surface); font-size:13px; font-weight:600; color:var(--ink); cursor:pointer; font-family:var(--font); transition:all 0.15s; white-space:nowrap; box-shadow:0 1px 4px rgba(0,0,0,0.07); }
 .l-chip:active { background:var(--ink); color:#fff; border-color:var(--ink); }
+.l-sgst-chip { padding:9px 16px; border-radius:var(--radius-pill); border:1px solid var(--border); background:var(--surface); font-size:13px; font-weight:600; color:var(--ink); cursor:pointer; font-family:var(--font); white-space:nowrap; flex-shrink:0; box-shadow:0 1px 4px rgba(0,0,0,0.07); transition:all 0.15s; }
+.l-sgst-chip:active { background:var(--ink); color:#fff; border-color:var(--ink); }
 
 /* PRODUCT CARD ROW */
 .l-card-row { padding:8px 16px; display:flex; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; cursor:grab; user-select:none; }
@@ -232,6 +234,7 @@ if ('serviceWorker' in navigator) {
   <div class="l-header">
     <div class="l-logo">lumen<span class="l-dot" style="width:8px;height:8px;border-radius:50%;background:#E8490F;display:inline-block;margin-left:4px;flex-shrink:0;margin-bottom:2px"></span></div>
     <div style="display:flex;gap:8px;align-items:center">
+      <button onclick="openDressingRoom()" id="dressingBtn" title="My dressing room" style="position:relative;width:36px;height:36px;border-radius:50%;background:var(--card);border:1.5px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span id="dressingCount" style="position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:#E8490F;color:#fff;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px;line-height:1"></span></button>
       <button onclick="toggleCloset()" id="closetBtn" style="width:36px;height:36px;border-radius:50%;background:var(--card);border:1.5px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 18H3.62a1 1 0 0 1-.7-1.71L12 8l9.08 8.29A1 1 0 0 1 20.38 18z"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/></svg></button>
       <div class="l-profile-btn" id="profileBtn" onclick="openProfile()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke-linecap="round"/></svg></div>
     </div>
@@ -256,8 +259,8 @@ if ('serviceWorker' in navigator) {
     <!-- CHAT THREAD -->
     <div class="l-chat" id="lumenChat"></div>
 
-    <!-- Suggestion pills (shown when chat is empty) -->
-    <div id="chatSuggestions" style="padding:8px 12px 4px;flex-wrap:wrap;gap:7px;flex-shrink:0;display:none"></div>
+    <!-- Suggestion pills — single horizontally-scrollable row pinned above the input -->
+    <div id="chatSuggestions" style="padding:8px 12px 6px;gap:8px;flex-shrink:0;display:none;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none"></div>
 
     <!-- INPUT BAR -->
     <div class="l-input-bar">
@@ -496,11 +499,8 @@ function renderSuggestionChips() {
   wrap.innerHTML = '';
   (SUGGESTION_SETS[_chipSet] || SUGGESTION_SETS.default).forEach(({ key, msg, action }) => {
     const btn = document.createElement('button');
+    btn.className = 'l-sgst-chip';
     btn.textContent = t(key);
-    btn.style.cssText =
-      'padding:7px 14px;border-radius:var(--radius-pill);border:1.5px solid var(--border);' +
-      'background:var(--bg);font-size:13px;font-weight:500;color:var(--ink);cursor:pointer;' +
-      'font-family:var(--font);white-space:nowrap;transition:all 0.15s';
     btn.addEventListener('click', () => {
       hideSuggestionChips();
       if (action === 'rateOutfit') { startOutfitCheck(); return; }
@@ -835,7 +835,7 @@ async function enrichProduct(p) {
 async function openDressingRoom() {
   hideSuggestionChips();
   if (!savedProducts.length && !savedOutfits.length) {
-    addMessage('ai', 'Your dressing room is empty. Tap the ★ on any product — or "Love it" on an outfit — and it\'ll be saved here so you can come back and complete the purchase.');
+    addMessage('ai', 'Your dressing room is empty. Tap the ★ on any product — or "Love it" on an outfit — and it\'ll be saved here. You can come back any time with the ★ button at the top to complete the purchase.');
     showSuggestionChips('default');
     return;
   }
@@ -890,8 +890,13 @@ function renderProductsInline(prods, label, noFeedback) {
   if (!noFeedback && !window._drHintShown) {
     window._drHintShown = true;
     const hint = document.createElement('div');
-    hint.style.cssText = 'padding:2px 16px 6px;font-size:12px;color:var(--tx3)';
-    hint.textContent = 'Tap ★ on a product to save it to your dressing room — pick piece by piece, then check out when you\'re ready.';
+    hint.style.cssText =
+      'margin:8px 16px;padding:12px 14px;border-radius:14px;background:var(--card);' +
+      'border:1.5px solid var(--border);font-size:13px;font-weight:500;color:var(--tx1);' +
+      'display:flex;align-items:center;gap:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06)';
+    hint.innerHTML =
+      '<svg viewBox="0 0 24 24" width="22" height="22" fill="#E8490F" stroke="#E8490F" stroke-width="1" style="flex-shrink:0" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
+      '<span>Tap <b>★</b> on anything you like to save it to your <b>dressing room</b> — pick piece by piece, then review your picks from the ★ button up top.</span>';
     c.appendChild(hint);
   }
   if (!noFeedback) addTasteFeedback(prods);
@@ -964,7 +969,8 @@ function addTasteFeedback(prods) {
 function toggleSave(id) {
   const p = products.find(x => x.id === id) || savedProducts.find(x => x.id === id);
   if (!p) return;
-  if (savedItems.includes(id)) {
+  const adding = !savedItems.includes(id);
+  if (!adding) {
     savedItems = savedItems.filter(x => x !== id);
     savedProducts = savedProducts.filter(x => x.id !== id);
   } else {
@@ -972,6 +978,7 @@ function toggleSave(id) {
     if (!savedProducts.find(x => x.id === id)) savedProducts.push(p);
   }
   persistDressingRoom();
+  updateDressingBadge();
   const btn = document.getElementById('pin-' + id);
   if (btn) {
     btn.classList.toggle('saved', savedItems.includes(id));
@@ -979,6 +986,55 @@ function toggleSave(id) {
     if (svg) svg.setAttribute('fill', savedItems.includes(id) ? 'currentColor' : 'none');
   }
   updateSidebarSaved();
+  if (adding && products.find(x => x.id === id)) updateShopperGuide();
+  else if (document.getElementById('shopperGuide')) updateShopperGuide();
+}
+
+function updateDressingBadge() {
+  const badge = document.getElementById('dressingCount');
+  if (!badge) return;
+  const n = savedProducts.length + savedOutfits.length;
+  badge.textContent = n;
+  badge.style.display = n > 0 ? 'flex' : 'none';
+}
+
+// Personal-shopper guide: after each star, acknowledge and steer toward the
+// remaining categories of the current result set, then offer a review.
+function updateShopperGuide() {
+  const c = chat();
+  if (!c) return;
+  document.getElementById('shopperGuide')?.remove();
+  if (!savedProducts.length) return;
+  const cats = [...new Set(products.map(x => (x.category || '').toLowerCase()).filter(Boolean))];
+  const savedCats = new Set(savedProducts.map(x => (x.category || '').toLowerCase()));
+  const remaining = cats.filter(cat => !savedCats.has(cat));
+
+  const wrap = document.createElement('div');
+  wrap.id = 'shopperGuide';
+  const text = remaining.length
+    ? 'Saved to your dressing room ✓ Star any others you like — still to pick: <b>' + remaining.join('</b>, <b>') + '</b>.'
+    : 'Saved ✓ Your set is looking complete — ready to review your picks, or need anything else?';
+  wrap.innerHTML =
+    '<div class="l-msg ai"><div class="l-av"><svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M10 2l1.5 4.5L16 8l-4.5 1.5L10 14l-1.5-4.5L4 8l4.5-1.5z"/></svg></div><div class="l-bbl ai">' + text + '</div></div>';
+
+  const chipsRow = document.createElement('div');
+  chipsRow.className = 'l-chips';
+  const mk = (label, fn) => {
+    const b = document.createElement('button');
+    b.className = 'l-chip';
+    b.textContent = label;
+    b.onclick = fn;
+    chipsRow.appendChild(b);
+  };
+  mk('Review my picks (' + savedProducts.length + ')', () => { wrap.remove(); openDressingRoom(); });
+  if (remaining.length) {
+    mk('Find ' + remaining[0], () => { wrap.remove(); sendMessage('Show me ' + remaining[0] + ' options to complete this outfit'); });
+  } else {
+    mk('I need something else', () => { wrap.remove(); document.getElementById('lumenInput')?.focus(); });
+  }
+  wrap.appendChild(chipsRow);
+  c.appendChild(wrap);
+  scrollToLatest();
 }
 
 // ── Score bars ────────────────────────────────────────────────────────────
@@ -1672,6 +1728,7 @@ function renderClosetOutfitCard(cardData) {
       }
       sendSignal('positive');
     }
+    updateDressingBadge();
     styleVoteBtns();
   };
   dislikeBtn.onclick = () => {
@@ -1680,6 +1737,7 @@ function renderClosetOutfitCard(cardData) {
     styleVoteBtns();
     savedOutfits = savedOutfits.filter(o => o.key !== outfitKey);
     persistSavedOutfits();
+    updateDressingBadge();
     sendSignal('negative');
     _sourceForNext = 'closet';
     sendMessage('Not feeling that one — show me a different outfit from my closet');
@@ -2947,6 +3005,7 @@ function init() {
   applyLang();
   wireInput(document.getElementById('lumenInput'), document.getElementById('lumenSend'));
   setupDesktopLayout();
+  updateDressingBadge();
   loadUserGreeting();
 }
 
