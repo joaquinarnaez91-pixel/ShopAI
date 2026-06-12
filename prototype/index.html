@@ -379,6 +379,7 @@ const STRINGS = {
     chip_diff_styles:    'Show different styles',
     chip_another_outfit: 'Another outfit idea',
     chip_shop_pieces:    'Shop pieces like these',
+    chip_dressing_room:  'My dressing room',
   },
   es: {
     chat_placeholder:    'Pregúntale a Lumen sobre tu estilo…',
@@ -432,9 +433,11 @@ const STRINGS = {
     chip_diff_styles:    'Ver otros estilos',
     chip_another_outfit: 'Otra idea de outfit',
     chip_shop_pieces:    'Comprar prendas similares',
+    chip_dressing_room:  'Mi probador',
   }
 };
-let currentLang = localStorage.getItem('lumen_lang') || 'en';
+// All-English for MVP — ES strings kept for later re-enable
+let currentLang = 'en';
 function t(key) { return (STRINGS[currentLang] || STRINGS.en)[key] || key; }
 function setLang(lang) {
   currentLang = lang;
@@ -473,11 +476,12 @@ const SUGGESTION_SETS = {
     { key: 'chip_outfit_closet', msg: () => currentLang === 'es' ? 'Crea un outfit con mi guardarropa' : 'Build an outfit from my closet' },
     { key: 'chip_trending',      msg: () => currentLang === 'es' ? '¿Qué está de moda esta temporada?' : "What's trending this season?" },
     { key: 'chip_find_item',     msg: () => currentLang === 'es' ? 'Quiero encontrar algo que vi' : 'I saw something I love — help me find it' },
+    { key: 'chip_dressing_room', action: 'dressingRoom' },
   ],
   products: [
     { key: 'chip_lower_budget', msg: () => currentLang === 'es' ? 'Muéstrame opciones más económicas' : 'Show me lower budget options' },
     { key: 'chip_diff_styles',  msg: () => currentLang === 'es' ? 'Muéstrame otros estilos' : 'Show me different styles' },
-    { key: 'chip_wear_today',   msg: () => currentLang === 'es' ? '¿Qué me pongo hoy?' : 'What should I wear today?' },
+    { key: 'chip_dressing_room', action: 'dressingRoom' },
     { key: 'chip_rate_outfit',  action: 'rateOutfit' },
   ],
   outfit: [
@@ -500,6 +504,7 @@ function renderSuggestionChips() {
     btn.addEventListener('click', () => {
       hideSuggestionChips();
       if (action === 'rateOutfit') { startOutfitCheck(); return; }
+      if (action === 'dressingRoom') { openDressingRoom(); return; }
       sendMessage(msg());
     });
     wrap.appendChild(btn);
@@ -515,6 +520,17 @@ function showSuggestionChips(setName) {
   if (setName) _chipSet = setName;
   _suggestionsHidden = false;
   renderSuggestionChips();
+}
+function renderEntryChips() {
+  renderChipGroup(
+    SUGGESTION_SETS.onboarding.map(ch => ({ label: t(ch.key), msg: ch.msg ? ch.msg() : null, action: ch.action })),
+    (msg, action) => {
+      if (action === 'rateOutfit') { startOutfitCheck(); return; }
+      if (action === 'dressingRoom') { openDressingRoom(); return; }
+      if (msg) sendMessage(msg);
+    }
+  );
+  scrollToLatest();
 }
 function startOutfitCheck() {
   _outfitCheckMode = true;
@@ -532,8 +548,17 @@ function startOutfitCheck() {
 
 // ── State ─────────────────────────────────────────────────────────────────
 let products        = [];
-let savedItems      = [];   // saved product ids
-let savedProducts   = [];   // saved product objects
+let savedItems      = [];   // saved product ids (dressing room)
+let savedProducts   = [];   // saved product objects (dressing room)
+let savedOutfits    = [];   // loved closet outfits (dressing room)
+try { savedItems    = JSON.parse(localStorage.getItem('lumen_saved_items')    || '[]'); } catch(e) {}
+try { savedProducts = JSON.parse(localStorage.getItem('lumen_saved_products') || '[]'); } catch(e) {}
+try { savedOutfits  = JSON.parse(localStorage.getItem('lumen_saved_outfits')  || '[]'); } catch(e) {}
+function persistSavedOutfits() { localStorage.setItem('lumen_saved_outfits', JSON.stringify(savedOutfits)); }
+function persistDressingRoom() {
+  localStorage.setItem('lumen_saved_items',    JSON.stringify(savedItems));
+  localStorage.setItem('lumen_saved_products', JSON.stringify(savedProducts));
+}
 let messages        = [];
 let userProfile     = {};
 let enrichCache     = {};
@@ -807,7 +832,24 @@ async function enrichProduct(p) {
 }
 
 // ── Product cards (inline in chat) ────────────────────────────────────────
-function renderProductsInline(prods, label) {
+async function openDressingRoom() {
+  hideSuggestionChips();
+  if (!savedProducts.length && !savedOutfits.length) {
+    addMessage('ai', 'Your dressing room is empty. Tap the ★ on any product — or "Love it" on an outfit — and it\'ll be saved here so you can come back and complete the purchase.');
+    showSuggestionChips('default');
+    return;
+  }
+  addMessage('ai', 'Your dressing room — everything you\'ve saved, ready when you are:');
+  if (savedProducts.length) renderProductsInline(savedProducts, 'Saved products', true);
+  if (savedOutfits.length) {
+    await ensureClosetLoaded();
+    savedOutfits.forEach(o => renderClosetOutfitCard(o));
+  }
+  scrollToLatest();
+  showSuggestionChips('default');
+}
+
+function renderProductsInline(prods, label, noFeedback) {
   const c = chat();
   if (!c) return;
 
@@ -845,7 +887,14 @@ function renderProductsInline(prods, label) {
 
   c.appendChild(row);
   applyCardScroll(row);
-  addTasteFeedback(prods);
+  if (!noFeedback && !window._drHintShown) {
+    window._drHintShown = true;
+    const hint = document.createElement('div');
+    hint.style.cssText = 'padding:2px 16px 6px;font-size:12px;color:var(--tx3)';
+    hint.textContent = 'Tap ★ on a product to save it to your dressing room — pick piece by piece, then check out when you\'re ready.';
+    c.appendChild(hint);
+  }
+  if (!noFeedback) addTasteFeedback(prods);
   scrollToLatest();
 }
 
@@ -881,11 +930,18 @@ function addTasteFeedback(prods) {
     { emoji: '<svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 8.5V15a1 1 0 0 0 1 1h6a1 1 0 0 0 .97-.75l1.5-6A1 1 0 0 0 15.5 8h-4l.6-2.4A1 1 0 0 0 11.13 4.5L7 8.5zM4 9h1.5a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5H4a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1z"/></svg>', label: 'Good', type: 'good' },
     { emoji: '<svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M13 11.5V5a1 1 0 0 0-1-1H6a1 1 0 0 0-.97.75l-1.5 6A1 1 0 0 0 4.5 12h4l-.6 2.4a1 1 0 0 0 .97 1.1L13 11.5zM16 11h-1.5a.5.5 0 0 1-.5-.5v-6a.5.5 0 0 1 .5-.5H16a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1z"/></svg>', label: 'Not for me', type: 'not_for_me' }
   ];
+  let picked = null;
+  const resetBtnStyles = () => wrap.querySelectorAll('button').forEach(el => {
+    el.style.opacity = '1'; el.style.borderColor = 'var(--border)'; el.style.background = 'var(--bg)';
+  });
   buttons.forEach(b => {
     const btn = document.createElement('button');
     btn.style.cssText = 'padding:4px 10px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-size:13px;cursor:pointer;transition:all 0.15s';
     btn.innerHTML = b.emoji + ' ' + b.label;
     btn.onclick = () => {
+      if (picked === b.type) { picked = null; resetBtnStyles(); return; }
+      picked = b.type;
+      resetBtnStyles();
       wrap.querySelectorAll('button').forEach(el => el.style.opacity = '0.4');
       btn.style.opacity = '1';
       btn.style.borderColor = 'var(--tx1)';
@@ -915,6 +971,7 @@ function toggleSave(id) {
     savedItems.push(id);
     if (!savedProducts.find(x => x.id === id)) savedProducts.push(p);
   }
+  persistDressingRoom();
   const btn = document.getElementById('pin-' + id);
   if (btn) {
     btn.classList.toggle('saved', savedItems.includes(id));
@@ -969,15 +1026,15 @@ function openDeepDive(p) {
     'border:none;cursor:pointer;color:var(--tx2);line-height:1;padding:0 4px">✕</button>';
   dd.appendChild(header);
 
-  // Product image (3:4 aspect ratio)
+  // Product image — capped height so it never pushes content out of frame
   const imgWrap = document.createElement('div');
   imgWrap.style.cssText =
-    'width:100%;background:var(--garment-bg);aspect-ratio:3/4;' +
+    'width:100%;background:var(--garment-bg);height:38vh;max-height:380px;' +
     'overflow:hidden;display:flex;align-items:center;justify-content:center';
   if (p.img) {
     const img = document.createElement('img');
     img.src = p.img;
-    img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+    img.style.cssText = 'width:100%;height:100%;object-fit:contain';
     img.onerror = () => { imgWrap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20.38 18H3.62a1 1 0 0 1-.7-1.71L12 8l9.08 8.29A1 1 0 0 1 20.38 18z"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/></svg></div>'; };
     imgWrap.appendChild(img);
   } else {
@@ -1008,10 +1065,26 @@ function openDeepDive(p) {
   buyBtn.style.cssText =
     'display:block;text-align:center;padding:16px;background:var(--tx1);' +
     'color:#fff;border-radius:12px;font-size:15px;font-weight:600;' +
-    'text-decoration:none;margin-bottom:24px;letter-spacing:0.3px';
+    'text-decoration:none;margin-bottom:10px;letter-spacing:0.3px';
   buyBtn.textContent = 'Shop at ' + (p.source || 'Store') + ' →';
   buyBtn.addEventListener('click', () => logLinkClick(p.name, p.price, p.source, p.link || '', 'chat'));
   content.appendChild(buyBtn);
+
+  // Save to dressing room
+  const ddSaveBtn = document.createElement('button');
+  const paintSaveBtn = () => {
+    const saved = savedItems.includes(p.id);
+    ddSaveBtn.textContent = saved ? '★ Saved in your dressing room' : '☆ Save to dressing room';
+    ddSaveBtn.style.cssText =
+      'display:block;width:100%;text-align:center;padding:14px;border-radius:12px;' +
+      'font-size:14px;font-weight:600;margin-bottom:24px;cursor:pointer;font-family:var(--font);' +
+      (saved
+        ? 'background:var(--card);color:var(--tx1);border:1.5px solid var(--tx1)'
+        : 'background:var(--bg);color:var(--tx1);border:1.5px solid var(--border)');
+  };
+  paintSaveBtn();
+  ddSaveBtn.onclick = () => { toggleSave(p.id); paintSaveBtn(); };
+  content.appendChild(ddSaveBtn);
 
   // Divider
   const div1 = document.createElement('div');
@@ -1074,14 +1147,22 @@ function openDeepDive(p) {
   overlay.classList.add('show');
   deepDiveOpen = true;
 
-  // Swipe down to close
-  let touchStartY = 0;
-  dd.addEventListener('touchstart', e => {
-    touchStartY = e.touches[0].clientY;
-  }, { passive: true });
-  dd.addEventListener('touchend', e => {
-    if (e.changedTouches[0].clientY - touchStartY > 70) closeDeepDive();
-  }, { passive: true });
+  // Swipe down to close — attach once (was re-attached every open, stacking listeners
+  // and firing on normal scrolls). Now: must start at top of sheet, pull down 140px+, mostly vertical.
+  if (!dd._swipeWired) {
+    dd._swipeWired = true;
+    let touchStartY = 0, touchStartX = 0, startedAtTop = false;
+    dd.addEventListener('touchstart', e => {
+      touchStartY = e.touches[0].clientY;
+      touchStartX = e.touches[0].clientX;
+      startedAtTop = dd.scrollTop <= 0;
+    }, { passive: true });
+    dd.addEventListener('touchend', e => {
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      const dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
+      if (startedAtTop && dy > 140 && dy > dx * 2) closeDeepDive();
+    }, { passive: true });
+  }
 
   // Load enrich data
   enrichProduct(p).then(data => {
@@ -1352,13 +1433,6 @@ function openProfile() {
     (userGender ? `<div style="font-size:13px;color:var(--tx2);margin-bottom:6px">${userGender}</div>` : '') +
     (userAge    ? `<div style="font-size:13px;color:var(--tx2);margin-bottom:16px">${userAge}</div>` : '') +
     `<div style="border-top:1px solid var(--border);padding-top:16px;display:flex;flex-direction:column;gap:10px">` +
-      `<div style="display:flex;align-items:center;justify-content:space-between">` +
-        `<span style="font-size:13px;color:var(--ink-soft)">Language</span>` +
-        `<div style="display:flex;gap:0;border:1.5px solid var(--border);border-radius:8px;overflow:hidden">` +
-          `<button onclick="setLang('en');closeProfile();openProfile()" style="padding:6px 14px;border:none;background:${currentLang==='en'?'var(--ink)':'transparent'};color:${currentLang==='en'?'#fff':'var(--ink-soft)'};font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">EN</button>` +
-          `<button onclick="setLang('es');closeProfile();openProfile()" style="padding:6px 14px;border:none;background:${currentLang==='es'?'var(--ink)':'transparent'};color:${currentLang==='es'?'#fff':'var(--ink-soft)'};font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">ES</button>` +
-        `</div>` +
-      `</div>` +
       `<button onclick="signOut()" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;background:transparent;font-size:14px;color:var(--tx2);font-family:var(--font);cursor:pointer">${t('profile_signout')}</button>` +
     `</div>`;
 
@@ -1573,18 +1647,44 @@ function renderClosetOutfitCard(cardData) {
     }).catch(() => {});
   };
 
+  // Exclusive + deselectable vote. Love → saves the outfit for later; Not for me → asks for a new one.
+  let outfitVote = null;
+  const outfitKey = (title || '') + '|' + (item_ids || []).join(',');
+  const styleVoteBtns = () => {
+    const apply = (btn, active) => {
+      btn.style.background = active ? 'var(--tx1)' : 'var(--bg)';
+      btn.style.color = active ? '#fff' : '';
+      btn.style.opacity = (outfitVote && !active) ? '0.4' : '1';
+    };
+    apply(likeBtn, outfitVote === 'like');
+    apply(dislikeBtn, outfitVote === 'dislike');
+  };
   likeBtn.onclick = () => {
-    likeBtn.style.background = 'var(--tx1)';
-    likeBtn.style.color = '#fff';
-    dislikeBtn.style.opacity = '0.4';
-    sendSignal('positive');
+    if (outfitVote === 'like') {
+      outfitVote = null;
+      savedOutfits = savedOutfits.filter(o => o.key !== outfitKey);
+      persistSavedOutfits();
+    } else {
+      outfitVote = 'like';
+      if (!savedOutfits.find(o => o.key === outfitKey)) {
+        savedOutfits.push({ key: outfitKey, title, occasion, item_ids, note, savedAt: Date.now() });
+        persistSavedOutfits();
+      }
+      sendSignal('positive');
+    }
+    styleVoteBtns();
   };
   dislikeBtn.onclick = () => {
-    dislikeBtn.style.background = 'var(--tx1)';
-    dislikeBtn.style.color = '#fff';
-    likeBtn.style.opacity = '0.4';
+    if (outfitVote === 'dislike') { outfitVote = null; styleVoteBtns(); return; }
+    outfitVote = 'dislike';
+    styleVoteBtns();
+    savedOutfits = savedOutfits.filter(o => o.key !== outfitKey);
+    persistSavedOutfits();
     sendSignal('negative');
+    _sourceForNext = 'closet';
+    sendMessage('Not feeling that one — show me a different outfit from my closet');
   };
+  if (savedOutfits.find(o => o.key === outfitKey)) { outfitVote = 'like'; styleVoteBtns(); }
 
   actions.appendChild(likeBtn);
   actions.appendChild(dislikeBtn);
@@ -2317,16 +2417,17 @@ async function sendMessage(text) {
 
   // Nudge toward closet when asking for outfit help but wardrobe is empty
   const isWardrobeRequest = /\b(outfit|wear|closet|wardrobe|style me|what (should|do) i wear|dress me)\b/i.test(text);
-  if (isWardrobeRequest && closetItems.length === 0) {
+  if (isWardrobeRequest && closetItems.length === 0 && !_sourceForNext) {
     addMessage('user', text);
     messages.push({ role:'user', content:text });
     setTimeout(() => {
       addMessage('ai', 'Before I can style outfits for you, add a few items to your closet — I\'ll work with what you actually own. 👗');
       renderChipGroup([
         { label:'Add items now', action:'opencloset' },
-        { label:'Browse instead', msg: text }
+        { label:'Shop the web instead', msg: text }
       ], (msg, action) => {
         if (action === 'opencloset') { toggleCloset(); return; }
+        _sourceForNext = 'web';
         isLoading = false;
         sendMessage(msg);
       });
@@ -2610,7 +2711,7 @@ function showOnboardingWelcome() {
     'What\'s on your mind?'
   );
   showSuggestionChips('onboarding');
-  scrollToLatest();
+  renderEntryChips();
 }
 
 // ── First-run onboarding (3-screen modal) ────────────────────────────────
@@ -2799,6 +2900,8 @@ async function loadUserGreeting() {
       showFirstRunOnboarding(() => {
         if (hasProfile) {
           addMessage('ai', 'Welcome back' + (name ? ', ' + name : '') + '! 👋\n\nWhat\'s on your mind today?');
+          showSuggestionChips('onboarding');
+          renderEntryChips();
         } else {
           showOnboardingWelcome();
         }
@@ -2813,7 +2916,7 @@ async function loadUserGreeting() {
         'What\'s on your mind today?'
       );
       showSuggestionChips('onboarding');
-      scrollToLatest();
+      renderEntryChips();
       if (wardrobeCount < 3) setTimeout(() => toggleCloset(), 500);
     } else {
       showOnboardingWelcome();

@@ -306,10 +306,12 @@ export default async function handler(req, res) {
     models.map(m => searchForModel(m, serpKey, rfKey))
   );
 
+  // Timestamp-based ids: sequential ids collided across searches, breaking saved/pinned products
+  const idBase = Date.now();
   const products = settled
     .map(r => r.status === 'fulfilled' ? r.value : null)
     .filter(Boolean)
-    .map((p, i) => ({ ...p, id: i + 1 }));
+    .map((p, i) => ({ ...p, id: idBase + i }));
 
   console.log('[search] Returning', products.length, '/', models.length, 'products');
   return res.status(200).json(products);
