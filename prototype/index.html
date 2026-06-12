@@ -544,6 +544,7 @@ let profileOpen     = false;
 let currentDiveProduct = null;
 let tryOnPersonDataUri = null;
 let _outfitCheckMode = false;
+let _sourceForNext   = null;  // 'closet' | 'web' | 'both' — set by the source-ask chips
 let _occasionMode = false;
 let currentProfile = {};
 
@@ -2335,6 +2336,37 @@ async function sendMessage(text) {
     return;
   }
 
+  // Ask where to source outfit looks from (closet / web / both) before recommending
+  const isWearIntent =
+    /\b(what (should|do|can) i wear|what to wear|help me dress|dress me|style me|wear (today|tomorrow|tonight))\b/i.test(text) ||
+    /qu[eé] me pongo|qu[eé] ponerme|ay[uú]dame a vestirme/i.test(text);
+  const sourceAlreadyStated = /closet|guardarropa|tienda|stores|online|shop the web/i.test(text);
+  if (isWearIntent && !sourceAlreadyStated && !_sourceForNext && closetItems.length > 0) {
+    addMessage('user', text);
+    messages.push({ role:'user', content:text });
+    const askText = currentLang === 'es'
+      ? '¿Te muestro looks de tu guardarropa, de tiendas, o ambos?'
+      : 'Want looks from your closet, from the web, or both?';
+    setTimeout(() => {
+      addMessage('ai', askText);
+      messages.push({ role:'assistant', content:askText });
+      renderChipGroup([
+        { label: currentLang === 'es' ? 'Mi guardarropa'    : 'My closet',    msg: currentLang === 'es' ? 'De mi guardarropa'   : 'From my closet',   action: 'closet' },
+        { label: currentLang === 'es' ? 'Buscar en tiendas' : 'Shop the web', msg: currentLang === 'es' ? 'Busca en tiendas'    : 'Shop the web',     action: 'web' },
+        { label: currentLang === 'es' ? 'Ambos'             : 'Both',         msg: currentLang === 'es' ? 'Ambos'               : 'Both',             action: 'both' },
+      ], (msg, action) => {
+        _sourceForNext = action;
+        isLoading = false;
+        sendMessage(msg);
+      });
+      scrollToLatest();
+      isLoading = false;
+    }, 350);
+    return;
+  }
+  const sourceChoice = _sourceForNext;
+  _sourceForNext = null;
+
   addMessage('user', text);
   messages.push({ role:'user', content:text });
   const typId = showTyping();
@@ -2366,7 +2398,24 @@ async function sendMessage(text) {
       photoBase64 = null; photoMimeType = null;
     }
 
-    const tab = currentMode = detectApiMode(text);
+    if (sourceChoice) {
+      const note = {
+        closet: '\n\n[Source preference: MY CLOSET. Build the look ONLY from owned closet items and reply with an OUTFIT_CARD token. Do not recommend products to buy.]',
+        web:    '\n\n[Source preference: SHOP THE WEB. Recommend real products to buy and reply with a SEARCH_MODELS token. Do not use closet items.]',
+        both:   '\n\n[Source preference: BOTH. First build one look from owned closet items (OUTFIT_CARD token), then recommend complementary pieces to buy (SEARCH_MODELS token).]'
+      }[sourceChoice];
+      const last = apiMessages[apiMessages.length - 1];
+      apiMessages = [
+        ...apiMessages.slice(0, -1),
+        typeof last.content === 'string'
+          ? { role:'user', content: last.content + note }
+          : { role:'user', content: [...last.content, { type:'text', text: note }] }
+      ];
+    }
+
+    const tab = currentMode = sourceChoice
+      ? (sourceChoice === 'closet' ? 'style' : 'discover')
+      : detectApiMode(text);
     const userContext = [
       userGender        ? 'Gender: ' + userGender : null,
       userAge           ? 'Age: '    + userAge    : null,
@@ -2454,27 +2503,33 @@ async function sendMessage(text) {
       _chipSet = 'outfit';
 
     } else {
-      // No occasion tokens — check OUTFIT_CARD, SEARCH_MODELS, or plain text
+      // No occasion tokens — check OUTFIT_CARD and/or SEARCH_MODELS (source=both emits both), else plain text
       const outfitCardMatch = content.match(/OUTFIT_CARD:\s*(\{[\s\S]*?\})/);
       const tokMatch = content.match(/SEARCH_MODELS:\s*(\{[\s\S]*\})/);
 
-      if (outfitCardMatch) {
-        const displayText = content.slice(0, content.indexOf('OUTFIT_CARD:'))
-          .replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '').trim();
+      if (outfitCardMatch || tokMatch) {
+        const firstTok = Math.min(
+          outfitCardMatch ? content.indexOf('OUTFIT_CARD:') : Infinity,
+          tokMatch ? content.indexOf('SEARCH_MODELS:') : Infinity
+        );
+        const displayText = content.slice(0, firstTok)
+          .replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '')
+          .replace(/\s*```[a-z]*\s*$/g, '').trim();
         if (displayText) addMessage('ai', displayText);
         messages.push({ role:'assistant', content });
-        try {
-          const cardData = JSON.parse(outfitCardMatch[1]);
-          setTimeout(async () => {
-            await ensureClosetLoaded();
-            renderClosetOutfitCard(cardData);
-          }, 300);
-        } catch(e) { console.error('[outfit_card] parse error:', e.message); }
-        _chipSet = 'outfit';
-      } else if (tokMatch) {
-        const displayText = content.slice(0, content.indexOf('SEARCH_MODELS:')).replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '').replace(/\s*```[a-z]*\s*$/g, '').trim();
-        if (displayText) addMessage('ai', displayText);
-        messages.push({ role:'assistant', content });
+
+        if (outfitCardMatch) {
+          try {
+            const cardData = JSON.parse(outfitCardMatch[1]);
+            setTimeout(async () => {
+              await ensureClosetLoaded();
+              renderClosetOutfitCard(cardData);
+            }, 300);
+          } catch(e) { console.error('[outfit_card] parse error:', e.message); }
+          _chipSet = 'outfit';
+        }
+
+      if (tokMatch) {
         userProfile = { ...userProfile, ...extractProfile(messages) };
         updateProfileDisplay();
 
@@ -2504,6 +2559,7 @@ async function sendMessage(text) {
           removeTyping(srchTypId);
           addMessage('ai', 'I had trouble searching right now. Please try again in a moment.');
         }
+      }
 
       } else {
         const displayContent = content.replace(/PROFILE_UPDATE:\{[\s\S]*?\}/g, '').trim();
