@@ -96,7 +96,7 @@ async function detectGarments(imageBase64, mimeType) {
           { type: 'image', source: { type: 'base64', media_type: mimeType, data: imageBase64 } },
           {
             type: 'text',
-            text: 'List every distinct clothing item and accessory visible in this photo (top, bottom, shoes, hat, bag, etc). Return JSON array only, no other text:\n[{"item":"short description","category":"tops|bottoms|shoes|outerwear|accessories|dresses"}]'
+            text: 'List every distinct clothing item and accessory visible in this photo (top, bottom, shoes, hat, bag, etc), including clothes, shoes and accessories worn by a person — list each worn item separately and ignore the person themselves. Return JSON array only, no other text:\n[{"item":"short description","category":"tops|bottoms|shoes|outerwear|accessories|dresses"}]'
           }
         ]
       }]
